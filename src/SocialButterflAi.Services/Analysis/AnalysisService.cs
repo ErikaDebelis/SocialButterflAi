@@ -25,7 +25,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<object> Analyze(
+        public async Task<object> AnalyzeAsync(
             object request
         )
         {
