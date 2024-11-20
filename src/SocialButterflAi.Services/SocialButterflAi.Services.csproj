@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+    <ProjectReference Include="..\ButterflAi.Models\ButterflAi.Models.csproj" />
+    </ItemGroup>
+
+</Project>
