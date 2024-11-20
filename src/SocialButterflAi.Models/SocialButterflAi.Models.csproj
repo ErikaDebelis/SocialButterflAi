@@ -1,11 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>9.0</LangVersion>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>9.0</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="System.Text.Json" Version="9.0.0" />
     </ItemGroup>
 
 </Project>
