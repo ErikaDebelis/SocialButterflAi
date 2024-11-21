@@ -23,7 +23,7 @@ namespace SocialButterflAi.Services.OpenAi
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<WhisperResponse> Whisper(
+        public async Task<WhisperResponse> ExecuteWhisperAsync(
             WhisperRequest request
         )
         {

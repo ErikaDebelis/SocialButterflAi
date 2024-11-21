@@ -1,4 +1,6 @@
-//RESTful API
+using Microsoft.AspNetCore.Mvc;
+
+using SocialButterflAi.Models.Analysis;
 
 namespace SocialButterflAi.Api.Controllers
 {

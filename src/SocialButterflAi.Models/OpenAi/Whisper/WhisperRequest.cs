@@ -17,7 +17,7 @@ namespace ButterflAi.Models.OpenAi.Whisper
         [JsonPropertyName("WavUrl")]
         public string WavUrl { get; set; }
 
-        private IEnumerable<byte> _wavData
+        private IEnumerable<byte> _wavBytes
         {
             get
             {

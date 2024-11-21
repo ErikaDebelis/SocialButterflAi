@@ -5,7 +5,7 @@ namespace ButterflAi.Models.OpenAi.Whisper
 {
     public enum Model
     {
-        unknown,
-        whisper_1
+        Unknown,
+        Whisper_1
     }
 }

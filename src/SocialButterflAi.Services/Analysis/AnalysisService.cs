@@ -11,10 +11,18 @@ namespace SocialButterflAi.Services.Analysis
 {
     public class AnalysisService : IAnalysisService
     {
+        public IOpenAiClient OpenAiClient;
+        public IClaudeClient ClaudeClient;
         public ILogger<IAnalysisService> Logger;
 
-        public AnalysisService(ILogger<IAnalysisService> logger)
+        public AnalysisService(
+            IOpenAiClient openAiClient,
+            IClaudeClient claudeClient,
+            ILogger<IAnalysisService> logger
+        )
         {
+            OpenAiClient = openAiClient;
+            ClaudeClient = claudeClient;
             Logger = logger;
         }
 
@@ -26,13 +34,57 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public async Task<AnalysisResponse> AnalyzeAsync(
-            object request
+            AnalysisRequest request
         )
         {
-            var response = new object();
+            var response = new AnalysisResponse();
             try
             {
-                throw new NotImplementedException();
+                var whisperRequest = new WhisperRequest
+                {
+                    AudioFormat = AudioFormat.wav,
+                    Model = Model.Whisper_1,
+                    WavUrl = $"data:audio/wav;base64,{request.Base64Audio}"
+                };
+
+                var whisperResponse = await OpenAiClient.ExecuteWhisperAsync(whisperRequest);
+
+                if(whisperResponse == null
+                || !whisperResponse.Success)
+                {
+                    Logger.LogError("Whisper failed");
+                    return null;
+                }
+
+                if(string.IsNullOrWhiteSpace(whisperResponse.Text))
+                {
+                    Logger.LogError("Whisper text is empty");
+                    return null;
+                }
+
+                //now that we have the audio text, we can send it to Claude for analysis
+                var claudeRequest = new ClaudeRequest
+                {
+                };
+
+                var claudeResponse = await ClaudeClient.AiExecutionAsync(claudeRequest);
+
+                if(claudeResponse == null
+                || !claudeResponse.Success)
+                {
+                    Logger.LogError("Claude failed");
+                    return null;
+                }
+
+                response.Success = whisperRequest.Success && claudeRequest.Success;
+                response.Message = whisperRequest.Message + claudeRequest.Message;
+                response.Text = whisperResponse.Text;
+                // response.Sentiment = claudeResponse.Sentiment;
+                // response.Keywords = claudeResponse.Keywords;
+
+                Logger.LogInformation("Analysis completed");
+
+                return response;
             }
             catch (Exception ex)
             {
