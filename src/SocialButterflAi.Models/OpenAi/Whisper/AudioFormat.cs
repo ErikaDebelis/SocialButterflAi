@@ -6,8 +6,11 @@ namespace ButterflAi.Models.OpenAi.Whisper
     public enum AudioFormat
     {
         unknown,
-        wav,
         mp3,
-        mpeg
+        mp4,
+        mpeg,
+        mpga,
+        wav,
+        webm
     }
 }
