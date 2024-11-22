@@ -16,5 +16,12 @@ namespace ButterflAi.Models.Analysis
         [JsonProperty("Language")]
         [JsonPropertyName("Language")]
         public SupportedLanguages Language { get; set; }
+
+        /// <summary>
+        /// 'i think they were being sarcastic'
+        /// </summary>
+        [JsonProperty("Perception")]
+        [JsonPropertyName("Perception")]
+        public string Perception { get; set; }
     }
 }

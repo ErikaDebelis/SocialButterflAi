@@ -78,9 +78,8 @@ namespace SocialButterflAi.Services.Analysis
 
                 response.Success = whisperRequest.Success && claudeRequest.Success;
                 response.Message = whisperRequest.Message + claudeRequest.Message;
-                response.Text = whisperResponse.Text;
-                // response.Sentiment = claudeResponse.Sentiment;
-                // response.Keywords = claudeResponse.Keywords;
+                response.Transcript = whisperResponse.Text;
+                response.Conclusion = claudeResponse.Conclusion;
 
                 Logger.LogInformation("Analysis completed");
 

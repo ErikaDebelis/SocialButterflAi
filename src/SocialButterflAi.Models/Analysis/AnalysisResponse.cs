@@ -1,6 +1,8 @@
 using Newtonsoft.Json;
 using System.Text.Json;
 
+using ButterflAi.Models.Claude;
+
 namespace ButterflAi.Models.Analysis
 {
     public class AnalysisResponse
@@ -13,8 +15,12 @@ namespace ButterflAi.Models.Analysis
         [JsonPropertyName("Message")]
         public string Message { get; set; }
 
-        [JsonProperty("Text")]
-        [JsonPropertyName("Text")]
-        public string Text { get; set; }
+        [JsonProperty("Transcript")]
+        [JsonPropertyName("Transcript")]
+        public string Transcript { get; set; }
+
+        [JsonProperty("Conclusion")]
+        [JsonPropertyName("Conclusion")]
+        public Conclusion Conclusion { get; set; }
     }
 }
