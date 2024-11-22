@@ -30,6 +30,11 @@ namespace SocialButterflAi.Services.OpenAi
             var response = new WhisperResponse();
             try
             {
+
+                //endpoints :
+                // /v1/audio/transcriptions:	whisper-1
+                // /v1/audio/translations:	whisper-1
+                // /v1/audio/speech:	tts-1,  tts-1-hd (if i wanted to use the text to speech model )
                 throw new NotImplementedException();
             }
             catch (Exception ex)
