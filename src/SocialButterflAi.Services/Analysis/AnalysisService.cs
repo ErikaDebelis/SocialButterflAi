@@ -65,6 +65,7 @@ namespace SocialButterflAi.Services.Analysis
                 //now that we have the audio text, we can send it to Claude for analysis
                 var claudeRequest = new ClaudeRequest
                 {
+                    
                 };
 
                 var claudeResponse = await ClaudeClient.AiExecutionAsync(claudeRequest);

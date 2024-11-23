@@ -11,10 +11,25 @@ namespace SocialButterflAi.Services.OpenAi
     {
         private HttpClient _httpClient;
         public ILogger<OpenAiClient> Logger;
+        private Settings _settings;
 
-        public OpenAiClient(ILogger<OpenAiClient> logger)
+        private readonly const string _authHeaderKey = "Authorization";
+        private readonly const string _authHeaderValuePrefix = "Bearer";
+        private readonly const string _contentType = "application/json";
+
+        public OpenAiClient(
+            Settings settings,
+            ILogger<OpenAiClient> logger
+        )
         {
+            _settings = settings;
+
             _httpClient = new HttpClient();
+
+            _httpClient.DefaultRequestHeaders.Add(_authHeaderKey, $"{_authHeaderValuePrefix} {_settings.ApiKey}");
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_contentType));
+            _httpClient.BaseAddress = new Uri(_settings.Url);
+
             Logger = logger;
         }
 
@@ -30,11 +45,8 @@ namespace SocialButterflAi.Services.OpenAi
             var response = new WhisperResponse();
             try
             {
+                var whisperResponse = await _httpClient.PostAsync();
 
-                //endpoints :
-                // /v1/audio/transcriptions:	whisper-1
-                // /v1/audio/translations:	whisper-1
-                // /v1/audio/speech:	tts-1,  tts-1-hd (if i wanted to use the text to speech model )
                 throw new NotImplementedException();
             }
             catch (Exception ex)

@@ -7,12 +7,12 @@ namespace ButterflAi.Models.Integration
 {
     public class OpenAiSettings
     {
-        [JsonProperty("model")]
-        [JsonPropertyName("model")]
+        [JsonProperty("Model")]
+        [JsonPropertyName("Model")]
         public string Model { get; set; }
 
-        [JsonProperty("api-key")]
-        [JsonPropertyName("api-key")]
+        [JsonProperty("ApiKey")]
+        [JsonPropertyName("ApiKey")]
         public string ApiKey { get; set; }
 
         [JsonProperty("Url")]

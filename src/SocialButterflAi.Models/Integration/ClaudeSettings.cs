@@ -5,16 +5,16 @@ namespace ButterflAi.Models.Integration
 {
     public class ClaudeSettings
     {
-        [JsonProperty("anthropic-version")]
-        [JsonPropertyName("anthropic-version")]
+        [JsonProperty("Version")]
+        [JsonPropertyName("Version")]
         public string Version { get; set; }
 
         [JsonProperty("model")]
-        [JsonPropertyName("model")]
+        [JsonPropertyName("Model")]
         public string Model { get; set; }
 
-        [JsonProperty("x-api-key")]
-        [JsonPropertyName("x-api-key")]
+        [JsonProperty("ApiKey")]
+        [JsonPropertyName("ApiKey")]
         public string ApiKey { get; set; }
 
         [JsonProperty("Url")]
