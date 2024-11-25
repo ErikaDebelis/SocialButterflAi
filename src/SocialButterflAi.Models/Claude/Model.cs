@@ -5,6 +5,7 @@ namespace ButterflAi.Models.Claude
 {
     public enum Model
     {
+        Claude3mv5Sonnet20241022,
         Claude3mv5Sonnet20240620,
         Claude3Opus20240229,
         Claude3Sonnet20240229,
