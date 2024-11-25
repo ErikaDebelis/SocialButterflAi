@@ -26,9 +26,9 @@ namespace SocialButterflAi.Services.OpenAi
 
             _httpClient = new HttpClient();
 
-            _httpClient.DefaultRequestHeaders.Add(_authHeaderKey, $"{_authHeaderValuePrefix} {_settings.ApiKey}");
+            _httpClient.DefaultRequestHeaders.Add(_authHeaderKey, $"{_authHeaderValuePrefix} {_settings.OpenAi.ApiKey}");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_contentType));
-            _httpClient.BaseAddress = new Uri(_settings.Url);
+            _httpClient.BaseAddress = new Uri(_settings.OpenAi.Url);
 
             Logger = logger;
         }

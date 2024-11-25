@@ -24,11 +24,11 @@ namespace ButterflAi.Models.Claude
 
         [JsonProperty("temperature")]
         [JsonPropertyName("temperature")]
-        public float Temperature { get; set; } = 0.5f;
+        public float Temperature => 0.5f;
 
         [JsonProperty("max_tokens")]
         [JsonPropertyName("max_tokens")]
-        public int MaxTokens { get; set; }
+        public int MaxTokens => 1000;
 
         [JsonProperty("messages")]
         [JsonPropertyName("messages")]

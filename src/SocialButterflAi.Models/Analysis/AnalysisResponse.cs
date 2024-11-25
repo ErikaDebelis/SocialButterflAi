@@ -17,10 +17,10 @@ namespace ButterflAi.Models.Analysis
 
         [JsonProperty("Transcript")]
         [JsonPropertyName("Transcript")]
-        public string Transcript { get; set; }
+        public string? Transcript { get; set; }
 
         [JsonProperty("Conclusion")]
         [JsonPropertyName("Conclusion")]
-        public Conclusion Conclusion { get; set; }
+        public Conclusion? Conclusion { get; set; }
     }
 }

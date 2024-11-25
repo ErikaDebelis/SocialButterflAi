@@ -53,36 +53,56 @@ namespace SocialButterflAi.Services.Analysis
                 || !whisperResponse.Success)
                 {
                     Logger.LogError("Whisper failed");
-                    return null;
+
+                    response.Success = false;
+                    response.Message = "Whisper failed";
+
+                    return response;
                 }
 
                 if(string.IsNullOrWhiteSpace(whisperResponse.Text))
                 {
                     Logger.LogError("Whisper text is empty");
-                    return null;
+
+                    response.Success = false;
+                    response.Message = "Whisper text is empty";
+
+                    return response;
                 }
+
+                var message = new Message
+                {
+                    Content = whisperResponse.Text,
+                    User = Role.User
+                };
 
                 //now that we have the audio text, we can send it to Claude for analysis
                 var claudeRequest = new ClaudeRequest
                 {
-                    
+                    Messages = new List<Message> { message }
                 };
 
                 var claudeResponse = await ClaudeClient.AiExecutionAsync(claudeRequest);
 
                 if(claudeResponse == null
-                || !claudeResponse.Success)
+                    || !claudeResponse.Success
+                )
                 {
                     Logger.LogError("Claude failed");
-                    return null;
+
+                    response.Success = false;
+                    response.Message = "Claude failed";
+                    response.Transcript = whisperResponse.Text;
+
+                    return response;
                 }
+
+                Logger.LogInformation("Analysis completed");
 
                 response.Success = whisperRequest.Success && claudeRequest.Success;
                 response.Message = whisperRequest.Message + claudeRequest.Message;
                 response.Transcript = whisperResponse.Text;
                 response.Conclusion = claudeResponse.Conclusion;
-
-                Logger.LogInformation("Analysis completed");
 
                 return response;
             }
