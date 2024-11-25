@@ -11,21 +11,21 @@ namespace SocialButterflAi.Services.Claude
     {
         private HttpClient _httpClient;
         public ILogger<ClaudeClient> Logger;
-        private Settings _settings;
+        private ClaudeSettings _settings;
 
         private readonly const string _authHeaderApiKeyPrefix = "x-api-key";
         private readonly const string _contentType = "application/json";
 
         public ClaudeClient(
-            Settings settings,
+            ClaudeSettings settings,
             ILogger<ClaudeClient> logger
         )
         {
             _httpClient = new HttpClient();
 
-            _httpClient.DefaultRequestHeaders.Add(_authHeaderApiKeyPrefix, _settings.Claude.ApiKey);
+            _httpClient.DefaultRequestHeaders.Add(_authHeaderApiKeyPrefix, _settings.ApiKey);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_contentType));
-            _httpClient.BaseAddress = new Uri(_settings.Claude.Url);
+            _httpClient.BaseAddress = new Uri(_settings.Url);
 
             Logger = logger;
         }
