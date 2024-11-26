@@ -27,18 +27,52 @@ namespace SocialButterflAi.Api.Controllers
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         [HttpPost]
+        [Route("Upload")]
+        public async Task<IActionResult> UploadVideo(
+            UploadDtoRequest request
+        )
+        {
+            try
+            {
+                if (request.File == null
+                    || request.File.Length == 0
+                )
+                {
+                    Logger.LogError("No file uploaded");
+                    return BadRequest("No file uploaded");
+                }
+
+                var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant().TrimStart('.');
+                var matchingExtension = Enum.TryParse<VideoFormat>(extension, out var format) ?? VideoFormat.unknown;
+
+                if (matchingExtension == VideoFormat.unknown)
+                {
+                    Logger.LogError("Invalid video format");
+                    return BadRequest("Invalid video format");
+                }
+
+                var uploadResponse = await AnalysisService.UploadAsync(request);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        [HttpPost]
         public async Task<IActionResult> Analyze(
             AnalysisDtoRequest request
         )
         {
             try
             {
-                //use ffmpeg to extract audio from video file 
-                //and save it as a wav file
-
-                //use ffmpeg to save gif from video with the same timestamp as the audio file
-                // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
-
                 var extension = Path.GetExtension(request.AudioFile.FileName).ToLowerInvariant().TrimStart('.');
 
                 var matchingExtension = Enum.TryParse<AudioFormat>(extension out var audioFormat) ?? AudioFormat.unknown;

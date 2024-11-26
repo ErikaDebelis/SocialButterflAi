@@ -15,15 +15,74 @@ namespace SocialButterflAi.Services.Analysis
         public IClaudeClient ClaudeClient;
         public ILogger<IAnalysisService> Logger;
 
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly MediaProcessor _mediaProcessor;
+        private readonly string _uploadDirectory;
+        private readonly string _processedDirectory;
+
         public AnalysisService(
             IOpenAiClient openAiClient,
             IClaudeClient claudeClient,
-            ILogger<IAnalysisService> logger
+            ILogger<IAnalysisService> logger,
+
+            IWebHostEnvironment webHostEnvironment
         )
         {
             OpenAiClient = openAiClient;
             ClaudeClient = claudeClient;
             Logger = logger;
+
+            _webHostEnvironment = webHostEnvironment;
+            _mediaProcessor = new MediaProcessor();
+
+            // Set up directories
+            _uploadDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Videos");
+            _processedDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Processed");
+
+            if (!Directory.Exists(_uploadDirectory))
+            {
+                Directory.CreateDirectory(_uploadDirectory);
+            }
+
+            if (!Directory.Exists(_processedDirectory))
+            {
+                Directory.CreateDirectory(_processedDirectory);
+            }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public async Task<UploadResponse> UploadAsync(
+            IFormFile file,
+            VideoFormat format
+        )
+        {
+            var response = new UploadResponse();
+            try
+            {
+                var fileName = $"{Guid.NewGuid()}.{format}";
+                var filePath = Path.Combine(_uploadDirectory, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                response.Success = true;
+                response.VideoPath = filePath;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                throw new Exception("Error", ex);
+            }
         }
 
         /// <summary>
@@ -40,7 +99,7 @@ namespace SocialButterflAi.Services.Analysis
             var response = new AnalysisResponse();
             try
             {
-                //use ffmpeg to extract audio from video file 
+                //use ffmpeg to extract audio from video file
                 //and save it as a wav file
 
                 //use ffmpeg to save gif from video with the same timestamp as the audio file

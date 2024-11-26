@@ -16,8 +16,20 @@ namespace SocialButterflAi.Services.Analysis
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public Task<object> Analyze(
-            object request
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public Task<UploadResponse> UploadAsync(
+            IFormFile file,
+            VideoFormat format
+        );
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public Task<AnalysisResponse> AnalyzeAsync(
+            AnalysisRequest request
         );
     }
 }

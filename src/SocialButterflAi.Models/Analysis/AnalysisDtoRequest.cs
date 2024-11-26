@@ -5,9 +5,18 @@ namespace ButterflAi.Models.Analysis
 {
     public class AnalysisDtoRequest
     {
-        [JsonProperty("AudioFile")]
-        [JsonPropertyName("AudioFile")]
-        public IFormFile AudioFile { get; set; }
+
+        [JsonProperty("TransactionId")]
+        [JsonPropertyName("TransactionId")]
+        public string TransactionId { get; set; }
+
+        [JsonProperty("GifPath")]
+        [JsonPropertyName("GifPath")]
+        public string GifPath { get; set; }
+
+        [JsonProperty("AudioPath")]
+        [JsonPropertyName("AudioPath")]
+        public string AudioPath { get; set; }
 
         [JsonProperty("Language")]
         [JsonPropertyName("Language")]
