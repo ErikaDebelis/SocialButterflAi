@@ -7,6 +7,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// // setting global options
+// GlobalFFOptions.Configure(new FFOptions { BinaryFolder = "./bin", TemporaryFilesFolder = "/tmp" });
+
+// // or
+// GlobalFFOptions.Configure(options => options.BinaryFolder = "./bin");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

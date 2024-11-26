@@ -33,6 +33,12 @@ namespace SocialButterflAi.Api.Controllers
         {
             try
             {
+                //use ffmpeg to extract audio from video file 
+                //and save it as a wav file
+
+                //use ffmpeg to save gif from video with the same timestamp as the audio file
+                // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
+
                 var extension = Path.GetExtension(request.AudioFile.FileName).ToLowerInvariant().TrimStart('.');
 
                 var matchingExtension = Enum.TryParse<AudioFormat>(extension out var audioFormat) ?? AudioFormat.unknown;
