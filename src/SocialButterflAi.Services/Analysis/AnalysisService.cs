@@ -40,6 +40,33 @@ namespace SocialButterflAi.Services.Analysis
             var response = new AnalysisResponse();
             try
             {
+                //use ffmpeg to extract audio from video file 
+                //and save it as a wav file
+
+                //use ffmpeg to save gif from video with the same timestamp as the audio file
+                // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
+
+                string inputVideo = "path/to/input/video.mp4"; //todo: update with the correct path
+                string outputAudio = "path/to/output/audio.wav"; //todo: update with the correct path
+                string outputGif = "path/to/output/animation.gif"; //todo: update with the correct path
+
+                var processVideoResponse = await ProcessVideoFile(
+                                                    inputVideo,
+                                                    outputAudio,
+                                                    outputGif
+                                                );
+
+                if(processVideoResponse == null
+                    || !processVideoResponse.Success
+                )
+                {
+                    Logger.LogError("Error processing video file");
+                    response.Success = false;
+                    response.Message = "Error processing video file";
+
+                    return response;
+                }
+
                 var whisperRequest = new WhisperRequest
                 {
                     AudioFormat = AudioFormat.wav,
@@ -111,5 +138,172 @@ namespace SocialButterflAi.Services.Analysis
                 throw new Exception("Error", ex);
             }
         }
+        
+        #region Private Methods
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inputVideoPath"></param>
+        /// <param name="outputAudioPath"></param>
+        /// <param name="outputGifPath"></param>
+        /// <returns></returns>
+        private async Task<BaseResponse> ProcessVideoFile(
+            string inputVideoPath,
+            string outputAudioPath,
+            string outputGifPath
+        )
+        {
+            var response = new BaseResponse();
+            try
+            {
+                // Extract audio to WAV
+                var audioResponse = await ExtractAudioToWav(inputVideoPath, outputAudioPath);
+
+                if(audioResponse == null
+                    || !audioResponse.Success
+                )
+                {
+                    Logger.LogError("Error extracting audio");
+                    response.Success = false;
+                    response.Message = "Error extracting audio";
+
+                    return response;
+                }
+                // Create synchronized GIF
+                var gifResponse = await CreateSynchronizedGif(inputVideoPath, outputGifPath);
+
+                if(gifResponse == null
+                    || !gifResponse.Success
+                )
+                {
+                    Logger.LogError("Error extracting GIF");
+                    response.Success = false;
+                    response.Message = "Error extracting GIF";
+
+                    return response;
+                }
+                Console.WriteLine("Processing completed successfully!");
+
+                response.Success = true;
+                response.Message = "Processing completed successfully!";
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing media: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inputPath"></param>
+        /// <param name="outputPath"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private async Task<BaseResponse> ExtractAudioToWav(
+            string inputPath,
+            string outputPath
+        )
+        {
+            var response = new BaseResponse();
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = _ffmpegPath,
+                    Arguments = //$"-i \"{inputPath}\" -vn -acodec pcm_s16le -ar 44100 -ac 2 \"{outputPath}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (var process = new Process { StartInfo = startInfo })
+                {
+                    process.Start();
+                    await process.WaitForExitAsync();
+
+                    if (process.ExitCode != 0)
+                    {
+                        Logger.LogError("Error extracting audio");
+                        response.Success = false;
+                        response.Message = "Error extracting audio";
+
+                        return response;
+                    }
+                }
+                Console.WriteLine("Audio extracted successfully!");
+
+                response.Success = true;
+                response.Message = "Audio extracted successfully!";
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inputPath"></param>
+        /// <param name="outputPath"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private async Task CreateSynchronizedGif(
+            string inputPath,
+            string outputPath
+        )
+        {
+            var response = new BaseResponse();
+            try
+            {
+                // FFmpeg command to create GIF with same duration as video
+                // Adjust -r (framerate) and -s (size) parameters as needed
+                //fps=10: Controls frame rate (adjust for smoothness vs file size)
+                //scale=320:-1: Sets the width to 320 pixels and adjusts the height to maintain aspect ratio
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = _ffmpegPath,
+                    Arguments = //$"-i \"{inputPath}\" -vf \"fps=10,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" \"{outputPath}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (var process = new Process { StartInfo = startInfo })
+                {
+                    process.Start();
+                    await process.WaitForExitAsync();
+
+                    if (process.ExitCode != 0)
+                    {
+                        Logger.LogError("Error extracting GIF");
+                        response.Success = false;
+                        response.Message = "Error extracting GIF";
+
+                        return response;
+                    }
+                }
+                Console.WriteLine("GIF extracted successfully!");
+
+                response.Success = true;
+                response.Message = "GIF extracted successfully!";
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
     }
 }

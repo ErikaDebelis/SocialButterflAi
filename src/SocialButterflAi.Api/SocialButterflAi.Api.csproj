@@ -5,6 +5,10 @@
         <LangVersion>9.0</LangVersion>
     </PropertyGroup>
 
+    <Target Name="AfterPublish">
+        <Copy SourceFiles ="@(binFilesToCopy)" DestinationFolder ="$(OutDir)\bin" />
+    </Target>
+    
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="System.Text.Json" Version="9.0.0" />
