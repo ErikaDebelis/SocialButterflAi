@@ -105,9 +105,41 @@ namespace SocialButterflAi.Services.Analysis
                 //use ffmpeg to save gif from video with the same timestamp as the audio file
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
 
-                string inputVideo = "path/to/input/video.mp4"; //todo: update with the correct path
-                string outputAudio = "path/to/output/audio.wav"; //todo: update with the correct path
-                string outputGif = "path/to/output/animation.gif"; //todo: update with the correct path
+                if (string.IsNullOrEmpty(endTime))
+                {
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = _ffmpegPath,
+                        Arguments = $"-i \"{inputPath}\" 2>&1",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    using (var process = new Process { StartInfo = startInfo })
+                    {
+                        process.Start();
+                        string output = await process.StandardError.ReadToEndAsync();
+                        await process.WaitForExitAsync();
+
+                        // Extract duration from FFmpeg output using regex
+                        var durationMatch = Regex.Match(output, @"Duration: (\d{2}:\d{2}:\d{2})");
+
+                        if (!durationMatch.Success)
+                        {
+                            throw new Exception("Could not determine video duration");
+                        }
+
+                        request.EndTime = durationMatch.Groups[1].Value;
+                    }
+
+                    Console.WriteLine($"Video timeframe: {request.EndTime} - {request.EndTime}");
+
+                }
+
+                string outputAudio = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid}.wav";
+                string outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid}.gif";
 
                 var processVideoResponse = await ProcessVideoFile(
                                                     inputVideo,

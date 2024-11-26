@@ -52,6 +52,19 @@ namespace SocialButterflAi.Api.Controllers
                 }
 
                 var uploadResponse = await AnalysisService.UploadAsync(request);
+
+                if (uploadResponse == null
+                    || !uploadResponse.Success
+                    || string.IsNullOrWhiteSpace(uploadResponse.VideoPath)
+                )
+                {
+                    Logger.LogError("Upload was not successful");
+                    return BadRequest("Upload was not successful");
+                }
+
+                Logger.LogInformation("Upload completed");
+
+                return Ok(uploadResponse);
             }
             catch (Exception ex)
             {
@@ -67,27 +80,21 @@ namespace SocialButterflAi.Api.Controllers
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         [HttpPost]
+        [Route("Analyze")]
         public async Task<IActionResult> Analyze(
             AnalysisDtoRequest request
         )
         {
             try
             {
-                var extension = Path.GetExtension(request.AudioFile.FileName).ToLowerInvariant().TrimStart('.');
-
-                var matchingExtension = Enum.TryParse<AudioFormat>(extension out var audioFormat) ?? AudioFormat.unknown;
-
-                if (matchingExtension == AudioFormat.unknown)
+                if (string.IsNullOrWhiteSpace(request.VideoPath))
                 {
-                    Logger.LogError("Invalid audio format");
-                    return BadRequest("Invalid audio format");
+                    Logger.LogError("No video path provided");
+                    return BadRequest("No video path provided");
                 }
-
-                var base64Audio = Convert.ToBase64String(request.AudioFile.OpenReadStream().ReadAllBytes());
 
                 var serviceRequest = new AnalysisRequest
                 {
-                    Base64Audio = base64Audio,
                     Language = request.Language
                 };
 
