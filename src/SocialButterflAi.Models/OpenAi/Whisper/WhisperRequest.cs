@@ -1,7 +1,11 @@
+using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
 
-namespace ButterflAi.Models.OpenAi.Whisper
+
+namespace SocialButterflAi.Models.OpenAi.Whisper
 {
     public class WhisperRequest
     {

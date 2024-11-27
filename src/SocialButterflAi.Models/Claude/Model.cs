@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Text.Json;
 
-namespace ButterflAi.Models.Claude
+namespace SocialButterflAi.Models.Claude
 {
     public enum Model
     {

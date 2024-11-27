@@ -1,7 +1,9 @@
+using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace ButterflAi.Models.Claude
+namespace SocialButterflAi.Models.Claude
 {
     public enum ResponseType
     {
@@ -28,7 +30,7 @@ namespace ButterflAi.Models.Claude
 
         [JsonProperty("model")]
         [JsonPropertyName("model")]
-        public Model Model { get; set; } = Model.Claude3mv5Sonnet20241020;
+        public Model Model { get; set; } = Model.Claude3mv5Sonnet20241022;
 
         [JsonProperty("stop_reason")]
         [JsonPropertyName("stop_reason")]
@@ -42,7 +44,8 @@ namespace ButterflAi.Models.Claude
         [JsonPropertyName("usage")]
         public Usage Usage { get; set; }
 
-        [JsonIgnore]
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }

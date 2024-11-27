@@ -1,20 +1,23 @@
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Net.Http.Headers;
 using System.Text;
-using Newtonsoft.Json;
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
-
+using Newtonsoft.Json;
 using SocialButterflAi.Models.Claude;
+using SocialButterflAi.Models.Integration;
 
 namespace SocialButterflAi.Services.Claude
 {
     public class ClaudeClient
     {
         private HttpClient _httpClient;
-        public ILogger<ClaudeClient> Logger;
+        private ILogger<ClaudeClient> Logger;
         private ClaudeSettings _settings;
 
-        private readonly const string _authHeaderApiKeyPrefix = "x-api-key";
-        private readonly const string _contentType = "application/json";
+        private const string _authHeaderApiKeyPrefix = "x-api-key";
+        private const string _contentType = "application/json";
 
         public ClaudeClient(
             ClaudeSettings settings,
@@ -42,7 +45,8 @@ namespace SocialButterflAi.Services.Claude
             var response = new ClaudeResponse();
             try
             {
-                var claudeResponse = await _httpClient.PostAsync();
+                var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _contentType);
+                var claudeResponse = await _httpClient.PostAsync(_settings.Url, content);
 
                 throw new NotImplementedException();
             }

@@ -1,5 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.Extensions.Logging;
+using SocialButterflAi.Services.Analysis;
 using SocialButterflAi.Models.Analysis;
 
 namespace SocialButterflAi.Api.Controllers
@@ -29,29 +35,35 @@ namespace SocialButterflAi.Api.Controllers
         [HttpPost]
         [Route("Upload")]
         public async Task<IActionResult> UploadVideo(
+            IFormFile file,
             UploadDtoRequest request
         )
         {
             try
             {
-                if (request.File == null
-                    || request.File.Length == 0
+                if (file == null
+                    || file.Length == 0
                 )
                 {
                     Logger.LogError("No file uploaded");
                     return BadRequest("No file uploaded");
                 }
 
-                var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant().TrimStart('.');
-                var matchingExtension = Enum.TryParse<VideoFormat>(extension, out var format) ?? VideoFormat.unknown;
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant().TrimStart('.');
+                var matchingExtension = Enum.TryParse<VideoFormat>(extension, true, out var videoFormat);
+                if (!matchingExtension)
+                    videoFormat = VideoFormat.unknown;
 
-                if (matchingExtension == VideoFormat.unknown)
+                if (videoFormat == VideoFormat.unknown)
                 {
                     Logger.LogError("Invalid video format");
                     return BadRequest("Invalid video format");
                 }
 
-                var uploadResponse = await AnalysisService.UploadAsync(request);
+                var uploadResponse = await AnalysisService.UploadAsync(
+                                                            // file,
+                                                            videoFormat
+                                                        );
 
                 if (uploadResponse == null
                     || !uploadResponse.Success

@@ -1,16 +1,12 @@
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace ButterflAi.Models.Analysis
+namespace SocialButterflAi.Models.Analysis
 {
     public class UploadDtoRequest
     {
         [JsonProperty("TransactionId")]
         [JsonPropertyName("TransactionId")]
         public string TransactionId { get; set; }
-
-        [JsonProperty("File")]
-        [JsonPropertyName("File")]
-        public IFormFile File { get; set; }
     }
 }

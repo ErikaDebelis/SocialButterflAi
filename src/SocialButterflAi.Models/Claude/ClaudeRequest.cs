@@ -1,7 +1,8 @@
+using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace ButterflAi.Models.Claude
+namespace SocialButterflAi.Models.Claude
 {
     public class ClaudeRequest
     {
@@ -22,12 +23,20 @@ namespace ButterflAi.Models.Claude
         [JsonPropertyName("max_tokens")]
         public int MaxTokens => 1000;
 
+        private Message UserPrimer = new UserAnalysisPrimer().Message;
+        private Message SystemPrimer = new AssistantAnalysisPrimer().Message;
+
         [JsonProperty("messages")]
         [JsonPropertyName("messages")]
-        public IEnumerable<Message> Messages => new List<Message>()
+        public IEnumerable<Message> Messages
         {
-            UserAnalysisPrimer.Message,
-            AssistantAnalysisPrimer.Message
+            get =>
+                new List<Message>()
+                {
+                    UserPrimer,
+                    SystemPrimer
+                };
+            set { }
         }
     }
 }

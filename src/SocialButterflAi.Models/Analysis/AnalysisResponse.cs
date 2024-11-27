@@ -1,18 +1,22 @@
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-using ButterflAi.Models.Claude;
+using SocialButterflAi.Models.Claude;
 
-namespace ButterflAi.Models.Analysis
+namespace SocialButterflAi.Models.Analysis
 {
     public class AnalysisResponse : BaseResponse
     {
         [JsonProperty("Transcript")]
         [JsonPropertyName("Transcript")]
         public string? Transcript { get; set; }
-
+        //
+        // [JsonProperty("Conclusion")]
+        // [JsonPropertyName("Conclusion")]
+        // public Conclusion? Conclusion { get; set; }
+        
         [JsonProperty("Conclusion")]
         [JsonPropertyName("Conclusion")]
-        public Conclusion? Conclusion { get; set; }
+        public string? Conclusion { get; set; }
     }
 }

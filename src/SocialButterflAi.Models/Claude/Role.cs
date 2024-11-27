@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace ButterflAi.Models.Claude
+namespace SocialButterflAi.Models.Claude
 {
     public enum Role
     {
@@ -9,3 +9,4 @@ namespace ButterflAi.Models.Claude
         User,
         Assistant
     }
+}

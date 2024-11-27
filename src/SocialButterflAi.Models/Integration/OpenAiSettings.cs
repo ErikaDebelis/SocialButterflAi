@@ -1,9 +1,9 @@
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-using ButterflAi.Models.OpenAi.Whisper;
+using SocialButterflAi.Models.OpenAi.Whisper;
 
-namespace ButterflAi.Models.Integration
+namespace SocialButterflAi.Models.Integration
 {
     public class OpenAiSettings
     {

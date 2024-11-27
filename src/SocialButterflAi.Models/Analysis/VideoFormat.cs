@@ -1,12 +1,13 @@
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace ButterflAi.Models.Analysis
+
+namespace SocialButterflAi.Models.Analysis
 {
     public enum VideoFormat
     {
         unknown,
-        .avi
+        avi,
         mp4,
         mov,
     }

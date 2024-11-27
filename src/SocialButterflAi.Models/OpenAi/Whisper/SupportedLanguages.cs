@@ -1,7 +1,8 @@
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace ButterflAi.Models.OpenAi.Whisper
+
+namespace SocialButterflAi.Models.OpenAi.Whisper
 {
     public enum SupportedLanguages
     {

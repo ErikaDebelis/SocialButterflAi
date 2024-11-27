@@ -1,6 +1,8 @@
+using System;
 using System.Text;
 using Newtonsoft.Json;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 using SocialButterflAi.Models.Claude;
@@ -19,7 +21,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public Task<UploadResponse> UploadAsync(
-            IFormFile file,
+            // IFormFile file,
             VideoFormat format
         );
 

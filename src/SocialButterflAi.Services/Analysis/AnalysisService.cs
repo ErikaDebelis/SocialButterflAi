@@ -1,43 +1,53 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+
+using SocialButterflAi.Services.OpenAi;
+using SocialButterflAi.Services.Claude;
 
 using SocialButterflAi.Models.Claude;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.OpenAi.Whisper;
+using Model = SocialButterflAi.Models.OpenAi.Whisper.Model;
 
 namespace SocialButterflAi.Services.Analysis
 {
     public class AnalysisService : IAnalysisService
     {
-        public IOpenAiClient OpenAiClient;
-        public IClaudeClient ClaudeClient;
-        public ILogger<IAnalysisService> Logger;
+        private OpenAiClient OpenAiClient;
+        private ClaudeClient ClaudeClient;
+        private ILogger<IAnalysisService> Logger;
 
-        private readonly IWebHostEnvironment _webHostEnvironment;
-        private readonly MediaProcessor _mediaProcessor;
+        // private readonly IWebHostEnvironment _webHostEnvironment;
+        // private readonly MediaProcessor _mediaProcessor;
         private readonly string _uploadDirectory;
         private readonly string _processedDirectory;
 
         public AnalysisService(
-            IOpenAiClient openAiClient,
-            IClaudeClient claudeClient,
-            ILogger<IAnalysisService> logger,
+            OpenAiClient openAiClient,
+            ClaudeClient claudeClient,
+            ILogger<IAnalysisService> logger
 
-            IWebHostEnvironment webHostEnvironment
+            // IWebHostEnvironment webHostEnvironment
         )
         {
             OpenAiClient = openAiClient;
             ClaudeClient = claudeClient;
             Logger = logger;
 
-            _webHostEnvironment = webHostEnvironment;
-            _mediaProcessor = new MediaProcessor();
+            // _webHostEnvironment = webHostEnvironment;
+            // _mediaProcessor = new MediaProcessor();
 
             // Set up directories
-            _uploadDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Videos");
-            _processedDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Processed");
+            // _uploadDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Videos");
+            // _processedDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Processed");
 
             if (!Directory.Exists(_uploadDirectory))
             {
@@ -51,14 +61,15 @@ namespace SocialButterflAi.Services.Analysis
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="request"></param>
+        /// <param name="file"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public async Task<UploadResponse> UploadAsync(
-            IFormFile file,
+            // IFormFile file,
             VideoFormat format
         )
         {
@@ -70,7 +81,7 @@ namespace SocialButterflAi.Services.Analysis
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    await file.CopyToAsync(stream);
+                    // await file.CopyToAsync(stream);
                 }
 
                 response.Success = true;
@@ -105,12 +116,12 @@ namespace SocialButterflAi.Services.Analysis
                 //use ffmpeg to save gif from video with the same timestamp as the audio file
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
 
-                if (string.IsNullOrEmpty(endTime))
+                if (string.IsNullOrEmpty(request.EndTime))
                 {
                     var startInfo = new ProcessStartInfo
                     {
-                        FileName = _ffmpegPath,
-                        Arguments = $"-i \"{inputPath}\" 2>&1",
+                        FileName = request.VideoPath,
+                        Arguments = $"-i \"{request.VideoPath}\" 2>&1",
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         UseShellExecute = false,
@@ -138,11 +149,11 @@ namespace SocialButterflAi.Services.Analysis
 
                 }
 
-                string outputAudio = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid}.wav";
-                string outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid}.gif";
+                string outputAudio = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.wav";
+                string outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.gif";
 
                 var processVideoResponse = await ProcessVideoFile(
-                                                    inputVideo,
+                                                    request.VideoPath,
                                                     outputAudio,
                                                     outputGif
                                                 );
@@ -162,7 +173,7 @@ namespace SocialButterflAi.Services.Analysis
                 {
                     AudioFormat = AudioFormat.wav,
                     Model = Model.Whisper_1,
-                    WavUrl = $"data:audio/wav;base64,{request.Base64Audio}"
+                    // WavUrl = $"data:audio/wav;base64,{request.Base64Audio}"
                 };
 
                 var whisperResponse = await OpenAiClient.ExecuteWhisperAsync(whisperRequest);
@@ -191,7 +202,7 @@ namespace SocialButterflAi.Services.Analysis
                 var message = new Message
                 {
                     Content = whisperResponse.Text,
-                    User = Role.User
+                    Role = Role.User
                 };
 
                 //now that we have the audio text, we can send it to Claude for analysis
@@ -201,9 +212,7 @@ namespace SocialButterflAi.Services.Analysis
 
                 var claudeResponse = await ClaudeClient.AiExecutionAsync(claudeRequest);
 
-                if(claudeResponse == null
-                    || !claudeResponse.Success
-                )
+                if(claudeResponse == null)
                 {
                     Logger.LogError("Claude failed");
 
@@ -216,10 +225,10 @@ namespace SocialButterflAi.Services.Analysis
 
                 Logger.LogInformation("Analysis completed");
 
-                response.Success = whisperRequest.Success && claudeRequest.Success;
-                response.Message = whisperRequest.Message + claudeRequest.Message;
+                response.Success = whisperResponse.Success;
+                response.Message = whisperResponse.Message;
                 response.Transcript = whisperResponse.Text;
-                response.Conclusion = claudeResponse.Conclusion;
+                response.Conclusion = claudeResponse.Content.FirstOrDefault().Text;
 
                 return response;
             }
@@ -263,9 +272,7 @@ namespace SocialButterflAi.Services.Analysis
                 // Create synchronized GIF
                 var gifResponse = await CreateSynchronizedGif(inputVideoPath, outputGifPath);
 
-                if(gifResponse == null
-                    || !gifResponse.Success
-                )
+                if(gifResponse == null)
                 {
                     Logger.LogError("Error extracting GIF");
                     response.Success = false;
@@ -282,7 +289,8 @@ namespace SocialButterflAi.Services.Analysis
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error processing media: {ex.Message}");
+                Logger.LogError(ex, "Error");
+                throw new Exception("Error", ex);
             }
         }
 
@@ -303,8 +311,8 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var startInfo = new ProcessStartInfo
                 {
-                    FileName = _ffmpegPath,
-                    Arguments = //$"-i \"{inputPath}\" -vn -acodec pcm_s16le -ar 44100 -ac 2 \"{outputPath}\"",
+                    FileName = "", //_ffmpegPath,
+                    Arguments = "" ,//$"-i \"{inputPath}\" -vn -acodec pcm_s16le -ar 44100 -ac 2 \"{outputPath}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -346,7 +354,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="outputPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task CreateSynchronizedGif(
+        private async Task<BaseResponse> CreateSynchronizedGif(
             string inputPath,
             string outputPath
         )
@@ -360,8 +368,8 @@ namespace SocialButterflAi.Services.Analysis
                 //scale=320:-1: Sets the width to 320 pixels and adjusts the height to maintain aspect ratio
                 var startInfo = new ProcessStartInfo
                 {
-                    FileName = _ffmpegPath,
-                    Arguments = //$"-i \"{inputPath}\" -vf \"fps=10,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" \"{outputPath}\"",
+                    FileName = "", //_ffmpegPath,
+                    Arguments = "" ,//$"-i \"{inputPath}\" -vf \"fps=10,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" \"{outputPath}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

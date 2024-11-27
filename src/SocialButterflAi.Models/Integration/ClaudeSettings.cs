@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace ButterflAi.Models.Integration
+namespace SocialButterflAi.Models.Integration
 {
     public class ClaudeSettings
     {

@@ -1,7 +1,8 @@
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Text.Json.Serialization;
+using SocialButterflAi.Models.OpenAi.Whisper;
 
-namespace ButterflAi.Models.Analysis
+namespace SocialButterflAi.Models.Analysis
 {
     public class AnalysisRequest
     {
