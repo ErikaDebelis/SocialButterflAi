@@ -27,15 +27,12 @@ namespace SocialButterflAi.Models.Analysis
         [JsonPropertyName("EndTime")]
         public string? EndTime { get; set; } = ""; // Empty means until the end
 
-        [JsonProperty("Language")]
-        [JsonPropertyName("Language")]
-        public SupportedLanguages Language { get; set; }
 
         /// <summary>
         /// 'i think they were being sarcastic'
         /// </summary>
-        [JsonProperty("Perception")]
-        [JsonPropertyName("Perception")]
-        public string Perception { get; set; }
+        [JsonProperty("InitialUserPerception")]
+        [JsonPropertyName("InitialUserPerception")]
+        public string InitialUserPerception { get; set; }
     }
 }

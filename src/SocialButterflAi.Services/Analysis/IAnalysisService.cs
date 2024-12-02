@@ -32,7 +32,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="request"></param>
         /// <returns></returns>
         public Task<AnalysisResponse> AnalyzeAsync(
-            AnalysisRequest request
+            AnalysisDtoRequest request
         );
     }
 }

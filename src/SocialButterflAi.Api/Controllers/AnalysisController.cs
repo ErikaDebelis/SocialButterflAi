@@ -105,12 +105,7 @@ namespace SocialButterflAi.Api.Controllers
                     return BadRequest("No video path provided");
                 }
 
-                var serviceRequest = new AnalysisRequest
-                {
-                    Language = request.Language
-                };
-
-                var analysis = await AnalysisService.AnalyzeAsync(serviceRequest);
+                var analysis = await AnalysisService.AnalyzeAsync(request);
 
                 if (analysis == null)
                 {

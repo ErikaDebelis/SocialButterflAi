@@ -18,11 +18,13 @@ using SocialButterflAi.Models.OpenAi.Whisper;
 using Model = SocialButterflAi.Models.OpenAi.Whisper.Model;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using SocialButterflAi.Models.Integration;
 
 namespace SocialButterflAi.Services.Analysis
 {
     public class AnalysisService : IAnalysisService
     {
+        #region Properties (public and private)
         private OpenAiClient OpenAiClient;
         private ClaudeClient ClaudeClient;
         private ILogger<IAnalysisService> Logger;
@@ -31,12 +33,19 @@ namespace SocialButterflAi.Services.Analysis
         // private readonly MediaProcessor _mediaProcessor;
         private readonly string _uploadDirectory;
         private readonly string _processedDirectory;
+        private readonly long _maxFileSize;
+        private readonly AnalysisSettings _configuration;
+        #endregion
 
+        #region Constructor
         public AnalysisService(
             OpenAiClient openAiClient,
             ClaudeClient claudeClient,
             ILogger<IAnalysisService> logger,
-            IWebHostEnvironment webHostEnvironment
+            IWebHostEnvironment webHostEnvironment,
+            AnalysisSettings configuration
+
+
         )
         {
             OpenAiClient = openAiClient;
@@ -46,10 +55,10 @@ namespace SocialButterflAi.Services.Analysis
             _webHostEnvironment = webHostEnvironment;
             //_mediaProcessor = new MediaProcessor();
 
+            _maxFileSize = long.Parse(configuration.VideoSettings.MaxFileSize);
             //Set up directories
-            _uploadDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Videos");
-            _processedDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Processed");
-
+            _uploadDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, configuration.VideoSettings.UploadPath, "Videos");
+            _processedDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, configuration.VideoSettings.ProcessedPath, "Processed");
             if (!Directory.Exists(_uploadDirectory))
             {
                 Directory.CreateDirectory(_uploadDirectory);
@@ -60,7 +69,11 @@ namespace SocialButterflAi.Services.Analysis
                 Directory.CreateDirectory(_processedDirectory);
             }
         }
+        #endregion
 
+        #region Public/Main Methods
+
+        #region Upload
         /// <summary>
         /// 
         /// </summary>
@@ -96,7 +109,9 @@ namespace SocialButterflAi.Services.Analysis
                 throw new Exception("Error", ex);
             }
         }
+        #endregion
 
+        #region Analyze/Process
         /// <summary>
         ///
         /// </summary>
@@ -105,7 +120,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public async Task<AnalysisResponse> AnalyzeAsync(
-            AnalysisRequest request
+            AnalysisDtoRequest request
         )
         {
             var response = new AnalysisResponse();
@@ -117,17 +132,16 @@ namespace SocialButterflAi.Services.Analysis
                 //use ffmpeg to save gif from video with the same timestamp as the audio file
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
 
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = request.VideoPath,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
                 if (string.IsNullOrEmpty(request.EndTime))
                 {
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = request.VideoPath,
-                        Arguments = $"-i \"{request.VideoPath}\" 2>&1",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
 
                     using (var process = new Process { StartInfo = startInfo })
                     {
@@ -136,28 +150,32 @@ namespace SocialButterflAi.Services.Analysis
                         await process.WaitForExitAsync();
 
                         // Extract duration from FFmpeg output using regex
-                        var durationMatch = Regex.Match(output, @"Duration: (\d{2}:\d{2}:\d{2})");
-
-                        if (!durationMatch.Success)
+                        if(string.IsNullOrWhiteSpace(request.EndTime))
                         {
-                            throw new Exception("Could not determine video duration");
+                            var durationMatch = Regex.Match(output, @"Duration: (\d{2}:\d{2}:\d{2})");
+
+                            if (!durationMatch.Success)
+                            {
+                                throw new Exception("Could not determine video duration");
+                            }
+                            request.EndTime = durationMatch.Groups[1].Value;
                         }
-
-                        request.EndTime = durationMatch.Groups[1].Value;
+                        Console.WriteLine($"Video timeframe: {request.StartTime} - {request.EndTime}");
+                        // add the start and end time to the ProcessStartInfo arguments to extract the audio from the video 
+                        startInfo.ArgumentList.Add($"-ss {request.StartTime}");
+                        startInfo.ArgumentList.Add($"-to {request.EndTime}");
+                        startInfo.ArgumentList.Add("-c copy"); // -c copy: copy codec
                     }
-
-                    Console.WriteLine($"Video timeframe: {request.EndTime} - {request.EndTime}");
-
                 }
 
                 string outputAudio = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.wav";
                 string outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.gif";
 
                 var processVideoResponse = await ProcessVideoFile(
-                                                    request.VideoPath,
-                                                    outputAudio,
-                                                    outputGif
-                                                );
+                                                startInfo,
+                                                outputAudio,
+                                                outputGif
+                                            );
 
                 if(processVideoResponse == null
                     || !processVideoResponse.Success
@@ -239,8 +257,13 @@ namespace SocialButterflAi.Services.Analysis
                 throw new Exception("Error", ex);
             }
         }
-        
+        #endregion
+
+        #endregion
+
         #region Private Methods
+
+        #region Process Video File
         /// <summary>
         /// 
         /// </summary>
@@ -249,7 +272,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="outputGifPath"></param>
         /// <returns></returns>
         private async Task<BaseResponse> ProcessVideoFile(
-            string inputVideoPath,
+            ProcessStartInfo startInfo,
             string outputAudioPath,
             string outputGifPath
         )
@@ -258,7 +281,10 @@ namespace SocialButterflAi.Services.Analysis
             try
             {
                 // Extract audio to WAV
-                var audioResponse = await ExtractAudioToWav(inputVideoPath, outputAudioPath);
+                var audioResponse = await ExtractAudioToWav(
+                    startInfo,
+                    outputAudioPath
+                );
 
                 if(audioResponse == null
                     || !audioResponse.Success
@@ -271,7 +297,10 @@ namespace SocialButterflAi.Services.Analysis
                     return response;
                 }
                 // Create synchronized GIF
-                var gifResponse = await CreateSynchronizedGif(inputVideoPath, outputGifPath);
+                var gifResponse = await CreateSynchronizedGif(
+                    startInfo,
+                    outputGifPath
+                );
 
                 if(gifResponse == null)
                 {
@@ -294,7 +323,9 @@ namespace SocialButterflAi.Services.Analysis
                 throw new Exception("Error", ex);
             }
         }
+        #endregion
 
+        #region Extract Audio To WAV
         /// <summary>
         /// 
         /// </summary>
@@ -303,22 +334,14 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         private async Task<BaseResponse> ExtractAudioToWav(
-            string inputPath,
+            ProcessStartInfo startInfo,
             string outputPath
         )
         {
             var response = new BaseResponse();
             try
             {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "", //_ffmpegPath,
-                    Arguments = "" ,//$"-i \"{inputPath}\" -vn -acodec pcm_s16le -ar 44100 -ac 2 \"{outputPath}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+                startInfo.ArgumentList.Add("-vn"); //-vn: no video
 
                 using (var process = new Process { StartInfo = startInfo })
                 {
@@ -347,7 +370,9 @@ namespace SocialButterflAi.Services.Analysis
                 throw new Exception("Error", ex);
             }
         }
+        #endregion
 
+        #region Create Synchronized GIF
         /// <summary>
         /// 
         /// </summary>
@@ -356,7 +381,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         private async Task<BaseResponse> CreateSynchronizedGif(
-            string inputPath,
+            ProcessStartInfo startInfo,
             string outputPath
         )
         {
@@ -367,15 +392,8 @@ namespace SocialButterflAi.Services.Analysis
                 // Adjust -r (framerate) and -s (size) parameters as needed
                 //fps=10: Controls frame rate (adjust for smoothness vs file size)
                 //scale=320:-1: Sets the width to 320 pixels and adjusts the height to maintain aspect ratio
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "", //_ffmpegPath,
-                    Arguments = "" ,//$"-i \"{inputPath}\" -vf \"fps=10,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" \"{outputPath}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+                //no audio - an: -an: no audio
+                startInfo.ArgumentList.Add("-vf fps=10, scale=320:-1, -an");
 
                 using (var process = new Process { StartInfo = startInfo })
                 {
@@ -404,6 +422,8 @@ namespace SocialButterflAi.Services.Analysis
                 throw new Exception("Error", ex);
             }
         }
+        #endregion
+
         #endregion
     }
 }
