@@ -16,6 +16,8 @@ using SocialButterflAi.Models.Claude;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.OpenAi.Whisper;
 using Model = SocialButterflAi.Models.OpenAi.Whisper.Model;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -25,7 +27,7 @@ namespace SocialButterflAi.Services.Analysis
         private ClaudeClient ClaudeClient;
         private ILogger<IAnalysisService> Logger;
 
-        // private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IWebHostEnvironment _webHostEnvironment;
         // private readonly MediaProcessor _mediaProcessor;
         private readonly string _uploadDirectory;
         private readonly string _processedDirectory;
@@ -33,21 +35,20 @@ namespace SocialButterflAi.Services.Analysis
         public AnalysisService(
             OpenAiClient openAiClient,
             ClaudeClient claudeClient,
-            ILogger<IAnalysisService> logger
-
-            // IWebHostEnvironment webHostEnvironment
+            ILogger<IAnalysisService> logger,
+            IWebHostEnvironment webHostEnvironment
         )
         {
             OpenAiClient = openAiClient;
             ClaudeClient = claudeClient;
             Logger = logger;
 
-            // _webHostEnvironment = webHostEnvironment;
-            // _mediaProcessor = new MediaProcessor();
+            _webHostEnvironment = webHostEnvironment;
+            //_mediaProcessor = new MediaProcessor();
 
-            // Set up directories
-            // _uploadDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Videos");
-            // _processedDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Processed");
+            //Set up directories
+            _uploadDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Videos");
+            _processedDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads", "Processed");
 
             if (!Directory.Exists(_uploadDirectory))
             {
@@ -69,7 +70,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public async Task<UploadResponse> UploadAsync(
-            // IFormFile file,
+            IFormFile file,
             VideoFormat format
         )
         {
@@ -81,7 +82,7 @@ namespace SocialButterflAi.Services.Analysis
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    // await file.CopyToAsync(stream);
+                    await file.CopyToAsync(stream);
                 }
 
                 response.Success = true;

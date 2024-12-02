@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <LangVersion>9.0</LangVersion>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <Target Name="AfterPublish">
@@ -10,8 +10,10 @@
     </Target>
     
     <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="7.1.0" />
         <PackageReference Include="System.Text.Json" Version="9.0.0" />
     </ItemGroup>
         

@@ -61,7 +61,7 @@ namespace SocialButterflAi.Api.Controllers
                 }
 
                 var uploadResponse = await AnalysisService.UploadAsync(
-                                                            // file,
+                                                            file,
                                                             videoFormat
                                                         );
 

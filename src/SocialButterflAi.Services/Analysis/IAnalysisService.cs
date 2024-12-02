@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using SocialButterflAi.Models.Claude;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.OpenAi.Whisper;
+using Microsoft.AspNetCore.Http;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -21,7 +22,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public Task<UploadResponse> UploadAsync(
-            // IFormFile file,
+            IFormFile file,
             VideoFormat format
         );
 
