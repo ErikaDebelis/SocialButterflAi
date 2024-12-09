@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -19,6 +20,7 @@ using Model = SocialButterflAi.Models.OpenAi.Whisper.Model;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using SocialButterflAi.Models.Integration;
+using ILogger = Serilog.ILogger;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -28,6 +30,7 @@ namespace SocialButterflAi.Services.Analysis
         private OpenAiClient OpenAiClient;
         private ClaudeClient ClaudeClient;
         private ILogger<IAnalysisService> Logger;
+        readonly Serilog.ILogger SeriLogger;
 
         private readonly IWebHostEnvironment _webHostEnvironment;
         // private readonly MediaProcessor _mediaProcessor;
@@ -51,6 +54,7 @@ namespace SocialButterflAi.Services.Analysis
             OpenAiClient = openAiClient;
             ClaudeClient = claudeClient;
             Logger = logger;
+            SeriLogger = Serilog.Log.Logger;
 
             _webHostEnvironment = webHostEnvironment;
             //_mediaProcessor = new MediaProcessor();

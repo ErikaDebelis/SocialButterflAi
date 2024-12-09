@@ -16,6 +16,8 @@ namespace SocialButterflAi.Services.OpenAi
         private ILogger<OpenAiClient> Logger;
         private OpenAiSettings _settings;
 
+        readonly Serilog.ILogger SeriLogger;
+
         private const string _authHeaderKey = "Authorization";
         private const string _authHeaderValuePrefix = "Bearer";
         private const string _contentType = "application/json";
@@ -32,7 +34,8 @@ namespace SocialButterflAi.Services.OpenAi
             _httpClient.DefaultRequestHeaders.Add(_authHeaderKey, $"{_authHeaderValuePrefix} {_settings.ApiKey}");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_contentType));
             _httpClient.BaseAddress = new Uri(_settings.Url);
-
+            
+            SeriLogger = Serilog.Log.Logger;
             Logger = logger;
         }
 

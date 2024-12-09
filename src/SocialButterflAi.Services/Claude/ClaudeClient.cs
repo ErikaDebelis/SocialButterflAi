@@ -15,6 +15,7 @@ namespace SocialButterflAi.Services.Claude
         private HttpClient _httpClient;
         private ILogger<ClaudeClient> Logger;
         private ClaudeSettings _settings;
+        readonly Serilog.ILogger SeriLogger;
 
         private const string _authHeaderApiKeyPrefix = "x-api-key";
         private const string _contentType = "application/json";
@@ -25,12 +26,12 @@ namespace SocialButterflAi.Services.Claude
         )
         {
             _httpClient = new HttpClient();
-
             _httpClient.DefaultRequestHeaders.Add(_authHeaderApiKeyPrefix, _settings.ApiKey);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_contentType));
             _httpClient.BaseAddress = new Uri(_settings.Url);
 
             Logger = logger;
+            SeriLogger = Serilog.Log.Logger;
         }
 
         /// <summary>

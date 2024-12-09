@@ -14,7 +14,7 @@ namespace SocialButterflAi.Models.Analysis
         // [JsonProperty("Conclusion")]
         // [JsonPropertyName("Conclusion")]
         // public Conclusion? Conclusion { get; set; }
-        
+
         [JsonProperty("Conclusion")]
         [JsonPropertyName("Conclusion")]
         public string? Conclusion { get; set; }
