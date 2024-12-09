@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 
 
-namespace SocialButterflAi.Models.OpenAi.Whisper
+namespace SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper
 {
     public class WhisperRequest
     {

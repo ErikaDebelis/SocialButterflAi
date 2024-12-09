@@ -5,12 +5,13 @@ using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SocialButterflAi.Models.Claude;
+using SocialButterflAi.Models.LLMIntegration.Claude;
 using SocialButterflAi.Models.Integration;
+using SocialButterflAi.Models.LLMIntegration;
 
-namespace SocialButterflAi.Services.Claude
+namespace SocialButterflAi.Services.LLMIntegration.Claude
 {
-    public class ClaudeClient
+    public class ClaudeClient: IAiClient
     {
         private HttpClient _httpClient;
         private ILogger<ClaudeClient> Logger;
@@ -39,9 +40,9 @@ namespace SocialButterflAi.Services.Claude
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<ClaudeResponse> AiExecutionAsync(
-            ClaudeRequest request
-        )
+        public async Task<BaseAiResponse<object>> AiExecutionAsync<ClaudeRequest>(
+            AiRequest<ClaudeRequest> request
+        ) where ClaudeRequest : BaseAiRequestRequirements
         {
             var response = new ClaudeResponse();
             try

@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.OpenAi.Whisper
+namespace SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper
 {
     public class WhisperResponse
     {

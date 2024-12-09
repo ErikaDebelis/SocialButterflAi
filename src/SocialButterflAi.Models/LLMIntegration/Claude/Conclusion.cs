@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.Claude
+namespace SocialButterflAi.Models.LLMIntegration.Claude
 {
     public class Conclusion
     {

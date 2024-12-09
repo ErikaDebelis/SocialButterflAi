@@ -1,4 +1,4 @@
-namespace SocialButterflAi.Models.Claude
+namespace SocialButterflAi.Models.LLMIntegration.Claude
 {
     public class UserAnalysisPrimer
     {

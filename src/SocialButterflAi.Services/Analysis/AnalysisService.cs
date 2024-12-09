@@ -1,26 +1,28 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using System.Text.Json;
-using System.Text.RegularExpressions;
+using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 
-using SocialButterflAi.Services.OpenAi;
-using SocialButterflAi.Services.Claude;
-
-using SocialButterflAi.Models.Claude;
+// using CC.Data.Analysis;
 using SocialButterflAi.Models.Analysis;
-using SocialButterflAi.Models.OpenAi.Whisper;
-using Model = SocialButterflAi.Models.OpenAi.Whisper.Model;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using SocialButterflAi.Models.Integration;
-using ILogger = Serilog.ILogger;
+using SocialButterflAi.Services.LLMIntegration;
+using SocialButterflAi.Models.LLMIntegration.Claude;
+using SocialButterflAi.Models.LLMIntegration.OpenAi;
+using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
+using Model = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
+using SocialButterflAi.Services.LLMIntegration.OpenAi;
+using SocialButterflAi.Models.LLMIntegration;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -28,7 +30,9 @@ namespace SocialButterflAi.Services.Analysis
     {
         #region Properties (public and private)
         private OpenAiClient OpenAiClient;
-        private ClaudeClient ClaudeClient;
+        private IAiClient ClaudeClient;
+        // private AnalysisDbContext AnalysisDbContext;
+
         private ILogger<IAnalysisService> Logger;
         readonly Serilog.ILogger SeriLogger;
 
@@ -43,16 +47,18 @@ namespace SocialButterflAi.Services.Analysis
         #region Constructor
         public AnalysisService(
             OpenAiClient openAiClient,
-            ClaudeClient claudeClient,
+            IAiClient claudeClient,
+            // AnalysisDbContext analysisDbContext,
             ILogger<IAnalysisService> logger,
             IWebHostEnvironment webHostEnvironment,
             AnalysisSettings configuration
-
-
         )
         {
             OpenAiClient = openAiClient;
             ClaudeClient = claudeClient;
+
+            // AnalysisDbContext = analysisDbContext;
+
             Logger = logger;
             SeriLogger = Serilog.Log.Logger;
 
@@ -229,21 +235,15 @@ namespace SocialButterflAi.Services.Analysis
                 };
 
                 //now that we have the audio text, we can send it to Claude for analysis
-                var claudeRequest = new ClaudeRequest();
+                var claudeRequest = new AiRequest<ClaudeRequest>{ };
+                // claudeRequest.Messages = claudeRequest.Messages.Append(message);
 
-                claudeRequest.Messages = claudeRequest.Messages.Append(message);
-
-                var claudeResponse = await ClaudeClient.AiExecutionAsync(claudeRequest);
-
-                if(claudeResponse == null)
+                var aiResponse = await ClaudeClient.AiExecutionAsync<ClaudeRequest>(claudeRequest);
+                if (aiResponse == null)
                 {
-                    Logger.LogError("Claude failed");
+                    var openAiRequest = new AiRequest<OpenAiRequest>{ };
 
-                    response.Success = false;
-                    response.Message = "Claude failed";
-                    response.Transcript = whisperResponse.Text;
-
-                    return response;
+                    aiResponse = await OpenAiClient.AiExecutionAsync<OpenAiRequest>(openAiRequest);
                 }
 
                 Logger.LogInformation("Analysis completed");
@@ -251,7 +251,7 @@ namespace SocialButterflAi.Services.Analysis
                 response.Success = whisperResponse.Success;
                 response.Message = whisperResponse.Message;
                 response.Transcript = whisperResponse.Text;
-                response.Conclusion = claudeResponse.Content.FirstOrDefault().Text;
+                // response.Conclusion = aiResponse.Content.FirstOrDefault().Text;
 
                 return response;
             }

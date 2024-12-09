@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-using SocialButterflAi.Models.Claude;
+using SocialButterflAi.Models.LLMIntegration.Claude;
 
 namespace SocialButterflAi.Models.Analysis
 {

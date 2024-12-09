@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.Claude
+namespace SocialButterflAi.Models.LLMIntegration.Claude
 {
     public enum ResponseType
     {
         Message
     }
 
-    public class ClaudeResponse
+    public class ClaudeResponse : BaseAiResponse<object>
     {
         [JsonProperty("id")]
         [JsonPropertyName("id")]

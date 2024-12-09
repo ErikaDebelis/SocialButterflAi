@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.Claude
+namespace SocialButterflAi.Models.LLMIntegration.Claude
 {
-    public class ClaudeRequest
+    public class ClaudeRequest : BaseAiRequestRequirements
     {
         [JsonProperty("model")]
         [JsonPropertyName("model")]
@@ -13,15 +13,14 @@ namespace SocialButterflAi.Models.Claude
         [JsonProperty("system")]
         [JsonPropertyName("system")]
         public string SystemPrompt => "System"; //todo: make this meaningful
-
-
+        
         [JsonProperty("temperature")]
         [JsonPropertyName("temperature")]
-        public float Temperature => 0.5f;
+        public override float Temperature => 0.5f;
 
         [JsonProperty("max_tokens")]
         [JsonPropertyName("max_tokens")]
-        public int MaxTokens => 1000;
+        public override int MaxTokens => 1000;
 
         private Message UserPrimer = new UserAnalysisPrimer().Message;
         private Message SystemPrimer = new AssistantAnalysisPrimer().Message;

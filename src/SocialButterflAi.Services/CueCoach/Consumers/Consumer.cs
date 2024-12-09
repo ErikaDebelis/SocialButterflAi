@@ -1,48 +1,47 @@
 using System;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 using MassTransit;
-// using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Distributed;
 
 using Serilog;
 using Serilog.Core;
 using SocialButterflAi.Models.CueCoach.Contracts;
-
+using SocialButterflAi.Services.CueCoach;
 namespace CueCoach.Consumers
 {
     /// <summary>
-    /// The consumer 
+    /// The consumer
     /// </summary>
     public class Consumer : IConsumer<MessageContract>
     {
 
     #region Private Variables
-
+        public ICueCoachService CueCoachService;
         private readonly IBus Bus;
-        // private readonly IDistributedCache DistributedCache;
-        readonly Serilog.ILogger Logger;
+        private readonly IDistributedCache DistributedCache;
+        private readonly Serilog.ILogger SeriLogger;
 
     #endregion
 
     #region Constructors
 
         public Consumer(
+            ICueCoachService cueCoachService,
             IBus bus,
-            // IDistributedCache distributedCache,
-            Serilog.ILogger logger
+            IDistributedCache distributedCache
         )
         {
+            CueCoachService = cueCoachService;
             Bus = bus;
-            // DistributedCache = distributedCache;
-            Logger = logger;
+            DistributedCache = distributedCache;
+            SeriLogger = Serilog.Log.Logger;
         }
 
     #endregion
 
-    #region  Methods 
+    #region Methods
 
         /// <summary>
         /// This consumer will take the message and send it to the appropriate channel.
@@ -54,38 +53,38 @@ namespace CueCoach.Consumers
             ConsumeContext<MessageContract> messageContractContext
         )
         {
-	        // Only one consumption of this type allowed for the CommunicationsApi (Regardless of node). Pick a wait interval and check to see if a friend got to this first...
+	        // Only one consumption of this type allowed (Regardless of node). Pick a wait interval...
             // todo: there probably is a way to do this cleaner...
             var randomTo1k = new Random().Next(1000, 3000);
             Thread.Sleep(randomTo1k);
 
             var lockKey = $"MessageContract:{messageContractContext.MessageId}:Lock";
-            // var lockValue = await DistributedCache.GetStringAsync(lockKey) ?? string.Empty;
-            // if (lockValue == "Locked")
-            // {
-            //     Logger
-            //         .Information($"Another server is taking care of this contract. All done.");
-            //     return;
-            // }
-
-            // await DistributedCache.SetStringAsync(lockKey, "Locked");
-
-            if (string.IsNullOrWhiteSpace($"{messageContractContext.TransactionId}"))
+            var lockValue = await DistributedCache.GetStringAsync(lockKey) ?? string.Empty;
+            if (lockValue == "Locked")
             {
-                messageContractContext.TransactionId = Guid.NewGuid();
+                SeriLogger.Information($"Another server is taking care of this contract. All done.");
+                return;
             }
 
-            var transactionId = messageContractContext.TransactionId;
+            await DistributedCache.SetStringAsync(lockKey, "Locked");
+
+            if (string.IsNullOrWhiteSpace($"{messageContractContext.Message.TransactionId}"))
+            {
+                messageContractContext.Message.TransactionId = Guid.NewGuid();
+            }
+
+            var transactionId = messageContractContext.Message.TransactionId;
             try
             {
                 //continue here
+                // var response = await CueCoachService.ProcessMessageAsync();
             }
             catch (Exception ex)
             {
-                Logger.Fatal($" failed to process Contract message in Consumer. {ex.Message}");
+                SeriLogger.Fatal($" failed to process Contract message in Consumer. {ex.Message}");
             }
 
-            // await DistributedCache.RemoveAsync(lockKey);
+            await DistributedCache.RemoveAsync(lockKey);
         }
 
     #endregion
