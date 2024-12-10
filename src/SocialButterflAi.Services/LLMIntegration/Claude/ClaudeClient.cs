@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using SocialButterflAi.Models.LLMIntegration.Claude;
 using SocialButterflAi.Models.Integration;
 using SocialButterflAi.Models.LLMIntegration;
+using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 
 namespace SocialButterflAi.Services.LLMIntegration.Claude
 {

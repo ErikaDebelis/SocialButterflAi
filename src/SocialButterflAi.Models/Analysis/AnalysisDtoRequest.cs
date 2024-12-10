@@ -8,6 +8,10 @@ namespace SocialButterflAi.Models.Analysis
     public class AnalysisDtoRequest
     {
 
+        [JsonProperty("ModelProvider")]
+        [JsonPropertyName("ModelProvider")]
+        public string ModelProvider { get; set; }
+
         [JsonProperty("TransactionId")]
         [JsonPropertyName("TransactionId")]
         public string TransactionId { get; set; }

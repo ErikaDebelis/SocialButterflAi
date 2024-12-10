@@ -23,6 +23,7 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using Model = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 using SocialButterflAi.Services.LLMIntegration.OpenAi;
 using SocialButterflAi.Models.LLMIntegration;
+using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 
 namespace SocialButterflAi.Services.Analysis

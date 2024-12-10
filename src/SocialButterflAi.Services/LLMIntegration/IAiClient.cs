@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using SocialButterflAi.Models.LLMIntegration;
+using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 
 namespace SocialButterflAi.Services.LLMIntegration
 {

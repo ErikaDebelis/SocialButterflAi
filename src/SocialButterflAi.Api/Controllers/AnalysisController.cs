@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SocialButterflAi.Services.Analysis;
 using SocialButterflAi.Models.Analysis;
+using SocialButterflAi.Models.LLMIntegration;
 
 namespace SocialButterflAi.Api.Controllers
 {
@@ -105,7 +106,9 @@ namespace SocialButterflAi.Api.Controllers
                     return BadRequest("No video path provided");
                 }
 
-                var analysis = await AnalysisService.AnalyzeAsync(request);
+                var modelProvider = Enum.Parse<ModelProvider>(request.ModelProvider);
+                
+                var analysis = await AnalysisService.AnalyzeAsync(request, modelProvider);
 
                 if (analysis == null)
                 {
