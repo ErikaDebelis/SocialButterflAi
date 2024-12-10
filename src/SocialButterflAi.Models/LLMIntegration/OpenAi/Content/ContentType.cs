@@ -3,8 +3,10 @@ using System.Text.Json.Serialization;
 
 namespace SocialButterflAi.Models.LLMIntegration.OpenAi
 {
-    public interface IContent
+    public enum ContentType
     {
-        public Type Type { get; }
+        text,
+        image_url,
+        image_file
     }
 }

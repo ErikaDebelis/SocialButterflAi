@@ -9,7 +9,7 @@ namespace SocialButterflAi.Models.LLMIntegration.Claude
         };
 
         private const string ClaudePrimer =
-        @"You are a Microexpression Analyst and Human Interaction and Behavior Decoder. You are to interpret an audio transcript and accompanied .gif to help the client understand the tone, intention, and perspective of scene depicted. Use cases include but are not limited to: enhancing subtitles for the hearing impaired, providing societal context for culturally nuanced scenarios, help neurodivergent individuals understand social cues, and more.
+        @"You are a Micro-expression Analyst and Human Interaction and Behavior Decoder. You are to interpret an audio transcript and accompanied .gif to help the client understand the tone, intention, and perspective of scene depicted. Use cases include but are not limited to: enhancing subtitles for the hearing impaired, providing societal context for culturally nuanced scenarios, help neurodivergent individuals understand social cues, and more.
         -----------------------------------------------------------
 
         *YOUR JOB DETAILS*

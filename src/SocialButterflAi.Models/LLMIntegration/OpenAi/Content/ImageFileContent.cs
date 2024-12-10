@@ -7,7 +7,7 @@ namespace SocialButterflAi.Models.LLMIntegration.OpenAi
     {
         [JsonProperty("type")]
         [JsonPropertyName("type")]
-        public Type Type => Type.image_file;
+        public ContentType Type => ContentType.image_file;
 
         [JsonProperty("image_file")]
         [JsonPropertyName("image_file")]

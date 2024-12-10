@@ -13,7 +13,7 @@ namespace SocialButterflAi.Models.LLMIntegration.Claude
         [JsonProperty("system")]
         [JsonPropertyName("system")]
         public string SystemPrompt => "System"; //todo: make this meaningful
-        
+
         [JsonProperty("temperature")]
         [JsonPropertyName("temperature")]
         public override float Temperature => 0.5f;

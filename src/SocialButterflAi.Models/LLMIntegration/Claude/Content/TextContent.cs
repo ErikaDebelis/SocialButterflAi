@@ -1,16 +1,16 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.LLMIntegration.OpenAi
+namespace SocialButterflAi.Models.LLMIntegration.Claude.Content
 {
     public class TextContent: IContent
     {
         [JsonProperty("type")]
         [JsonPropertyName("type")]
-        public Type Type => Type.text;
+        public ContentType Type => ContentType.Text;
 
         [JsonProperty("text")]
         [JsonPropertyName("text")]
-        public Text Text { get; set; }
+        public string Text { get; set; }
     }
 }

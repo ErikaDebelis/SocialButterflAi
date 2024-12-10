@@ -5,7 +5,7 @@ namespace SocialButterflAi.Models.LLMIntegration
 {
     public interface IBaseAiRequestRequirements
     {
-        
+
         [JsonProperty("temperature")]
         [JsonPropertyName("temperature")]
         public float Temperature { get; set; }
