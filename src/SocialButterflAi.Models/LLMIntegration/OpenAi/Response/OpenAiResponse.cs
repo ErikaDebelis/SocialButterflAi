@@ -34,11 +34,11 @@ namespace SocialButterflAi.Models.LLMIntegration.OpenAi.Response
     //     }
     // }
     ///
-    public class OpenAiResponse
+    public class OpenAiResponse: BaseAiResponseRequirements
     {
         [JsonProperty("id")]
         [JsonPropertyName("id")]
-        public string Id { get; set; }
+        public override string Id { get; set; }
 
         [JsonProperty("object")]
         [JsonPropertyName("object")]

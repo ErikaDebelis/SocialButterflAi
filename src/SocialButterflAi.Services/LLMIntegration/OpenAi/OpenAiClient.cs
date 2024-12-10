@@ -48,11 +48,12 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<BaseAiResponse<object>> AiExecutionAsync<OpenAiRequest>(
+        public async Task<BaseAiResponse<OpenAiResponse>> AiExecutionAsync<OpenAiRequest, OpenAiResponse>(
             AiRequest<OpenAiRequest> request
         ) where OpenAiRequest : BaseAiRequestRequirements
+          where OpenAiResponse : BaseAiResponseRequirements
         {
-            var response = new BaseAiResponse<object>();
+            var response = new BaseAiResponse<OpenAiResponse>();
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _contentType);
@@ -85,7 +86,7 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
                 SeriLogger.Information("response received and deserialized");;
                 response.Success = true;
                 response.Message = "Success";
-                // response.Data = deserializedOpenAiResponse;
+                response.AiData = deserializedOpenAiResponse;
 
                 return response;
             }

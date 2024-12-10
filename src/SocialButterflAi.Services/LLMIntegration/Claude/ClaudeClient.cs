@@ -41,11 +41,12 @@ namespace SocialButterflAi.Services.LLMIntegration.Claude
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<BaseAiResponse<object>> AiExecutionAsync<ClaudeRequest>(
+        public async Task<BaseAiResponse<ClaudeResponse>> AiExecutionAsync<ClaudeRequest, ClaudeResponse>(
             AiRequest<ClaudeRequest> request
         ) where ClaudeRequest : BaseAiRequestRequirements
+          where ClaudeResponse : BaseAiResponseRequirements
         {
-            var response = new BaseAiResponse<object>();
+            var response = new BaseAiResponse<ClaudeResponse>();
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _contentType);
@@ -78,7 +79,7 @@ namespace SocialButterflAi.Services.LLMIntegration.Claude
                 SeriLogger.Information("response received and deserialized");;
                 response.Success = true;
                 response.Message = "Success";
-                // response.Data = deserializedClaudeResponse;
+                response.AiData = deserializedClaudeResponse;
 
                 return response;
             }

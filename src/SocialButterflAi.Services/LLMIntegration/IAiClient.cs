@@ -12,8 +12,9 @@ namespace SocialButterflAi.Services.LLMIntegration
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public Task<BaseAiResponse<object>> AiExecutionAsync<T>(
-            AiRequest<T> request
-        ) where T : BaseAiRequestRequirements;
+        public Task<BaseAiResponse<T2>> AiExecutionAsync<T1, T2>(
+            AiRequest<T1> request
+        ) where T1 : BaseAiRequestRequirements
+        where T2 : BaseAiResponseRequirements;
     }
 }

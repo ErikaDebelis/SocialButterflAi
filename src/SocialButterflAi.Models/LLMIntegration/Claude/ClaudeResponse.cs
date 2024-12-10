@@ -11,11 +11,11 @@ namespace SocialButterflAi.Models.LLMIntegration.Claude
         Message
     }
 
-    public class ClaudeResponse
+    public class ClaudeResponse : BaseAiResponseRequirements
     {
         [JsonProperty("id")]
         [JsonPropertyName("id")]
-        public string Id { get; set; }
+        public override string Id { get; set; }
 
         [JsonProperty("type")]
         [JsonPropertyName("type")]
