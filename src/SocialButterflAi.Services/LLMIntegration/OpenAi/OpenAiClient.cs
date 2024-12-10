@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using SocialButterflAi.Models.Integration;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Models.LLMIntegration.OpenAi;
+using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 
 namespace SocialButterflAi.Services.LLMIntegration.OpenAi
@@ -51,17 +52,47 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
             AiRequest<OpenAiRequest> request
         ) where OpenAiRequest : BaseAiRequestRequirements
         {
-            var response = new OpenAiResponse();
+            var response = new BaseAiResponse<object>();
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _contentType);
                 var openAiResponse = await _httpClient.PostAsync(_settings.Url, content);
 
-                throw new NotImplementedException();
+                if(!openAiResponse.IsSuccessStatusCode)
+                {
+                    Logger.LogError($"Error- {openAiResponse.ReasonPhrase}");
+                    SeriLogger.Error($"Error- {openAiResponse.ReasonPhrase}");
+                    response.Success = false;
+                    response.Message = openAiResponse.ReasonPhrase;
+
+                    return response;
+                }
+
+                var contentString = await openAiResponse.Content.ReadAsStringAsync();
+                var deserializedOpenAiResponse = JsonConvert.DeserializeObject<OpenAiResponse>(contentString);
+
+                if(deserializedOpenAiResponse == null)
+                {
+                    Logger.LogError("Error- failed to deserialize response");
+                    SeriLogger.Error("Error- failed to deserialize response");
+                    response.Success = false;
+                    response.Message = "failed to deserialize response";
+
+                    return response;
+                }
+
+                Logger.LogInformation("response received and deserialized");
+                SeriLogger.Information("response received and deserialized");;
+                response.Success = true;
+                response.Message = "Success";
+                // response.Data = deserializedOpenAiResponse;
+
+                return response;
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
                 throw new Exception("Error", ex);
             }
         }

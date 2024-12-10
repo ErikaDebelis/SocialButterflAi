@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
+using SocialButterflAi.Models.LLMIntegration.Claude.Content;
 
 namespace SocialButterflAi.Models.LLMIntegration.Claude
 {
@@ -10,7 +11,7 @@ namespace SocialButterflAi.Models.LLMIntegration.Claude
         Message
     }
 
-    public class ClaudeResponse : BaseAiResponse<object>
+    public class ClaudeResponse
     {
         [JsonProperty("id")]
         [JsonPropertyName("id")]
@@ -26,7 +27,7 @@ namespace SocialButterflAi.Models.LLMIntegration.Claude
 
         [JsonProperty("content")]
         [JsonPropertyName("content")]
-        public IEnumerable<TextContent> Content { get; set; }
+        public IEnumerable<IContent> Content { get; set; }
 
         [JsonProperty("model")]
         [JsonPropertyName("model")]

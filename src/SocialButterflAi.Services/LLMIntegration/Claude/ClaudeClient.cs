@@ -45,13 +45,42 @@ namespace SocialButterflAi.Services.LLMIntegration.Claude
             AiRequest<ClaudeRequest> request
         ) where ClaudeRequest : BaseAiRequestRequirements
         {
-            var response = new ClaudeResponse();
+            var response = new BaseAiResponse<object>();
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _contentType);
                 var claudeResponse = await _httpClient.PostAsync(_settings.Url, content);
 
-                throw new NotImplementedException();
+                if(!claudeResponse.IsSuccessStatusCode)
+                {
+                    Logger.LogError($"Error- {claudeResponse.ReasonPhrase}");
+                    SeriLogger.Error($"Error- {claudeResponse.ReasonPhrase}");
+                    response.Success = false;
+                    response.Message = claudeResponse.ReasonPhrase;
+
+                    return response;
+                }
+
+                var contentString = await claudeResponse.Content.ReadAsStringAsync();
+                var deserializedClaudeResponse = JsonConvert.DeserializeObject<ClaudeResponse>(contentString);
+
+                if(deserializedClaudeResponse == null)
+                {
+                    Logger.LogError("Error- failed to deserialize response");
+                    SeriLogger.Error("Error- failed to deserialize response");
+                    response.Success = false;
+                    response.Message = "failed to deserialize response";
+
+                    return response;
+                }
+
+                Logger.LogInformation("response received and deserialized");
+                SeriLogger.Information("response received and deserialized");;
+                response.Success = true;
+                response.Message = "Success";
+                // response.Data = deserializedClaudeResponse;
+
+                return response;
             }
             catch (Exception ex)
             {
