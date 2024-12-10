@@ -9,6 +9,7 @@ using SocialButterflAi.Models.LLMIntegration.Claude;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using Microsoft.AspNetCore.Http;
+using SocialButterflAi.Models.LLMIntegration;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -32,7 +33,8 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="request"></param>
         /// <returns></returns>
         public Task<AnalysisResponse> AnalyzeAsync(
-            AnalysisDtoRequest request
+            AnalysisDtoRequest request,
+            ModelProvider modelProvider
         );
     }
 }

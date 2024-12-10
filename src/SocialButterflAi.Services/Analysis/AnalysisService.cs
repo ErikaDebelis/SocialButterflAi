@@ -23,6 +23,7 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using Model = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 using SocialButterflAi.Services.LLMIntegration.OpenAi;
 using SocialButterflAi.Models.LLMIntegration;
+using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -130,7 +131,8 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public async Task<AnalysisResponse> AnalyzeAsync(
-            AnalysisDtoRequest request
+            AnalysisDtoRequest request,
+            ModelProvider modelProvider
         )
         {
             var response = new AnalysisResponse();
@@ -235,15 +237,51 @@ namespace SocialButterflAi.Services.Analysis
                 };
 
                 //now that we have the audio text, we can send it to Claude for analysis
-                var claudeRequest = new AiRequest<ClaudeRequest>{ };
-                // claudeRequest.Messages = claudeRequest.Messages.Append(message);
 
-                var aiResponse = await ClaudeClient.AiExecutionAsync<ClaudeRequest>(claudeRequest);
-                if (aiResponse == null)
+                Func<Task<BaseAiResponse<BaseAiResponseRequirements>>> aiResponse = modelProvider switch
                 {
-                    var openAiRequest = new AiRequest<OpenAiRequest>{ };
+                    ModelProvider.Claude => async () =>
+                    {
+                        var claudeRequest = new AiRequest<ClaudeRequest>{ };
+                        claudeRequest.AiData.Messages = claudeRequest.AiData.Messages.Append(message);
 
-                    aiResponse = await OpenAiClient.AiExecutionAsync<OpenAiRequest>(openAiRequest);
+                        var claudeResponse = await ClaudeClient.AiExecutionAsync<ClaudeRequest, ClaudeResponse>(claudeRequest);
+
+                        return new BaseAiResponse<BaseAiResponseRequirements>
+                        {
+                            Success = claudeResponse.Success,
+                            Message = claudeResponse.Message,
+                            AiData = claudeResponse.AiData
+                        };
+                    },
+                    ModelProvider.OpenAi => async () =>
+                    {
+                        var openAiRequest = new AiRequest<OpenAiRequest>{ };
+
+                        var openAiResponse = await OpenAiClient.AiExecutionAsync<OpenAiRequest, OpenAiResponse>(openAiRequest);
+
+                        return new BaseAiResponse<BaseAiResponseRequirements>
+                        {
+                            Success = openAiResponse.Success,
+                            Message = openAiResponse.Message,
+                            AiData = openAiResponse.AiData
+                        };
+                    },
+                    _ => throw new NotImplementedException()
+                };
+
+                var runCompletion = await aiResponse();
+
+                if(runCompletion == null
+                    || !runCompletion.Success
+                )
+                {
+                    Logger.LogError("Error running AI completion");
+
+                    response.Success = false;
+                    response.Message = "Error running AI completion";
+
+                    return response;
                 }
 
                 Logger.LogInformation("Analysis completed");
