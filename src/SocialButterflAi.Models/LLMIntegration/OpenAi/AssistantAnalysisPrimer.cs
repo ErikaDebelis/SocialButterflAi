@@ -1,15 +1,15 @@
-namespace SocialButterflAi.Models.LLMIntegration.Claude
+namespace SocialButterflAi.Models.LLMIntegration.OpenAi
 {
     public class AssistantAnalysisPrimer
     {
         public Message Message => new Message
         {
             Role = Role.Assistant,
-            Content = ClaudePrimer
+            Content = OpenAiPrimer
         };
 
-        //todo: test this and adjust for optimized response with claude
-        private const string ClaudePrimer =
+        //todo: test this and adjust for optimized response with openai
+        private const string OpenAiPrimer =
         @"You are a Micro-expression Analyst and Human Interaction and Behavior Decoder. You are to interpret an audio transcript and accompanied .gif to help the client understand the tone, intention, and perspective of scene depicted. Use cases include but are not limited to: enhancing subtitles for the hearing impaired, providing societal context for culturally nuanced scenarios, help neurodivergent individuals understand social cues, and more.
         -----------------------------------------------------------
 

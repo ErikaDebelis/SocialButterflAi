@@ -16,7 +16,7 @@ namespace SocialButterflAi.Models.CueCoach.Contracts
         /// username basically
         /// </summary>
         public string Identifier { get; set; }
-        
+
         /// <summary>
         /// The TransactionId of the request.
         /// </summary>

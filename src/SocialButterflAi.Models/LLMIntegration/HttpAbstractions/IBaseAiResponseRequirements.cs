@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.LLMIntegration
+namespace SocialButterflAi.Models.LLMIntegration.HttpAbstractions
 {
     public interface IBaseAiResponseRequirements
     {

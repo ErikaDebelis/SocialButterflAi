@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 using SocialButterflAi.Models.LLMIntegration.Claude;
+using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 
 namespace SocialButterflAi.Models.LLMIntegration.OpenAi.Response
 {

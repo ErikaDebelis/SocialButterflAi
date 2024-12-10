@@ -12,7 +12,7 @@ namespace SocialButterflAi.Models.LLMIntegration.OpenAi
 
         [JsonProperty("prompt")]
         [JsonPropertyName("prompt")]
-        public string? Prompt { get; set; }
+        public string Prompt => new AssistantAnalysisPrimer().Message.Content;
 
         [JsonProperty("temperature")]
         [JsonPropertyName("temperature")]

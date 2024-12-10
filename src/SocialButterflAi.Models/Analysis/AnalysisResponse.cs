@@ -1,7 +1,8 @@
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-using SocialButterflAi.Models.LLMIntegration.Claude;
+using SocialButterflAi.Models.LLMIntegration.TypedAnalysis;
 
 namespace SocialButterflAi.Models.Analysis
 {
@@ -11,9 +12,9 @@ namespace SocialButterflAi.Models.Analysis
         [JsonPropertyName("Transcript")]
         public string? Transcript { get; set; }
         //
-        // [JsonProperty("Conclusion")]
-        // [JsonPropertyName("Conclusion")]
-        // public Conclusion? Conclusion { get; set; }
+        [JsonProperty("")]
+        [JsonPropertyName("")]
+        public IEnumerable<EnhancedCaption>? EnhancedCaptions { get; set; }
 
         [JsonProperty("Conclusion")]
         [JsonPropertyName("Conclusion")]

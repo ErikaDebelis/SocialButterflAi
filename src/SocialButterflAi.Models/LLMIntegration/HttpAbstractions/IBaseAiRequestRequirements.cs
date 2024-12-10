@@ -1,16 +1,17 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.LLMIntegration
+namespace SocialButterflAi.Models.LLMIntegration.HttpAbstractions
 {
-    public class BaseAiRequestRequirements: IBaseAiRequestRequirements
+    public interface IBaseAiRequestRequirements
     {
+
         [JsonProperty("temperature")]
         [JsonPropertyName("temperature")]
-        public virtual float Temperature { get; set; }
+        public float Temperature { get; set; }
 
         [JsonProperty("max_tokens")]
         [JsonPropertyName("max_tokens")]
-        public virtual int MaxTokens { get; set; }
+        public int MaxTokens { get; set; }
     }
 }
