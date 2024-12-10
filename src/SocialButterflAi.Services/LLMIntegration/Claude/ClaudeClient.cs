@@ -35,6 +35,7 @@ namespace SocialButterflAi.Services.LLMIntegration.Claude
             SeriLogger = Serilog.Log.Logger;
         }
 
+        #region AiExecution
         /// <summary>
         /// 
         /// </summary>
@@ -58,5 +59,6 @@ namespace SocialButterflAi.Services.LLMIntegration.Claude
                 throw new Exception("Error", ex);
             }
         }
+        #endregion
     }
 }

@@ -41,6 +41,7 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
             Logger = logger;
         }
 
+        #region AiExecution
         /// <summary>
         ///
         /// </summary>
@@ -64,7 +65,9 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
                 throw new Exception("Error", ex);
             }
         }
+        #endregion
 
+        #region Whisper
         /// <summary>
         /// 
         /// </summary>
@@ -88,5 +91,6 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
                 throw new Exception("Error", ex);
             }
         }
+        #endregion
     }
 }

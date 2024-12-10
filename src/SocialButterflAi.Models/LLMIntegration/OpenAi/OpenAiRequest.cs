@@ -6,6 +6,14 @@ namespace SocialButterflAi.Models.LLMIntegration.OpenAi
 {
     public class OpenAiRequest : BaseAiRequestRequirements
     {
+        [JsonProperty("model")]
+        [JsonPropertyName("model")]
+        public string Model { get; set; }
+
+        [JsonProperty("prompt")]
+        [JsonPropertyName("prompt")]
+        public string? Prompt { get; set; }
+
         [JsonProperty("temperature")]
         [JsonPropertyName("temperature")]
         public override float Temperature => 0.0f;

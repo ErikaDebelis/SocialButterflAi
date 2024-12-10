@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.LLMIntegration.Claude
+namespace SocialButterflAi.Models.LLMIntegration
 {
     public enum Role
     {

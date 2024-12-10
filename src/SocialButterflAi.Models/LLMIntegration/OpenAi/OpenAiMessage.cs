@@ -1,9 +1,9 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.LLMIntegration.Claude
+namespace SocialButterflAi.Models.LLMIntegration.OpenAi
 {
-    public class Message
+    public class OpenAiMessage : Message
     {
         [JsonProperty("role")]
         [JsonPropertyName("role")]
@@ -11,6 +11,6 @@ namespace SocialButterflAi.Models.LLMIntegration.Claude
 
         [JsonProperty("content")]
         [JsonPropertyName("content")]
-        public string Content { get; set; }
+        public IContent Content { get; set; }
     }
 }
