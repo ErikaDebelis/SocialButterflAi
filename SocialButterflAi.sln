@@ -11,7 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialButterflAi.Models", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialButterflAi.Services", "src\SocialButterflAi.Services\SocialButterflAi.Services.csproj", "{0A9B3220-A175-4D06-AFC1-DD69CEA489FF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialButterFlAi.Data", "src\SocialButterFlAi.Data\SocialButterFlAi.Data.csproj", "{3D0B8277-2648-4CF3-9570-4FB10E049564}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialButterFlAi.Data.Identity", "src\SocialButterFlAi.Data.Identity\SocialButterFlAi.Data.Identity.csproj", "{3D0B8277-2648-4CF3-9570-4FB10E049564}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialButterFlAi.Data.Chat", "src\SocialButterFlAi.Data.Chat\SocialButterFlAi.Data.Chat.csproj", "{B6D5074C-A5CB-4E39-A212-670850F84C6B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialButterFlAi.Data.Analysis", "src\SocialButterFlAi.Data.Analysis\SocialButterFlAi.Data.Analysis.csproj", "{7416DC3B-A369-49C2-8604-B4DFC29738F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +39,12 @@ Global
 		{3D0B8277-2648-4CF3-9570-4FB10E049564}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D0B8277-2648-4CF3-9570-4FB10E049564}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D0B8277-2648-4CF3-9570-4FB10E049564}.Release|Any CPU.Build.0 = Release|Any CPU
+								{B6D5074C-A5CB-4E39-A212-670850F84C6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6D5074C-A5CB-4E39-A212-670850F84C6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6D5074C-A5CB-4E39-A212-670850F84C6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6D5074C-A5CB-4E39-A212-670850F84C6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7416DC3B-A369-49C2-8604-B4DFC29738F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7416DC3B-A369-49C2-8604-B4DFC29738F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,6 +54,8 @@ Global
 		{461405AE-F71E-4CF5-B01B-6E996C5F2298} = {81A9D065-1C12-440C-AA32-E6618A654235}
 		{0A9B3220-A175-4D06-AFC1-DD69CEA489FF} = {81A9D065-1C12-440C-AA32-E6618A654235}
 		{3D0B8277-2648-4CF3-9570-4FB10E049564} = {81A9D065-1C12-440C-AA32-E6618A654235}
+								{{B6D5074C-A5CB-4E39-A212-670850F84C6B} = {81A9D065-1C12-440C-AA32-E6618A654235}
+								{7416DC3B-A369-49C2-8604-B4DFC29738F5} = {81A9D065-1C12-440C-AA32-E6618A654235}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {73354787-1017-4E61-8604-579980984CCE}

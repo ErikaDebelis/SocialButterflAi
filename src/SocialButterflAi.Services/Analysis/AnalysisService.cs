@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 
-// using SocialButterFlAi.Data.Analysis;
+using SocialButterFlAi.Data.Analysis;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.Integration;
 using SocialButterflAi.Services.LLMIntegration;
@@ -33,7 +33,7 @@ namespace SocialButterflAi.Services.Analysis
         #region Properties (public and private)
         private OpenAiClient OpenAiClient;
         private IAiClient ClaudeClient;
-        // private AnalysisDbContext AnalysisDbContext;
+        private AnalysisDbContext AnalysisDbContext;
 
         private ILogger<IAnalysisService> Logger;
         readonly Serilog.ILogger SeriLogger;
@@ -50,7 +50,7 @@ namespace SocialButterflAi.Services.Analysis
         public AnalysisService(
             OpenAiClient openAiClient,
             IAiClient claudeClient,
-            // AnalysisDbContext analysisDbContext,
+            AnalysisDbContext analysisDbContext,
             ILogger<IAnalysisService> logger,
             IWebHostEnvironment webHostEnvironment,
             AnalysisSettings configuration
@@ -59,7 +59,7 @@ namespace SocialButterflAi.Services.Analysis
             OpenAiClient = openAiClient;
             ClaudeClient = claudeClient;
 
-            // AnalysisDbContext = analysisDbContext;
+            AnalysisDbContext = analysisDbContext;
 
             Logger = logger;
             SeriLogger = Serilog.Log.Logger;

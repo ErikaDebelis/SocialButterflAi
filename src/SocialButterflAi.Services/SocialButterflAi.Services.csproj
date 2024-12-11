@@ -30,7 +30,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SocialButterflAi.Models\SocialButterflAi.Models.csproj" />
-        <ProjectReference Include="..\SocialButterflAi.Data\SocialButterflAi.Data.csproj" />
+        <ProjectReference Include="..\SocialButterflAi.Data.Identity\SocialButterflAi.Data.Identity.csproj" />
+        <ProjectReference Include="..\SocialButterflAi.Data.Chat\SocialButterflAi.Data.Chat.csproj" />
+        <ProjectReference Include="..\SocialButterflAi.Data.Analysis\SocialButterflAi.Data.Analysis.csproj" />
     </ItemGroup>
 
 </Project>

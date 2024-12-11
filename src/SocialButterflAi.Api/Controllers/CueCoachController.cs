@@ -1,14 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using MassTransit;
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using System.Text.Json.Serialization;
+
+using SocialButterFlAi.Data.Identity;
+using MassTransit;
 using RabbitMQ.Client;
+
 using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Models.CueCoach.Contracts;
 
@@ -21,7 +24,8 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
     {
     #region Private Variables
 
-		private IBus Bus;
+        private IdentityDbContext IdentityDbContext;
+        private IBus Bus;
         private ILogger<CueCoachController> Logger;
 
     #endregion
@@ -30,10 +34,12 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
 
         public CueCoachController(
             IBus bus,
+            IdentityDbContext identityDbContext,
             ILogger<CueCoachController> logger
         )
         {
             Bus = bus ?? throw new ArgumentNullException(nameof(bus));
+            IdentityDbContext = identityDbContext;
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 

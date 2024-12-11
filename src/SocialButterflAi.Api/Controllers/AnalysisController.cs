@@ -2,10 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+
+using SocialButterFlAi.Data.Identity;
 using SocialButterflAi.Services.Analysis;
+
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.LLMIntegration;
 
@@ -15,15 +19,18 @@ namespace SocialButterflAi.Api.Controllers
     [Route("[controller]")]
     public class AnalysisController : ControllerBase
     {
-        public IAnalysisService AnalysisService;
         public ILogger<AnalysisController> Logger;
+        private IdentityDbContext IdentityDbContext;
+        public IAnalysisService AnalysisService;
 
         public AnalysisController(
             IAnalysisService analysisService,
+            IdentityDbContext identityDbContext,
             ILogger<AnalysisController> logger
         )
         {
             AnalysisService = analysisService;
+            IdentityDbContext = identityDbContext;
             Logger = logger;
         }
 
