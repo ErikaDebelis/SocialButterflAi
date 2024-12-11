@@ -11,11 +11,12 @@ namespace SocialButterflAi.Models.CueCoach.Contracts
         /// <summary>
         ///
         /// </summary>
-        public Dictionary<string, string> IncomingHeaders { get; set; }
+        public Dictionary<string, string> Headers { get; set; }
+        
         /// <summary>
-        /// username basically
+        ///
         /// </summary>
-        public string Identifier { get; set; }
+        public string Username { get; set; }
 
         /// <summary>
         /// The TransactionId of the request.

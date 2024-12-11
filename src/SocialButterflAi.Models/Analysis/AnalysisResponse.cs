@@ -10,7 +10,7 @@ namespace SocialButterflAi.Models.Analysis
     {
         [JsonProperty("Transcript")]
         [JsonPropertyName("Transcript")]
-        public string? Transcript { get; set; }
+        public string Transcript { get; set; }
         //
         [JsonProperty("")]
         [JsonPropertyName("")]

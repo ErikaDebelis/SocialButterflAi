@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 
-// using CC.Data.Analysis;
+// using SocialButterFlAi.Data.Analysis;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.Integration;
 using SocialButterflAi.Services.LLMIntegration;
@@ -105,7 +105,7 @@ namespace SocialButterflAi.Services.Analysis
                 var fileName = $"{Guid.NewGuid()}.{format}";
                 var filePath = Path.Combine(_uploadDirectory, fileName);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
@@ -133,7 +133,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="Exception"></exception>
         public async Task<AnalysisResponse> AnalyzeAsync(
             AnalysisDtoRequest request,
-            ModelProvider modelProvider
+            ModelProvider modelProvider = ModelProvider.Claude
         )
         {
             var response = new AnalysisResponse();
@@ -155,34 +155,31 @@ namespace SocialButterflAi.Services.Analysis
                 };
                 if (string.IsNullOrEmpty(request.EndTime))
                 {
+                    using var process = new Process { StartInfo = startInfo };
+                    process.Start();
+                    var output = await process.StandardError.ReadToEndAsync();
+                    await process.WaitForExitAsync();
 
-                    using (var process = new Process { StartInfo = startInfo })
+                    // Extract duration from FFmpeg output using regex
+                    if(string.IsNullOrWhiteSpace(request.EndTime))
                     {
-                        process.Start();
-                        string output = await process.StandardError.ReadToEndAsync();
-                        await process.WaitForExitAsync();
+                        var durationMatch = Regex.Match(output, @"Duration: (\d{2}:\d{2}:\d{2})");
 
-                        // Extract duration from FFmpeg output using regex
-                        if(string.IsNullOrWhiteSpace(request.EndTime))
+                        if (!durationMatch.Success)
                         {
-                            var durationMatch = Regex.Match(output, @"Duration: (\d{2}:\d{2}:\d{2})");
-
-                            if (!durationMatch.Success)
-                            {
-                                throw new Exception("Could not determine video duration");
-                            }
-                            request.EndTime = durationMatch.Groups[1].Value;
+                            throw new Exception("Could not determine video duration");
                         }
-                        Console.WriteLine($"Video timeframe: {request.StartTime} - {request.EndTime}");
-                        // add the start and end time to the ProcessStartInfo arguments to extract the audio from the video 
-                        startInfo.ArgumentList.Add($"-ss {request.StartTime}");
-                        startInfo.ArgumentList.Add($"-to {request.EndTime}");
-                        startInfo.ArgumentList.Add("-c copy"); // -c copy: copy codec
+                        request.EndTime = durationMatch.Groups[1].Value;
                     }
+                    Console.WriteLine($"Video timeframe: {request.StartTime} - {request.EndTime}");
+                    // add the start and end time to the ProcessStartInfo arguments to extract the audio from the video 
+                    startInfo.ArgumentList.Add($"-ss {request.StartTime}");
+                    startInfo.ArgumentList.Add($"-to {request.EndTime}");
+                    startInfo.ArgumentList.Add("-c copy"); // -c copy: copy codec
                 }
 
-                string outputAudio = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.wav";
-                string outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.gif";
+                var outputAudio = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.wav";
+                var outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.gif";
 
                 var processVideoResponse = await ProcessVideoFile(
                                                 startInfo,
@@ -211,7 +208,8 @@ namespace SocialButterflAi.Services.Analysis
                 var whisperResponse = await OpenAiClient.ExecuteWhisperAsync(whisperRequest);
 
                 if(whisperResponse == null
-                || !whisperResponse.Success)
+                    || !whisperResponse.Success
+                )
                 {
                     Logger.LogError("Whisper failed");
 
@@ -237,8 +235,7 @@ namespace SocialButterflAi.Services.Analysis
                     Role = Role.User
                 };
 
-                //now that we have the audio text, we can send it to Claude for analysis
-
+                //now that we have the audio text, we can send it to Claude or openai for analysis
                 Func<Task<BaseAiResponse<BaseAiResponseRequirements>>> aiResponse = modelProvider switch
                 {
                     ModelProvider.Claude => async () =>

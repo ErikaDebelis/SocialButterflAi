@@ -8,7 +8,7 @@
     <Target Name="AfterPublish">
         <Copy SourceFiles ="@(binFilesToCopy)" DestinationFolder ="$(OutDir)\bin" />
     </Target>
-    
+
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
@@ -27,9 +27,10 @@
         <PackageReference Include="MassTransit.Redis" Version="8.3.2" />
         <PackageReference Include="MassTransit.Abstractions" Version="8.3.2" />
     </ItemGroup>
-        
+
     <ItemGroup>
         <ProjectReference Include="..\SocialButterflAi.Models\SocialButterflAi.Models.csproj" />
         <ProjectReference Include="..\SocialButterflAi.Services\SocialButterflAi.Services.csproj" />
+        <ProjectReference Include="..\SocialButterflAi.Data\SocialButterflAi.Data.csproj" />
     </ItemGroup>
 </Project>

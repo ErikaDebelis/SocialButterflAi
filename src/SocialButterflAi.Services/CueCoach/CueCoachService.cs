@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-// using CC.Data.Chat;
+// using SocialButterFlAi.Data.Chat;
 
 using SocialButterflAi.Services.Analysis;
 
@@ -12,6 +12,7 @@ namespace SocialButterflAi.Services.CueCoach
     {
         #region Properties (public and private)
         public IAnalysisService AnalysisService;
+        // private IdentityDbContext IdentityDbContext;
         // private ChatDbContext ChatDbContext;
         private ILogger<ICueCoachService> Logger;
         readonly Serilog.ILogger SeriLogger;
@@ -20,11 +21,13 @@ namespace SocialButterflAi.Services.CueCoach
         #region Constructor
         public CueCoachService(
             IAnalysisService analysisService,
+            // IdentityDbContext identityDbContext,
             // ChatDbContext chatDbContext,
             ILogger<ICueCoachService> logger
         )
         {
             AnalysisService = analysisService;
+            // IdentityDbContext = identityDbContext;
             // ChatDbContext = chatDbContext;
             Logger = logger;
             SeriLogger = Serilog.Log.Logger;

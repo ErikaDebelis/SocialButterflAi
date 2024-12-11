@@ -12,25 +12,13 @@
 
         <PackageReference Include="Serilog" Version="4.0.0" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
-        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-        <PackageReference Include="Serilog.Sinks.Grafana.Loki" Version="8.3.0" />
-        <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="3.0.0" />
 
-        <PackageReference Include="MassTransit" Version="8.3.2" />
-        <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.2" />
-        <PackageReference Include="MassTransit.Redis" Version="8.3.2" />
-        <PackageReference Include="MassTransit.Abstractions" Version="8.3.2" />
-
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\SocialButterflAi.Models\SocialButterflAi.Models.csproj" />
-        <ProjectReference Include="..\SocialButterflAi.Data\SocialButterflAi.Data.csproj" />
     </ItemGroup>
 
 </Project>
