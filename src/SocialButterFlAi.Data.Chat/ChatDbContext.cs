@@ -132,6 +132,16 @@ namespace SocialButterFlAi.Data.Chat
                 .HasMany(chat => chat.Messages)
                 .WithOne(msg => msg.Chat)
                 .HasForeignKey(p => p.ChatId);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(msg => msg.ToIdentity)
+                .WithMany()
+                .HasForeignKey(p => p.ToIdentityId);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(msg => msg.FromIdentity)
+                .WithMany()
+                .HasForeignKey(p => p.FromIdentityId);
         }
         #endregion
     }
@@ -141,10 +151,10 @@ namespace SocialButterFlAi.Data.Chat
     /// </summary>
     public class ChatDbContextFactory : IDesignTimeDbContextFactory<ChatDbContext>
     {
-        private string _connectionString;
+        private readonly string _connectionString;
 
         /// <summary>
-        ///
+        /// invoked from the program.cs file to create a new instance of the ChatDbContextFactory
         /// </summary>
         /// <param name="connectionString"></param>
         public ChatDbContextFactory(string connectionString)
@@ -153,7 +163,7 @@ namespace SocialButterFlAi.Data.Chat
         }
 
         /// <summary>
-        ///
+        /// invoked from the program.cs file to create a new instance of the ChatDbContext
         /// </summary>
         /// <param name="args"></param>
         public ChatDbContext CreateDbContext(string[] args)

@@ -56,15 +56,15 @@ builder.Services.AddDbContext<AnalysisDbContext>(options =>
 
 // Run Identity Migrations at Startup if Needed
 var identityFactory = new IdentityDbContextFactory(dbConnectionString);
-var identityContext = identityFactory.CreateDbContext(Array.Empty<string>());
+var identityContext = identityFactory.CreateDbContext([]);
 await identityContext.Database.MigrateAsync();
 
 var chatFactory = new ChatDbContextFactory(dbConnectionString);
-var chatContext = chatFactory.CreateDbContext(Array.Empty<string>());
+var chatContext = chatFactory.CreateDbContext([]);
 await chatContext.Database.MigrateAsync();
 
 var analysisContextFactory = new AnalysisDbContextFactory(dbConnectionString);
-var analysisContext = analysisContextFactory.CreateDbContext(Array.Empty<string>());
+var analysisContext = analysisContextFactory.CreateDbContext([]);
 await analysisContext.Database.MigrateAsync();
 #endregion
 

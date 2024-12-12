@@ -174,10 +174,10 @@ namespace SocialButterFlAi.Data.Analysis
     /// </summary>
     public class AnalysisDbContextFactory : IDesignTimeDbContextFactory<AnalysisDbContext>
     {
-        private string _connectionString;
+        private readonly string _connectionString;
 
         /// <summary>
-        ///
+        /// invoked from the program.cs file to create a new instance of the AnalysisDbContextFactory
         /// </summary>
         /// <param name="connectionString"></param>
         public AnalysisDbContextFactory(string connectionString)
@@ -186,7 +186,7 @@ namespace SocialButterFlAi.Data.Analysis
         }
 
         /// <summary>
-        ///
+        /// invoked from the program.cs file to create a new instance of the AnalysisDbContext
         /// </summary>
         /// <param name="args"></param>
         public AnalysisDbContext CreateDbContext(string[] args)

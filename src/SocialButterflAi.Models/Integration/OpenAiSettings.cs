@@ -7,9 +7,13 @@ namespace SocialButterflAi.Models.Integration
 {
     public class OpenAiSettings
     {
-        [JsonProperty("Model")]
-        [JsonPropertyName("Model")]
-        public string Model { get; set; }
+        [JsonProperty("WhisperModel")]
+        [JsonPropertyName("WhisperModel")]
+        public string WhisperModel { get; set; }
+
+        [JsonProperty("CompletionModel")]
+        [JsonPropertyName("CompletionModel")]
+        public string CompletionModel { get; set; }
 
         [JsonProperty("ApiKey")]
         [JsonPropertyName("ApiKey")]
@@ -18,5 +22,13 @@ namespace SocialButterflAi.Models.Integration
         [JsonProperty("Url")]
         [JsonPropertyName("Url")]
         public string Url { get; set; }
+
+        [JsonProperty("WhisperEndpoint")]
+        [JsonPropertyName("WhisperEndpoint")]
+        public string WhisperEndpoint { get; set; }
+
+        [JsonProperty("CompletionEndpoint")]
+        [JsonPropertyName("CompletionEndpoint")]
+        public string CompletionEndpoint { get; set; }
     }
 }

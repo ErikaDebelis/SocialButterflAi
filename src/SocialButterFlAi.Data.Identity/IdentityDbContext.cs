@@ -268,10 +268,10 @@ namespace SocialButterFlAi.Data.Identity
     /// </summary>
     public class IdentityDbContextFactory : IDesignTimeDbContextFactory<IdentityDbContext>
     {
-        private string _connectionString;
+        private readonly string _connectionString;
 
         /// <summary>
-        /// Constructor- takes in a connection string
+        /// invoked from the program.cs file to create a new instance of the IdentityDbContextFactory
         /// </summary>
         /// <param name="connectionString"></param>
         public IdentityDbContextFactory(string connectionString)
@@ -280,7 +280,7 @@ namespace SocialButterFlAi.Data.Identity
         }
 
         /// <summary>
-        /// Constructor- takes in an args array
+        /// invoked from the program.cs file to create a new instance of the IdentityDbContext
         /// </summary>
         /// <param name="args"></param>
         public IdentityDbContext CreateDbContext(string[] args)

@@ -1,12 +1,8 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
-using System.Text.Json;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 using Microsoft.AspNetCore.Http;
@@ -14,17 +10,18 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 
 using SocialButterFlAi.Data.Analysis;
+using SocialButterflAi.Services.LLMIntegration;
+using SocialButterflAi.Services.LLMIntegration.OpenAi;
+
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.Integration;
-using SocialButterflAi.Services.LLMIntegration;
+using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Models.LLMIntegration.Claude;
 using SocialButterflAi.Models.LLMIntegration.OpenAi;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
-using Model = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
-using SocialButterflAi.Services.LLMIntegration.OpenAi;
-using SocialButterflAi.Models.LLMIntegration;
-using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
+using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
+using Model = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -172,7 +169,7 @@ namespace SocialButterflAi.Services.Analysis
                         request.EndTime = durationMatch.Groups[1].Value;
                     }
                     Console.WriteLine($"Video timeframe: {request.StartTime} - {request.EndTime}");
-                    // add the start and end time to the ProcessStartInfo arguments to extract the audio from the video 
+                    // add the start and end time to the ProcessStartInfo arguments to extract the audio from the video
                     startInfo.ArgumentList.Add($"-ss {request.StartTime}");
                     startInfo.ArgumentList.Add($"-to {request.EndTime}");
                     startInfo.ArgumentList.Add("-c copy"); // -c copy: copy codec

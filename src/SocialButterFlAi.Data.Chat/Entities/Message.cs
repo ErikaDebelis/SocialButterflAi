@@ -14,13 +14,13 @@ namespace SocialButterFlAi.Data.Chat.Entities
         /// Navigation property
         /// </summary>
         public Guid ChatId { get; set; }
-        public Chat? Chat { get; set; }
+        public Chat Chat { get; set; }
 
         public Guid ToIdentityId { get; set; }
-        public Identity.Entities.Identity? ToIdentity { get; set; }
+        public Identity.Entities.Identity ToIdentity { get; set; }
 
         public Guid FromIdentityId { get; set; }
-        public Identity.Entities.Identity? FromIdentity { get; set; }
+        public Identity.Entities.Identity FromIdentity { get; set; }
 
         /// <summary>
         /// The text of the message

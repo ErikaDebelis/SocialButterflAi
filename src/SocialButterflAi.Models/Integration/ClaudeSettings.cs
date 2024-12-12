@@ -20,5 +20,9 @@ namespace SocialButterflAi.Models.Integration
         [JsonProperty("Url")]
         [JsonPropertyName("Url")]
         public string Url { get; set; }
+
+        [JsonProperty("CompletionEndpoint")]
+        [JsonPropertyName("CompletionEndpoint")]
+        public string CompletionEndpoint { get; set; }
     }
 }
