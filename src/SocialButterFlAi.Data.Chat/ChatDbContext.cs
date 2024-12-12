@@ -146,14 +146,6 @@ namespace SocialButterFlAi.Data.Chat
         /// <summary>
         ///
         /// </summary>
-        public ChatDbContextFactory()
-        {
-            _connectionString = "Host=postgres.socialbutterflai;Port=5434;Database=CueCoach;Username=postgres;Password=postgres;Include Error Detail=true";
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
         /// <param name="connectionString"></param>
         public ChatDbContextFactory(string connectionString)
         {

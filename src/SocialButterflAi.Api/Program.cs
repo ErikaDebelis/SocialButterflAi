@@ -3,10 +3,19 @@ using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SocialButterFlAi.Data.Identity;
+
 using SocialButterFlAi.Data.Chat;
+using SocialButterFlAi.Data.Identity;
 using SocialButterFlAi.Data.Analysis;
+using SocialButterflAi.Services.CueCoach;
+using SocialButterflAi.Services.Analysis;
+using SocialButterflAi.Services.LLMIntegration.Claude;
+using Microsoft.Extensions.Logging;
+using Settings = SocialButterflAi.Models.Integration.Settings;
+using SocialButterflAi.Services.LLMIntegration.OpenAi;
+using Microsoft.AspNetCore.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,8 +32,12 @@ var app = builder.Build();
 // // or
 // GlobalFFOptions.Configure(options => options.BinaryFolder = "./bin");
 
+var appSettings = builder.Configuration.GetSection("Settings").Get<Settings>();
+
 #region Database Configuration
-var dbConnectionString = "Host=postgres.socialbutterflai;Port=5434;Database=CueCoach;Username=postgres;Password=postgres;Include Error Detail=true";
+//todo: pull this using configuration in appsettings.json and integrations models for the connection string
+var postgresSettings = appSettings.Postgres;
+var dbConnectionString = $"Host={postgresSettings.Host};Port={postgresSettings.Port};Database={postgresSettings.Database};Username={postgresSettings.Username};Password={postgresSettings.Password};Include Error Detail={postgresSettings.IncludeErrorDetail}";
 
 builder.Services.AddDbContextFactory<IdentityDbContext>(options =>
 {
@@ -53,6 +66,49 @@ await chatContext.Database.MigrateAsync();
 var analysisContextFactory = new AnalysisDbContextFactory(dbConnectionString);
 var analysisContext = analysisContextFactory.CreateDbContext(Array.Empty<string>());
 await analysisContext.Database.MigrateAsync();
+#endregion
+
+#region Services
+builder.Services.AddScoped<IAnalysisService>(x =>
+	{
+        var logFactory = LoggerFactory.Create(b =>
+        {
+            b.AddFilter("Microsoft", LogLevel.Warning)
+            .AddFilter("System", LogLevel.Warning)
+            .AddConsole();
+        });
+
+        var claudeClient = new ClaudeClient(
+            appSettings.Claude,
+            logFactory.CreateLogger<ClaudeClient>()
+        );
+
+        var openaiClient = new OpenAiClient(
+            appSettings.OpenAi,
+            logFactory.CreateLogger<OpenAiClient>()
+        );
+
+		return new AnalysisService(
+            openaiClient,
+            claudeClient,
+			x.GetRequiredService<AnalysisDbContext>(),
+			x.GetRequiredService<ILogger<AnalysisService>>(),
+            x.GetRequiredService<IWebHostEnvironment>(),
+            appSettings.AnalysisSettings
+		);
+	}
+);
+
+builder.Services.AddScoped<ICueCoachService>(x =>
+	{
+		return new CueCoachService(
+            x.GetRequiredService<IAnalysisService>(),
+			x.GetRequiredService<IdentityDbContext>(),
+			x.GetRequiredService<ChatDbContext>(),
+			x.GetRequiredService<ILogger<CueCoachService>>()
+		);
+	}
+);
 #endregion
 
 // Configure the HTTP request pipeline.

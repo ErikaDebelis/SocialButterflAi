@@ -9,12 +9,16 @@ namespace SocialButterflAi.Models.Integration
         [JsonPropertyName("AnalysisSettings")]
         public AnalysisSettings AnalysisSettings { get; set; }
 
-        [JsonProperty("Openai")]
-        [JsonPropertyName("Openai")]
+        [JsonProperty("OpenAi")]
+        [JsonPropertyName("OpenAi")]
         public OpenAiSettings OpenAi { get; set; }
 
         [JsonProperty("Claude")]
         [JsonPropertyName("Claude")]
         public ClaudeSettings Claude { get; set; }
+        
+        [JsonProperty("Postgres")]
+        [JsonPropertyName("Postgres")]
+        public PostgresSettings Postgres { get; set; }
     }
 }

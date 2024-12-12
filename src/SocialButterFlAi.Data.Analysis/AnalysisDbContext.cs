@@ -179,14 +179,6 @@ namespace SocialButterFlAi.Data.Analysis
         /// <summary>
         ///
         /// </summary>
-        public AnalysisDbContextFactory()
-        {
-            _connectionString = "Host=postgres.socialbutterflai;Port=5434;Database=CueCoach;Username=postgres;Password=postgres;Include Error Detail=true";
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
         /// <param name="connectionString"></param>
         public AnalysisDbContextFactory(string connectionString)
         {

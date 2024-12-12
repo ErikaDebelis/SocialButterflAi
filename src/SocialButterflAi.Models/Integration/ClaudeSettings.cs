@@ -9,7 +9,7 @@ namespace SocialButterflAi.Models.Integration
         [JsonPropertyName("Version")]
         public string Version { get; set; }
 
-        [JsonProperty("model")]
+        [JsonProperty("Model")]
         [JsonPropertyName("Model")]
         public string Model { get; set; }
 

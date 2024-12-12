@@ -271,14 +271,6 @@ namespace SocialButterFlAi.Data.Identity
         private string _connectionString;
 
         /// <summary>
-        /// Default Constructor- no parameters- uses default connection string
-        /// </summary>
-        public IdentityDbContextFactory()
-        {
-            _connectionString = "Host=postgres.socialbutterflai;Port=5434;Database=CueCoach;Username=postgres;Password=postgres;Include Error Detail=true";
-        }
-
-        /// <summary>
         /// Constructor- takes in a connection string
         /// </summary>
         /// <param name="connectionString"></param>
