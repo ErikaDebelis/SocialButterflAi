@@ -1,3 +1,4 @@
+using System;
 using Newtonsoft.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,7 +8,8 @@ namespace SocialButterflAi.Models.Analysis
 {
     public class AnalysisDtoRequest
     {
-
+        public Guid RequesterIdentityId { get; set; }
+        
         [JsonProperty("ModelProvider")]
         [JsonPropertyName("ModelProvider")]
         public string ModelProvider { get; set; }

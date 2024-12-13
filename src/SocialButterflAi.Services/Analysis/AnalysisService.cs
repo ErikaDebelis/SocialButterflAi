@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
@@ -7,6 +8,7 @@ using System.Text.RegularExpressions;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using SocialButterflAi.Data.Analysis;
@@ -16,14 +18,14 @@ using SocialButterflAi.Services.LLMIntegration.OpenAi;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.Integration;
 using SocialButterflAi.Models.LLMIntegration;
+using SocialButterflAi.Data.Analysis.Entities;
 using SocialButterflAi.Models.LLMIntegration.Claude;
 using SocialButterflAi.Models.LLMIntegration.OpenAi;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
-using Model = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
-using Serilog;
+using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -86,10 +88,13 @@ namespace SocialButterflAi.Services.Analysis
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="identityId"></param>
         /// <param name="file"></param>
+        /// <param name="format"></param>
+        /// <param name="relatedChatId"></param>
+        /// <param name="videoTitle"></param>
+        /// <param name="videoDescription"></param>
         /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<UploadData>> UploadAsync(
             Guid identityId,
@@ -123,14 +128,12 @@ namespace SocialButterflAi.Services.Analysis
                     };
                 }
                 var durationData = await GetDuration(
-                    filePath,
-                    null,
-                    null
-                );
+                                                    filePath,
+                                                    null,
+                                                    null
+                                                );
 
-                if(durationData == null
-                    || !durationData.Success
-                )
+                if(durationData is not { Success: true } )
                 {
                     Logger.LogError("Error getting video duration");
                     SeriLogger.Error("Error getting video duration");
@@ -140,9 +143,11 @@ namespace SocialButterflAi.Services.Analysis
                     return response;
                 }
 
-                videoDto.Duration = durationData.Data.TimeSpan;
+                videoDto.Duration = durationData.Data;
 
-                if (videoDto == null)
+                var videoEntity = VideoDtoToEntity(videoDto);
+
+                if (videoEntity == null)
                 {
                     Logger.LogError("Error uploading video");
                     SeriLogger.Error("Error uploading video");
@@ -151,8 +156,6 @@ namespace SocialButterflAi.Services.Analysis
 
                     return response;
                 }
-
-                var videoEntity = VideoDtoToEntity(videoDto);
 
                 Logger.LogInformation("Video uploaded successfully");
                 SeriLogger.Information("Video uploaded successfully");
@@ -164,7 +167,8 @@ namespace SocialButterflAi.Services.Analysis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error");
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
                 throw new Exception("Error", ex);
             }
         }
@@ -172,9 +176,10 @@ namespace SocialButterflAi.Services.Analysis
 
         #region Analyze/Process
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="request"></param>
+        /// <param name="modelProvider"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
@@ -191,18 +196,33 @@ namespace SocialButterflAi.Services.Analysis
 
                 //use ffmpeg to save gif from video with the same timestamp as the audio file
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
+                
+                var matchingVideo = FindVideos(v =>
+                    (v.Identity.Id == request.RequesterIdentityId 
+                        || v.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null
+                    )
+                    && v.VideoUrl == request.VideoPath).FirstOrDefault();
 
+                if (matchingVideo is null)
+                {
+                    Logger.LogError("Video not found");
+                    SeriLogger.Error("Video not found");
+                    response.Success = false;
+                    response.Message = "Video not found";
+
+                    return response;
+                }
+                
                 var durationData = await GetDuration(
-                    request.VideoPath,
-                    request.StartTime,
-                    request.EndTime
-                );
+                                            request.VideoPath,
+                                            request.StartTime,
+                                            request.EndTime
+                                        );
 
-                if(durationData == null
-                    || !durationData.Success
-                )
+                if(durationData is not { Success: true } )
                 {
                     Logger.LogError("Error getting video duration");
+                    SeriLogger.Error("Error getting video duration");
                     response.Success = false;
                     response.Message = "Error getting video duration";
 
@@ -213,16 +233,15 @@ namespace SocialButterflAi.Services.Analysis
                 var outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.gif";
 
                 var processVideoResponse = await ProcessVideoFile(
-                                                durationData.Data.ProcessStartInfo,
-                                                outputAudio,
-                                                outputGif
-                                            );
+                                durationData.Data.ProcessStartInfo,
+                                outputAudio,
+                                outputGif
+                            );
 
-                if(processVideoResponse == null
-                    || !processVideoResponse.Success
-                )
+                if(processVideoResponse is not { Success: true } )
                 {
                     Logger.LogError("Error processing video file");
+                    SeriLogger.Error("Error processing video file");
                     response.Success = false;
                     response.Message = "Error processing video file";
 
@@ -232,17 +251,16 @@ namespace SocialButterflAi.Services.Analysis
                 var whisperRequest = new WhisperRequest
                 {
                     AudioFormat = AudioFormat.wav,
-                    Model = Model.Whisper_1,
+                    Model = WhisperModel.Whisper_1,
                     // WavUrl = $"data:audio/wav;base64,{request.Base64Audio}"
                 };
 
                 var whisperResponse = await OpenAiClient.ExecuteWhisperAsync(whisperRequest);
 
-                if(whisperResponse == null
-                    || !whisperResponse.Success
-                )
+                if(whisperResponse is not { Success: true } )
                 {
                     Logger.LogError("Whisper failed");
+                    SeriLogger.Error("Whisper failed");
 
                     response.Success = false;
                     response.Message = "Whisper failed";
@@ -253,6 +271,7 @@ namespace SocialButterflAi.Services.Analysis
                 if(string.IsNullOrWhiteSpace(whisperResponse.Text))
                 {
                     Logger.LogError("Whisper text is empty");
+                    SeriLogger.Error("Whisper text is empty");
 
                     response.Success = false;
                     response.Message = "Whisper text is empty";
@@ -301,11 +320,10 @@ namespace SocialButterflAi.Services.Analysis
 
                 var runCompletion = await aiResponse();
 
-                if(runCompletion == null
-                    || !runCompletion.Success
-                )
+                if(runCompletion is not { Success: true } )
                 {
                     Logger.LogError("Error running AI completion");
+                    SeriLogger.Error("Error running AI completion");
 
                     response.Success = false;
                     response.Message = "Error running AI completion";
@@ -314,6 +332,7 @@ namespace SocialButterflAi.Services.Analysis
                 }
 
                 Logger.LogInformation("Analysis completed");
+                SeriLogger.Information("Analysis completed");
 
                 response.Success = whisperResponse.Success;
                 response.Message = whisperResponse.Message;
@@ -324,7 +343,8 @@ namespace SocialButterflAi.Services.Analysis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error");
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
                 throw new Exception("Error", ex);
             }
         }
@@ -416,7 +436,8 @@ namespace SocialButterflAi.Services.Analysis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error");
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
                 throw new Exception("Error", ex);
             }
         }
@@ -445,9 +466,7 @@ namespace SocialButterflAi.Services.Analysis
                     outputAudioPath
                 );
 
-                if(audioResponse == null
-                    || !audioResponse.Success
-                )
+                if(audioResponse is not { Success: true } )
                 {
                     Logger.LogError("Error extracting audio");
                     response.Success = false;
@@ -478,7 +497,8 @@ namespace SocialButterflAi.Services.Analysis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error");
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
                 throw new Exception("Error", ex);
             }
         }
@@ -525,7 +545,8 @@ namespace SocialButterflAi.Services.Analysis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error");
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
                 throw new Exception("Error", ex);
             }
         }
@@ -577,7 +598,8 @@ namespace SocialButterflAi.Services.Analysis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error");
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
                 throw new Exception("Error", ex);
             }
         }
@@ -585,8 +607,29 @@ namespace SocialButterflAi.Services.Analysis
 
         #endregion
 
-        #region Database Methods
+        #region Entity/Database Methods
 
+        #region FindVideos
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="matchByStatement"></param>
+        /// <returns></returns>
+        private IEnumerable<VideoEntity> FindVideos(
+            Func<VideoEntity, bool> matchByStatement
+        )
+            => AnalysisDbContext
+                .Videos
+                .Include(v => v.Identity)
+                .Include(v => v.Chat)
+                    .ThenInclude(m => m.Members)
+                .Include(v => v.Captions)
+                    .ThenInclude(c => c.Analyses)
+                .Where(matchByStatement)
+                .ToArray();
+        #endregion
+        
         #region VideoDtoToEntity
         /// <remarks></remarks>
         /// <summary>
@@ -594,7 +637,7 @@ namespace SocialButterflAi.Services.Analysis
         ///</summary>
         /// <param name="Video"> </param>
         /// <returns></returns>
-        public VideoEntity VideoDtoToEntity(
+        private VideoEntity VideoDtoToEntity(
             VideoDto videoDto
         )
         {
@@ -603,6 +646,14 @@ namespace SocialButterflAi.Services.Analysis
                 var videoEntity = new VideoEntity
                 {
                     Id = videoDto.Id,
+                    IdentityId = videoDto.UploaderIdentityId,
+                    ChatId = videoDto.RelatedChatId,
+                    Title = videoDto.Title,
+                    Description = videoDto.Description,
+                    VideoUrl = videoDto.Url,
+                    VideoType = Enum.Parse<VideoType>($"{videoDto.Format}"),
+                    Duration = videoDto.Duration.TimeSpan,
+                    Captions = null,
                     CreatedBy = $"{videoDto.UploaderIdentityId}",
                     CreatedOn = DateTime.UtcNow,
                     ModifiedBy = $"{videoDto.UploaderIdentityId}",
@@ -629,14 +680,14 @@ namespace SocialButterflAi.Services.Analysis
         }
         #endregion
 
-        #region 🗺️ VideoEntityToDto 🗺️
+        #region VideoEntityToDto
         /// <remarks></remarks>
         /// <summary>
         ///
         ///</summary>
         /// <param name="VideoEntity"> </param>
         /// <returns></returns>
-        public VideoDto VideoEntityToDto(
+        private async Task<VideoDto> VideoEntityToDto(
             VideoEntity videoEntity
         )
         {
@@ -645,14 +696,29 @@ namespace SocialButterflAi.Services.Analysis
 
                 var videoDto = new VideoDto
                 {
+                    Id = videoEntity.Id,
+                    UploaderIdentityId = videoEntity.IdentityId,
+                    RelatedChatId = videoEntity.ChatId,
+                    Title = videoEntity.Title,
+                    Description = videoEntity.Description,
+                    Url = videoEntity.VideoUrl,
+                    Format = Enum.Parse<VideoFormat>($"{videoEntity.VideoType}"),
+                    FileStream = null,
+                    Duration = null
                 };
-
-                if (videoDto == null)
+                
+                var durationData = await GetDuration(videoDto.Url, null, null);
+                if (durationData == null
+                    || !durationData.Success
+                )
                 {
-                    Logger.LogError($"Error mapping ");
-                    SeriLogger.Error($"Error mapping ");
-                    throw new Exception($"Error mapping ");
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
                 }
+
+                videoDto.Duration = durationData.Data;
+                
                 Logger.LogTrace($"");
                 SeriLogger.Information($"");
 

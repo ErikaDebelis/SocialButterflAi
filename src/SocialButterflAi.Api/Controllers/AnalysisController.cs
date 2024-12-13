@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
@@ -8,10 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 using SocialButterflAi.Data.Identity;
+using SocialButterflAi.Data.Identity.Entities;
 using SocialButterflAi.Services.Analysis;
 
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.LLMIntegration;
+using SocialButterflAi.Services.CueCoach;
 
 namespace SocialButterflAi.Api.Controllers
 {
@@ -19,17 +22,20 @@ namespace SocialButterflAi.Api.Controllers
     [Route("[controller]")]
     public class AnalysisController : ControllerBase
     {
-        public ILogger<AnalysisController> Logger;
+        private ILogger<AnalysisController> Logger;
         private IdentityDbContext IdentityDbContext;
-        public IAnalysisService AnalysisService;
+        private IAnalysisService AnalysisService;
+        private ICueCoachService CueCoachService;
 
         public AnalysisController(
             IAnalysisService analysisService,
+            ICueCoachService cueCoachService,
             IdentityDbContext identityDbContext,
             ILogger<AnalysisController> logger
         )
         {
             AnalysisService = analysisService;
+            CueCoachService = cueCoachService;
             IdentityDbContext = identityDbContext;
             Logger = logger;
         }
@@ -49,6 +55,15 @@ namespace SocialButterflAi.Api.Controllers
         {
             try
             {
+                var identityName = HttpContext?.User?.Identity?.Name;
+
+                var identity = IdentityDbContext.Identities.SingleOrDefault(i => i.Email == identityName);
+                
+                var matchingChat = CueCoachService.FindChats(x =>
+                    x.Members.FirstOrDefault(m => m.Id == identity.Id) != null
+                    && x.Id == Guid.Parse(request.ChatId)
+                ).FirstOrDefault();
+                
                 if (file == null
                     || file.Length == 0
                 )
@@ -69,13 +84,16 @@ namespace SocialButterflAi.Api.Controllers
                 }
 
                 var uploadResponse = await AnalysisService.UploadAsync(
+                                                            identity.Id,
                                                             file,
-                                                            videoFormat
+                                                            videoFormat,
+                                                            matchingChat.Id,
+                                                            request.Title,
+                                                            request.Description
                                                         );
 
-                if (uploadResponse == null
-                    || !uploadResponse.Success
-                    || string.IsNullOrWhiteSpace(uploadResponse.VideoPath)
+                if (uploadResponse is not { Success: true }
+                    || string.IsNullOrWhiteSpace(uploadResponse.Data.VideoPath)
                 )
                 {
                     Logger.LogError("Upload was not successful");

@@ -8,5 +8,18 @@ namespace SocialButterflAi.Models.Analysis
         [JsonProperty("TransactionId")]
         [JsonPropertyName("TransactionId")]
         public string TransactionId { get; set; }
+        
+        [JsonProperty("ChatId")]
+        [JsonPropertyName("ChatId")]
+        public string? ChatId { get; set; }
+        
+        [JsonProperty("Title")]
+        [JsonPropertyName("Title")]
+        public string? Title { get; set; }
+        
+        [JsonProperty("Description")]
+        [JsonPropertyName("Description")]
+        public string? Description { get; set; }
+
     }
 }

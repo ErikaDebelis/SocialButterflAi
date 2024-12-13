@@ -132,6 +132,21 @@ namespace SocialButterflAi.Data.Chat
                 .HasMany(chat => chat.Messages)
                 .WithOne(msg => msg.Chat)
                 .HasForeignKey(p => p.ChatId);
+            
+            modelBuilder.Entity<Entities.Chat>()
+                .HasMany(model => model.Members)
+                .WithMany()
+                .UsingEntity<IdentityChat>(
+                    a => a
+                        .HasOne(ic => ic.Identity)
+                        .WithMany()
+                        .HasForeignKey(x => x.IdentityId),
+                    b => b
+                        .HasOne(ic => ic.Chat)
+                        .WithMany()
+                        .HasForeignKey(x => x.ChatId)
+                )
+                .HasKey(x => new { x.IdentityId, x.ChatId });
 
             modelBuilder.Entity<Message>()
                 .HasOne(msg => msg.ToIdentity)

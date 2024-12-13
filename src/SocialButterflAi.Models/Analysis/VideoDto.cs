@@ -19,6 +19,6 @@ namespace SocialButterflAi.Models.Analysis
         public string Url { get; set; }
         public VideoFormat Format { get; set; }
         public FileStream FileStream { get; set; }
-        public TimeSpan Duration { get; set; }
+        public DurationData Duration { get; set; }
     }
 }

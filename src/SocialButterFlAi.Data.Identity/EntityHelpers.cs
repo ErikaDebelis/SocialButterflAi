@@ -90,8 +90,8 @@ namespace SocialButterflAi.Data.Identity
                     }
                     // to store IEnumerable<EnumType> as strings in the database instead of ints
                     else if (propertyType.IsGenericType
-                            && propertyType.GetGenericTypeDefinition() == typeof(IEnumerable<>)
-                            && propertyType.GetGenericArguments()[0].IsEnum
+                        && propertyType.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+                        && propertyType.GetGenericArguments()[0].IsEnum
                     )
                     {
                         // get the generic type of the IEnumerable
