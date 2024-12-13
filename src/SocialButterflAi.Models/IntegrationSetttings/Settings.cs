@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.Integration
+namespace SocialButterflAi.Models.IntegrationSettings
 {
     public class Settings
     {

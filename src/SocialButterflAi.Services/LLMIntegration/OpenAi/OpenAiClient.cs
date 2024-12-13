@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SocialButterflAi.Models.Integration;
+using SocialButterflAi.Models.IntegrationSettings;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using SocialButterflAi.Models.LLMIntegration.OpenAi;

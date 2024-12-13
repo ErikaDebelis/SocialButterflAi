@@ -10,6 +10,6 @@ namespace SocialButterflAi.Models.LLMIntegration.OpenAi
     {
         [JsonProperty("content")]
         [JsonPropertyName("content")]
-        public IEnumerable<IContent>? Content { get; set; }
+        public new IEnumerable<IContent>? Content { get; set; }
     }
 }

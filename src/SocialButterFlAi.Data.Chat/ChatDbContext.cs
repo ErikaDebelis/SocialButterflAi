@@ -16,6 +16,7 @@ namespace SocialButterflAi.Data.Chat
 
         public DbSet<Chat.Entities.Chat> Chats { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<IdentityChat> IdentityChats { get; set; }
 
         private Dictionary<string, Guid> _Ids;
 
@@ -70,6 +71,20 @@ namespace SocialButterflAi.Data.Chat
                     ModifiedOn = DateTime.UtcNow,
                 }
             };
+            
+            var testIdentityChats = new List<IdentityChat>()
+            {
+                new ()
+                {
+                    IdentityId = _Ids["Identity1Id"],
+                    ChatId = _Ids["ChatId"],
+                },
+                new ()
+                {
+                    IdentityId = _Ids["Identity2Id"],
+                    ChatId = _Ids["ChatId"],
+                }
+            };
 
             // Add Identity Models (Dependencies) + Ignore Dependant Tables for Migration (they've already been added/created)
             IdentityDbContext.SetupModelNavigation(modelBuilder);
@@ -83,6 +98,9 @@ namespace SocialButterflAi.Data.Chat
 
             modelBuilder.Entity<Message>()
                 .HasData(testMessages);
+            
+            modelBuilder.Entity<IdentityChat>()
+                .HasData(testIdentityChats);
         }
         #endregion
 
@@ -100,9 +118,16 @@ namespace SocialButterflAi.Data.Chat
                     nameof(Chat),
                     t => t.ExcludeFromMigrations()
                 );
+            
             modelBuilder.Entity<Message>()
                 .ToTable(
                     nameof(Message),
+                    t => t.ExcludeFromMigrations()
+                );
+
+            modelBuilder.Entity<IdentityChat>()
+                .ToTable(
+                    nameof(IdentityChat),
                     t => t.ExcludeFromMigrations()
                 );
         }
@@ -120,13 +145,15 @@ namespace SocialButterflAi.Data.Chat
             //create the type variables for the entities
             var chatModelType = typeof(Entities.Chat);
             var messageType = typeof(Message);
+            var identityChatType = typeof(IdentityChat);
 
             //create the entity helper and pass in the model builder and the types and recurse to build the entities
             var entityHelper = new EntityHelper();
 
             entityHelper.EntityBuilder(modelBuilder, chatModelType, null);
             entityHelper.EntityBuilder(modelBuilder, messageType, null);
-
+            entityHelper.EntityBuilder(modelBuilder, identityChatType, null);
+            
             // Set up model relationships for navigation with keys and such
             modelBuilder.Entity<Entities.Chat>()
                 .HasMany(chat => chat.Messages)

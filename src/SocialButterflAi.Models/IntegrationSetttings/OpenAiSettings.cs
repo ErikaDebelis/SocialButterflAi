@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 
-namespace SocialButterflAi.Models.Integration
+namespace SocialButterflAi.Models.IntegrationSettings
 {
     public class OpenAiSettings
     {

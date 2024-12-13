@@ -6,7 +6,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SocialButterflAi.Models.LLMIntegration.Claude;
-using SocialButterflAi.Models.Integration;
+using SocialButterflAi.Models.IntegrationSettings;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 

@@ -1,24 +1,24 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 using SocialButterflAi.Data.Analysis;
 using SocialButterflAi.Services.LLMIntegration;
 using SocialButterflAi.Services.LLMIntegration.OpenAi;
 
 using SocialButterflAi.Models.Analysis;
-using SocialButterflAi.Models.Integration;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Data.Analysis.Entities;
+using SocialButterflAi.Models.IntegrationSettings;
 using SocialButterflAi.Models.LLMIntegration.Claude;
 using SocialButterflAi.Models.LLMIntegration.OpenAi;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
@@ -201,7 +201,8 @@ namespace SocialButterflAi.Services.Analysis
                     (v.Identity.Id == request.RequesterIdentityId 
                         || v.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null
                     )
-                    && v.VideoUrl == request.VideoPath).FirstOrDefault();
+                    && v.VideoUrl == request.VideoPath)
+                .FirstOrDefault();
 
                 if (matchingVideo is null)
                 {
@@ -290,7 +291,7 @@ namespace SocialButterflAi.Services.Analysis
                 {
                     ModelProvider.Claude => async () =>
                     {
-                        var claudeRequest = new AiRequest<ClaudeRequest>{ };
+                        var claudeRequest = new AiRequest<ClaudeRequest>();
                         claudeRequest.AiData.Messages = claudeRequest.AiData.Messages.Append(message);
 
                         var claudeResponse = await ClaudeClient.AiExecutionAsync<ClaudeRequest, ClaudeResponse>(claudeRequest);
@@ -304,7 +305,7 @@ namespace SocialButterflAi.Services.Analysis
                     },
                     ModelProvider.OpenAi => async () =>
                     {
-                        var openAiRequest = new AiRequest<OpenAiRequest>{ };
+                        var openAiRequest = new AiRequest<OpenAiRequest>();
 
                         var openAiResponse = await OpenAiClient.AiExecutionAsync<OpenAiRequest, OpenAiResponse>(openAiRequest);
 
@@ -352,7 +353,7 @@ namespace SocialButterflAi.Services.Analysis
 
         #endregion
 
-        #region Private/ Helper Methods
+        #region Private/Helper Methods
 
         #region Process Video File
         /// <summary>

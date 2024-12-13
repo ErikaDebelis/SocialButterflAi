@@ -13,7 +13,7 @@ using SocialButterflAi.Services.CueCoach;
 using SocialButterflAi.Services.Analysis;
 using SocialButterflAi.Services.LLMIntegration.Claude;
 using Microsoft.Extensions.Logging;
-using Settings = SocialButterflAi.Models.Integration.Settings;
+using Settings = SocialButterflAi.Models.IntegrationSettings.Settings;
 using SocialButterflAi.Services.LLMIntegration.OpenAi;
 using Microsoft.AspNetCore.Hosting;
 
