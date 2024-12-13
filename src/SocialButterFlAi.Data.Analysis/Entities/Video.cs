@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 
-using SocialButterFlAi.Data.Identity;
-using SocialButterFlAi.Data.Chat.Entities;
-using SocialButterFlAi.Data.Identity.Entities;
+using SocialButterflAi.Data.Identity;
+using SocialButterflAi.Data.Chat.Entities;
+using SocialButterflAi.Data.Identity.Entities;
 
-namespace SocialButterFlAi.Data.Analysis.Entities
+namespace SocialButterflAi.Data.Analysis.Entities
 {
     [PrimaryKey(nameof(Id))]
     [Table("Video")]
@@ -19,14 +19,14 @@ namespace SocialButterFlAi.Data.Analysis.Entities
         public Guid IdentityId { get; set; }
         public Identity.Entities.Identity Identity { get; set; }
 
-        public Guid ChatId { get; set; }
-        public Chat.Entities.Chat Chat { get; set; }
+        public Guid? ChatId { get; set; }
+        public Chat.Entities.Chat? Chat { get; set; }
 
         public string Title { get; set; }
         public string Description { get; set; }
         public string VideoUrl { get; set; }
         public VideoType VideoType { get; set; }
         public TimeSpan Duration { get; set; }
-        public List<EnhancedCaption> Captions { get; set; }
+        public List<EnhancedCaption>? Captions { get; set; }
     }
 }

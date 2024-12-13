@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Identity;
 
-namespace SocialButterFlAi.Data.Analysis.Entities
+namespace SocialButterflAi.Data.Analysis.Entities
 {
     [PrimaryKey(nameof(Id))]
     public class EnhancedCaption: BaseEntity

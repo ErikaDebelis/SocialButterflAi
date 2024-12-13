@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SocialButterFlAi.Data.Chat\SocialButterFlAi.Data.Chat.csproj" />
-        <ProjectReference Include="..\SocialButterFlAi.Data.Identity\SocialButterFlAi.Data.Identity.csproj" />
+        <ProjectReference Include="..\SocialButterflAi.Data.Chat\SocialButterflAi.Data.Chat.csproj" />
+        <ProjectReference Include="..\SocialButterflAi.Data.Identity\SocialButterflAi.Data.Identity.csproj" />
     </ItemGroup>
 </Project>

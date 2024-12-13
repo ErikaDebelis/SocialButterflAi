@@ -1,4 +1,4 @@
-namespace SocialButterFlAi.Data.Analysis.Entities
+namespace SocialButterflAi.Data.Analysis.Entities
 {
     public enum VideoType
     {

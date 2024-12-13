@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
 
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Identity;
 using MassTransit;
 using RabbitMQ.Client;
 

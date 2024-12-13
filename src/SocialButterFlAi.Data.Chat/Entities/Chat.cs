@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Identity;
 using System.Collections.Generic;
-namespace SocialButterFlAi.Data.Chat.Entities
+namespace SocialButterflAi.Data.Chat.Entities
 {
     [PrimaryKey(nameof(Id))]
     [Table("Chat")]

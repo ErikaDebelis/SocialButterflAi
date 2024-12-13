@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterFlAi.Data.Identity.Entities
+namespace SocialButterflAi.Data.Identity.Entities
 {
     public enum Gender
     {

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Identity;
 using SocialButterflAi.Services.Analysis;
 
 using SocialButterflAi.Models.Analysis;

@@ -1,4 +1,4 @@
-﻿namespace SocialButterFlAi.Data.Chat.Entities
+﻿namespace SocialButterflAi.Data.Chat.Entities
 {
     public enum ChatStatus
     {

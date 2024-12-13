@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Identity;
 
 #nullable disable
 
@@ -22,7 +22,7 @@ namespace SocialButterflAi.Data.Identity.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.Identity", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.Identity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -91,7 +91,7 @@ namespace SocialButterflAi.Data.Identity.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.Profile", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.Profile", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -161,7 +161,7 @@ namespace SocialButterflAi.Data.Identity.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.ProfilePronounChoice", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.ProfilePronounChoice", b =>
                 {
                     b.Property<Guid>("PronounChoiceId")
                         .HasColumnType("uuid");
@@ -188,7 +188,7 @@ namespace SocialButterflAi.Data.Identity.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.PronounChoice", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.PronounChoice", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -271,9 +271,9 @@ namespace SocialButterflAi.Data.Identity.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.Profile", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.Profile", b =>
                 {
-                    b.HasOne("SocialButterFlAi.Data.Identity.Entities.Identity", "Identity")
+                    b.HasOne("SocialButterflAi.Data.Identity.Entities.Identity", "Identity")
                         .WithMany()
                         .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -282,15 +282,15 @@ namespace SocialButterflAi.Data.Identity.Migrations
                     b.Navigation("Identity");
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.ProfilePronounChoice", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.ProfilePronounChoice", b =>
                 {
-                    b.HasOne("SocialButterFlAi.Data.Identity.Entities.Profile", "Profile")
+                    b.HasOne("SocialButterflAi.Data.Identity.Entities.Profile", "Profile")
                         .WithMany()
                         .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SocialButterFlAi.Data.Identity.Entities.PronounChoice", "PronounChoice")
+                    b.HasOne("SocialButterflAi.Data.Identity.Entities.PronounChoice", "PronounChoice")
                         .WithMany()
                         .HasForeignKey("PronounChoiceId")
                         .OnDelete(DeleteBehavior.Cascade)

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using SocialButterFlAi.Data.Chat;
+using SocialButterflAi.Data.Chat;
 
 #nullable disable
 
@@ -24,7 +24,7 @@ namespace SocialButterflAi.Data.Chat.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "hstore");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Chat.Entities.Chat", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Chat.Entities.Chat", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -66,7 +66,7 @@ namespace SocialButterflAi.Data.Chat.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Chat.Entities.Message", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Chat.Entities.Message", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -129,7 +129,7 @@ namespace SocialButterflAi.Data.Chat.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.Identity", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.Identity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -173,7 +173,7 @@ namespace SocialButterflAi.Data.Chat.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.Profile", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.Profile", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -228,7 +228,7 @@ namespace SocialButterflAi.Data.Chat.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.ProfilePronounChoice", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.ProfilePronounChoice", b =>
                 {
                     b.Property<Guid>("PronounChoiceId")
                         .HasColumnType("uuid");
@@ -246,7 +246,7 @@ namespace SocialButterflAi.Data.Chat.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.PronounChoice", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.PronounChoice", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -276,21 +276,21 @@ namespace SocialButterflAi.Data.Chat.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Chat.Entities.Message", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Chat.Entities.Message", b =>
                 {
-                    b.HasOne("SocialButterFlAi.Data.Chat.Entities.Chat", "Chat")
+                    b.HasOne("SocialButterflAi.Data.Chat.Entities.Chat", "Chat")
                         .WithMany("Messages")
                         .HasForeignKey("ChatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SocialButterFlAi.Data.Identity.Entities.Identity", "FromIdentity")
+                    b.HasOne("SocialButterflAi.Data.Identity.Entities.Identity", "FromIdentity")
                         .WithMany()
                         .HasForeignKey("FromIdentityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SocialButterFlAi.Data.Identity.Entities.Identity", "ToIdentity")
+                    b.HasOne("SocialButterflAi.Data.Identity.Entities.Identity", "ToIdentity")
                         .WithMany()
                         .HasForeignKey("ToIdentityId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -303,9 +303,9 @@ namespace SocialButterflAi.Data.Chat.Migrations
                     b.Navigation("ToIdentity");
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.Profile", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.Profile", b =>
                 {
-                    b.HasOne("SocialButterFlAi.Data.Identity.Entities.Identity", "Identity")
+                    b.HasOne("SocialButterflAi.Data.Identity.Entities.Identity", "Identity")
                         .WithMany()
                         .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -314,15 +314,15 @@ namespace SocialButterflAi.Data.Chat.Migrations
                     b.Navigation("Identity");
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Identity.Entities.ProfilePronounChoice", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Identity.Entities.ProfilePronounChoice", b =>
                 {
-                    b.HasOne("SocialButterFlAi.Data.Identity.Entities.Profile", "Profile")
+                    b.HasOne("SocialButterflAi.Data.Identity.Entities.Profile", "Profile")
                         .WithMany()
                         .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SocialButterFlAi.Data.Identity.Entities.PronounChoice", "PronounChoice")
+                    b.HasOne("SocialButterflAi.Data.Identity.Entities.PronounChoice", "PronounChoice")
                         .WithMany()
                         .HasForeignKey("PronounChoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -333,7 +333,7 @@ namespace SocialButterflAi.Data.Chat.Migrations
                     b.Navigation("PronounChoice");
                 });
 
-            modelBuilder.Entity("SocialButterFlAi.Data.Chat.Entities.Chat", b =>
+            modelBuilder.Entity("SocialButterflAi.Data.Chat.Entities.Chat", b =>
                 {
                     b.Navigation("Messages");
                 });

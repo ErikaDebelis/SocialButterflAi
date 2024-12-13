@@ -6,7 +6,7 @@ using SocialButterflAi.Models.LLMIntegration.TypedAnalysis;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class AnalysisResponse : BaseResponse
+    public class AnalysisData
     {
         [JsonProperty("Transcript")]
         [JsonPropertyName("Transcript")]

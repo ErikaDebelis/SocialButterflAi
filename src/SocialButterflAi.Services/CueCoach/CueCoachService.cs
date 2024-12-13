@@ -2,8 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-using SocialButterFlAi.Data.Chat;
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Chat;
+using SocialButterflAi.Data.Identity;
 
 using SocialButterflAi.Services.Analysis;
 

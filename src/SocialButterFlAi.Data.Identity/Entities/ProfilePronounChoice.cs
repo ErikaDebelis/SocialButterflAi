@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Identity;
 
-namespace SocialButterFlAi.Data.Identity.Entities
+namespace SocialButterflAi.Data.Identity.Entities
 {
     /// <summary>
     /// join table for Profile and PronounChoice

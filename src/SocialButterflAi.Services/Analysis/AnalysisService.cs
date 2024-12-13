@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 
-using SocialButterFlAi.Data.Analysis;
+using SocialButterflAi.Data.Analysis;
 using SocialButterflAi.Services.LLMIntegration;
 using SocialButterflAi.Services.LLMIntegration.OpenAi;
 
@@ -22,6 +22,8 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using Model = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
+using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
+using Serilog;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -36,7 +38,6 @@ namespace SocialButterflAi.Services.Analysis
         readonly Serilog.ILogger SeriLogger;
 
         private readonly IWebHostEnvironment _webHostEnvironment;
-        // private readonly MediaProcessor _mediaProcessor;
         private readonly string _uploadDirectory;
         private readonly string _processedDirectory;
         private readonly long _maxFileSize;
@@ -62,7 +63,6 @@ namespace SocialButterflAi.Services.Analysis
             SeriLogger = Serilog.Log.Logger;
 
             _webHostEnvironment = webHostEnvironment;
-            //_mediaProcessor = new MediaProcessor();
 
             _maxFileSize = long.Parse(configuration.VideoSettings.MaxFileSize);
             //Set up directories
@@ -91,24 +91,74 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<UploadResponse> UploadAsync(
+        public async Task<BaseResponse<UploadData>> UploadAsync(
+            Guid identityId,
             IFormFile file,
-            VideoFormat format
+            VideoFormat format,
+            Guid? relatedChatId,
+            string? videoTitle,
+            string? videoDescription = null
         )
         {
-            var response = new UploadResponse();
+            var response = new BaseResponse<UploadData>();
+            var videoDto = new VideoDto();
             try
             {
-                var fileName = $"{Guid.NewGuid()}.{format}";
+                var fileName = $"{videoTitle}:{Guid.NewGuid()}.{format}";
                 var filePath = Path.Combine(_uploadDirectory, fileName);
 
                 await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
+
+                    videoDto = new VideoDto
+                    {
+                        UploaderIdentityId = identityId,
+                        RelatedChatId = relatedChatId,
+                        Title = videoTitle,
+                        Description = videoDescription,
+                        Format = format,
+                        Url = filePath,
+                        FileStream = stream
+                    };
+                }
+                var durationData = await GetDuration(
+                    filePath,
+                    null,
+                    null
+                );
+
+                if(durationData == null
+                    || !durationData.Success
+                )
+                {
+                    Logger.LogError("Error getting video duration");
+                    SeriLogger.Error("Error getting video duration");
+                    response.Success = false;
+                    response.Message = "Error getting video duration";
+
+                    return response;
                 }
 
+                videoDto.Duration = durationData.Data.TimeSpan;
+
+                if (videoDto == null)
+                {
+                    Logger.LogError("Error uploading video");
+                    SeriLogger.Error("Error uploading video");
+                    response.Success = false;
+                    response.Message = "Error uploading video";
+
+                    return response;
+                }
+
+                var videoEntity = VideoDtoToEntity(videoDto);
+
+                Logger.LogInformation("Video uploaded successfully");
+                SeriLogger.Information("Video uploaded successfully");
+
                 response.Success = true;
-                response.VideoPath = filePath;
+                response.Data.VideoPath = filePath;
 
                 return response;
             }
@@ -128,12 +178,12 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<AnalysisResponse> AnalyzeAsync(
+        public async Task<BaseResponse<AnalysisData>> AnalyzeAsync(
             AnalysisDtoRequest request,
             ModelProvider modelProvider = ModelProvider.Claude
         )
         {
-            var response = new AnalysisResponse();
+            var response = new BaseResponse<AnalysisData>();
             try
             {
                 //use ffmpeg to extract audio from video file
@@ -142,44 +192,28 @@ namespace SocialButterflAi.Services.Analysis
                 //use ffmpeg to save gif from video with the same timestamp as the audio file
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
 
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = request.VideoPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                if (string.IsNullOrEmpty(request.EndTime))
-                {
-                    using var process = new Process { StartInfo = startInfo };
-                    process.Start();
-                    var output = await process.StandardError.ReadToEndAsync();
-                    await process.WaitForExitAsync();
+                var durationData = await GetDuration(
+                    request.VideoPath,
+                    request.StartTime,
+                    request.EndTime
+                );
 
-                    // Extract duration from FFmpeg output using regex
-                    if(string.IsNullOrWhiteSpace(request.EndTime))
-                    {
-                        var durationMatch = Regex.Match(output, @"Duration: (\d{2}:\d{2}:\d{2})");
+                if(durationData == null
+                    || !durationData.Success
+                )
+                {
+                    Logger.LogError("Error getting video duration");
+                    response.Success = false;
+                    response.Message = "Error getting video duration";
 
-                        if (!durationMatch.Success)
-                        {
-                            throw new Exception("Could not determine video duration");
-                        }
-                        request.EndTime = durationMatch.Groups[1].Value;
-                    }
-                    Console.WriteLine($"Video timeframe: {request.StartTime} - {request.EndTime}");
-                    // add the start and end time to the ProcessStartInfo arguments to extract the audio from the video
-                    startInfo.ArgumentList.Add($"-ss {request.StartTime}");
-                    startInfo.ArgumentList.Add($"-to {request.EndTime}");
-                    startInfo.ArgumentList.Add("-c copy"); // -c copy: copy codec
+                    return response;
                 }
 
                 var outputAudio = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.wav";
                 var outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.gif";
 
                 var processVideoResponse = await ProcessVideoFile(
-                                                startInfo,
+                                                durationData.Data.ProcessStartInfo,
                                                 outputAudio,
                                                 outputGif
                                             );
@@ -283,7 +317,7 @@ namespace SocialButterflAi.Services.Analysis
 
                 response.Success = whisperResponse.Success;
                 response.Message = whisperResponse.Message;
-                response.Transcript = whisperResponse.Text;
+                response.Data.Transcript = whisperResponse.Text;
                 // response.Conclusion = aiResponse.Content.FirstOrDefault().Text;
 
                 return response;
@@ -298,7 +332,7 @@ namespace SocialButterflAi.Services.Analysis
 
         #endregion
 
-        #region Private Methods
+        #region Private/ Helper Methods
 
         #region Process Video File
         /// <summary>
@@ -308,13 +342,101 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="outputAudioPath"></param>
         /// <param name="outputGifPath"></param>
         /// <returns></returns>
-        private async Task<BaseResponse> ProcessVideoFile(
+        private async Task<BaseResponse<DurationData>> GetDuration(
+            string inputVideoPath,
+            string? startTime,
+            string? endTime
+        )
+        {
+            var response = new BaseResponse<DurationData>();
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = inputVideoPath,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                if (!string.IsNullOrWhiteSpace(startTime))
+                {
+                    // Validate start time format
+                    if (!Regex.IsMatch(startTime, @"\d{2}:\d{2}:\d{2}"))
+                    {
+                        throw new Exception("Invalid start time format");
+                    }
+
+                    Console.WriteLine($"Video start time: {startTime}");
+
+                    // add the start time to the ProcessStartInfo arguments to extract the audio from the video
+                    startInfo.ArgumentList.Add($"-ss {startTime}");
+                }
+
+                using var process = new Process { StartInfo = startInfo };
+                process.Start();
+                var output = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                if (string.IsNullOrWhiteSpace(endTime))
+                {
+                    // Extract duration from FFmpeg output using regex
+                    var durationMatch = Regex.Match(output, @"Duration: (\d{2}:\d{2}:\d{2})");
+
+                    if (!durationMatch.Success)
+                    {
+                        Logger.LogError("Could not determine video duration");
+                        SeriLogger.Error("Could not determine video duration");
+                        response.Success = false;
+                        response.Message = "Could not determine video duration";
+
+                        return response;
+                    }
+                    endTime = durationMatch.Groups[1].Value;
+
+                    Console.WriteLine($"Video timeframe: {startTime} - {endTime}");
+                    // add the start and end time to the ProcessStartInfo arguments to extract the audio from the video
+                    startInfo.ArgumentList.Add($"-to {endTime}");
+                }
+                startInfo.ArgumentList.Add("-c copy"); // -c copy: copy codec
+
+                Logger.LogInformation("Duration extracted successfully!");
+                SeriLogger.Information("Duration extracted successfully!");
+
+                response.Success = true;
+                response.Message = "Duration extracted successfully!";
+                response.Data = new DurationData
+                {
+                    StartTime = startTime,
+                    EndTime = endTime
+                };
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
+        #region Process Video File
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inputVideoPath"></param>
+        /// <param name="outputAudioPath"></param>
+        /// <param name="outputGifPath"></param>
+        /// <returns></returns>
+        private async Task<BaseResponse<string>> ProcessVideoFile(
             ProcessStartInfo startInfo,
             string outputAudioPath,
             string outputGifPath
         )
         {
-            var response = new BaseResponse();
+            var response = new BaseResponse<string>();
             try
             {
                 // Extract audio to WAV
@@ -370,12 +492,12 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="outputPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<BaseResponse> ExtractAudioToWav(
+        private async Task<BaseResponse<string>> ExtractAudioToWav(
             ProcessStartInfo startInfo,
             string outputPath
         )
         {
-            var response = new BaseResponse();
+            var response = new BaseResponse<string>();
             try
             {
                 startInfo.ArgumentList.Add("-vn"); //-vn: no video
@@ -417,12 +539,12 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="outputPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<BaseResponse> CreateSynchronizedGif(
+        private async Task<BaseResponse<string?>> CreateSynchronizedGif(
             ProcessStartInfo startInfo,
             string outputPath
         )
         {
-            var response = new BaseResponse();
+            var response = new BaseResponse<string?>();
             try
             {
                 // FFmpeg command to create GIF with same duration as video
@@ -457,6 +579,90 @@ namespace SocialButterflAi.Services.Analysis
             {
                 Logger.LogError(ex, "Error");
                 throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Database Methods
+
+        #region VideoDtoToEntity
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="Video"> </param>
+        /// <returns></returns>
+        public VideoEntity VideoDtoToEntity(
+            VideoDto videoDto
+        )
+        {
+            try
+            {
+                var videoEntity = new VideoEntity
+                {
+                    Id = videoDto.Id,
+                    CreatedBy = $"{videoDto.UploaderIdentityId}",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedBy = $"{videoDto.UploaderIdentityId}",
+                    ModifiedOn = DateTime.UtcNow
+                };
+
+                if(videoEntity == null)
+                {
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
+                }
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return videoEntity;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region 🗺️ VideoEntityToDto 🗺️
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="VideoEntity"> </param>
+        /// <returns></returns>
+        public VideoDto VideoEntityToDto(
+            VideoEntity videoEntity
+        )
+        {
+            try
+            {
+
+                var videoDto = new VideoDto
+                {
+                };
+
+                if (videoDto == null)
+                {
+                    Logger.LogError($"Error mapping ");
+                    SeriLogger.Error($"Error mapping ");
+                    throw new Exception($"Error mapping ");
+                }
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return videoDto;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
             }
         }
         #endregion

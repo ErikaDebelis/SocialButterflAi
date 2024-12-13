@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SocialButterFlAi.Data.Identity\SocialButterFlAi.Data.Identity.csproj" />
+        <ProjectReference Include="..\SocialButterflAi.Data.Identity\SocialButterflAi.Data.Identity.csproj" />
     </ItemGroup>
 
 </Project>

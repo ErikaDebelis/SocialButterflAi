@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Microsoft.EntityFrameworkCore;
 
-namespace SocialButterFlAi.Data.Identity
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+namespace SocialButterflAi.Data.Identity
 {
     public class EntityHelper
     {
@@ -36,19 +37,19 @@ namespace SocialButterFlAi.Data.Identity
                     var allProps = currentType.GetProperties();
                     var dbProperties = allProps
                         .Where(p => p.PropertyType.IsSubclassOf(typeof(BaseEntity)))
-                        .Select((p => p.PropertyType));
+                        .Select(p => p.PropertyType);
 
-                    // Add the IEnumerable<BaseEntityType> as BaseEntityType
-                    var dbPropertiesWEnumerables = dbProperties.Concat(
-                        allProps
-                            .Where(t => t.PropertyType.IsGenericType
+                    // Add the IEnumerable<BaseEntityType> as a BaseEntityType
+                    var dbPropertiesWEnumerables = dbProperties
+                            .Concat(allProps
+                                .Where(t => t.PropertyType.IsGenericType
                                         && t.PropertyType.GetGenericTypeDefinition() == typeof(IEnumerable<>)
-                            )
+                                )
                             .Select(t => t.PropertyType.GetGenericArguments()[0])// get the generic type of the IEnumerable
                             .Where(p => !p.FullName.Contains("System")) // exclude system types like string, int, etc. leave only custom types defined in the project
                     ).ToArray();
 
-                    AdjustProperty(modelBuilder, parentType, currentType);
+                    AdjustProperty(modelBuilder, currentType);
 
                     _TypeNames.Add(currentType);
 
@@ -66,17 +67,15 @@ namespace SocialButterFlAi.Data.Identity
         /// 
         /// </summary>
         /// <param name="builder"></param>
-        /// <param name="parentType"></param>
         /// <param name="baseType"></param>
         public void AdjustProperty(
             ModelBuilder builder,
-            Type parentType,
-            Type baseType
+            Type currentType
         )
         {
             try
             {
-                var props = baseType.GetProperties();
+                var props = currentType.GetProperties();
                 // for each property, add the configuration for the property type
                 props.ToList().ForEach(pi =>
                 {
@@ -85,7 +84,7 @@ namespace SocialButterFlAi.Data.Identity
                     //to store enums as strings in the database instead of ints
                     if (propertyType.IsEnum)
                     {
-                        builder.Entity(baseType)
+                        builder.Entity(currentType)
                             .Property(pi.Name) //property name
                             .HasConversion<string>(); // convert to string
                     }
@@ -95,9 +94,18 @@ namespace SocialButterFlAi.Data.Identity
                             && propertyType.GetGenericArguments()[0].IsEnum
                     )
                     {
-                        // var enumType = propertyType.GetGenericArguments()[0];
+                        // get the generic type of the IEnumerable
+                        var enumType = propertyType.GetGenericArguments()[0];
+
+                        var converter = new ValueConverter<IEnumerable<object>, IEnumerable<string>>(
+                            v => v.Select(e => $"{e}"), // convert IEnumerable<EnumType> to IEnumerable<string>
+                            v => v.Select(e => Enum.Parse(enumType, e)) // convert IEnumerable<string> to IEnumerable<EnumType>
+                        );
+
+                        builder.Entity(currentType)
+                            .Property(pi.Name)
+                            .HasConversion(converter);
                     }
-                    // Add additional type converters here if we need to
                 });
             }
             catch (Exception ex)

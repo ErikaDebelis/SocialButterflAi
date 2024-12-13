@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-using SocialButterFlAi.Data.Identity;
-using SocialButterFlAi.Data.Identity.Entities;
+using SocialButterflAi.Data.Identity;
+using SocialButterflAi.Data.Identity.Entities;
 
-namespace SocialButterFlAi.Data.Identity
+namespace SocialButterflAi.Data.Identity
 {
     public class IdentityDbContext : DbContext
     {

@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using SocialButterFlAi.Data.Chat;
-using SocialButterFlAi.Data.Identity;
-using SocialButterFlAi.Data.Analysis;
+using SocialButterflAi.Data.Chat;
+using SocialButterflAi.Data.Identity;
+using SocialButterflAi.Data.Analysis;
 using SocialButterflAi.Services.CueCoach;
 using SocialButterflAi.Services.Analysis;
 using SocialButterflAi.Services.LLMIntegration.Claude;

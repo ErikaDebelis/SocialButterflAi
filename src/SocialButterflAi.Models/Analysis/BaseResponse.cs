@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class BaseResponse
+    public class BaseResponse<T>
     {
         [JsonProperty("Success")]
         [JsonPropertyName("Success")]
@@ -12,5 +12,9 @@ namespace SocialButterflAi.Models.Analysis
         [JsonProperty("Message")]
         [JsonPropertyName("Message")]
         public string Message { get; set; }
+
+        [JsonProperty("Data")]
+        [JsonPropertyName("Data")]
+        public T Data { get; set; }
     }
 }

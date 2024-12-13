@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-using SocialButterFlAi.Data.Identity;
-using SocialButterFlAi.Data.Chat.Entities;
+using SocialButterflAi.Data.Identity;
+using SocialButterflAi.Data.Chat.Entities;
 
-namespace SocialButterFlAi.Data.Chat
+namespace SocialButterflAi.Data.Chat
 {
     public class ChatDbContext : DbContext
     {

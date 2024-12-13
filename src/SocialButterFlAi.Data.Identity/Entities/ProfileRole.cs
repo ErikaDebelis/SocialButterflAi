@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
-namespace SocialButterFlAi.Data.Identity.Entities
+namespace SocialButterflAi.Data.Identity.Entities
 {
     public enum ProfileRole
     {

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Identity;
 
-namespace SocialButterFlAi.Data.Identity.Entities
+namespace SocialButterflAi.Data.Identity.Entities
 {
     [PrimaryKey(nameof(Id))]
     [Table("Identity")]

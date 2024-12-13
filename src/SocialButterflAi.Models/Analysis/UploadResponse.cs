@@ -5,7 +5,7 @@ using SocialButterflAi.Models.LLMIntegration.Claude;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class UploadResponse : BaseResponse
+    public class UploadData
     {
         [JsonProperty("VideoPath")]
         [JsonPropertyName("VideoPath")]

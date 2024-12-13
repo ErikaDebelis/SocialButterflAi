@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-using SocialButterFlAi.Data.Chat;
-using SocialButterFlAi.Data.Identity;
-using SocialButterFlAi.Data.Identity;
+using SocialButterflAi.Data.Chat;
+using SocialButterflAi.Data.Identity;
+using SocialButterflAi.Data.Identity;
 
-using SocialButterFlAi.Data.Analysis.Entities;
+using SocialButterflAi.Data.Analysis.Entities;
 
-namespace SocialButterFlAi.Data.Analysis
+namespace SocialButterflAi.Data.Analysis
 {
     public class AnalysisDbContext : DbContext
     {

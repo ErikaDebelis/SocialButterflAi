@@ -22,9 +22,13 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public Task<UploadResponse> UploadAsync(
+        public Task<BaseResponse<UploadData>> UploadAsync(
+            Guid identityId,
             IFormFile file,
-            VideoFormat format
+            VideoFormat format,
+            Guid? relatedChatId,
+            string? title,
+            string? description
         );
 
         /// <summary>
@@ -32,7 +36,7 @@ namespace SocialButterflAi.Services.Analysis
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public Task<AnalysisResponse> AnalyzeAsync(
+        public Task<BaseResponse<AnalysisData>> AnalyzeAsync(
             AnalysisDtoRequest request,
             ModelProvider modelProvider
         );

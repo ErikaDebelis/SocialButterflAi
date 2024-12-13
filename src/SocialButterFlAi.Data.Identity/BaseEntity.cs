@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SocialButterFlAi.Data.Identity
+namespace SocialButterflAi.Data.Identity
 {
     /// <summary>
     /// the core entity that all other entities inherit from. standard audit fields and id
