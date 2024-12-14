@@ -111,27 +111,32 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var fileName = $"{videoTitle}:{Guid.NewGuid()}.{format}";
                 var filePath = Path.Combine(_uploadDirectory, fileName);
+                var base64Audio = string.Empty;
 
-                await using (var stream = new FileStream(filePath, FileMode.Create))
+                using (var memoryStream = new MemoryStream())
                 {
-                    await file.CopyToAsync(stream);
-
-                    videoDto = new VideoDto
-                    {
-                        UploaderIdentityId = identityId,
-                        RelatedChatId = relatedChatId,
-                        Title = videoTitle,
-                        Description = videoDescription,
-                        Format = format,
-                        Url = filePath,
-                        FileStream = stream
-                    };
+                    await file.OpenReadStream().CopyToAsync(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
+                    base64Audio = Convert.ToBase64String(fileBytes);
                 }
+
+                videoDto = new VideoDto
+                {
+                    UploaderIdentityId = identityId,
+                    RelatedChatId = relatedChatId,
+                    Title = videoTitle,
+                    Description = videoDescription,
+                    Format = format,
+                    Url = filePath,
+                    FileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read),
+                    Base64Audio = base64Audio
+                };
+
                 var durationData = await GetDuration(
-                                                    filePath,
-                                                    null,
-                                                    null
-                                                );
+                                            filePath,
+                                            null,
+                                            null
+                                        );
 
                 if(durationData is not { Success: true } )
                 {
@@ -198,7 +203,7 @@ namespace SocialButterflAi.Services.Analysis
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
                 
                 var matchingVideo = FindVideos(v =>
-                    (v.Identity.Id == request.RequesterIdentityId 
+                    (v.Identity.Id == request.RequesterIdentityId
                         || v.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null
                     )
                     && v.VideoUrl == request.VideoPath)
@@ -215,10 +220,10 @@ namespace SocialButterflAi.Services.Analysis
                 }
                 
                 var durationData = await GetDuration(
-                                            request.VideoPath,
-                                            request.StartTime,
-                                            request.EndTime
-                                        );
+                                    request.VideoPath,
+                                    request.StartTime,
+                                    request.EndTime
+                                );
 
                 if(durationData is not { Success: true } )
                 {
@@ -355,7 +360,7 @@ namespace SocialButterflAi.Services.Analysis
 
         #region Private/Helper Methods
 
-        #region Process Video File
+        #region Get Duration
         /// <summary>
         /// 
         /// </summary>
@@ -536,7 +541,24 @@ namespace SocialButterflAi.Services.Analysis
 
                         return response;
                     }
+
                 }
+                //wip: fix this- done during upload rn but also my need to happen outside of upload
+                    //this is bc only certain parts of the video will be analyzed so we need to extract the audio for that part only
+
+
+                //save the audio file as a base64 string
+                // byte[] fileBytes;
+                // await using (var memoryStream = new MemoryStream())
+                // {
+                //     await using (var fileStream = new FileStream(outputPath, FileMode.Open, FileAccess.Read))
+                //     {
+                //         await fileStream.CopyToAsync(memoryStream);
+                //     }
+                //     fileBytes = memoryStream.ToArray();
+                // }
+
+                // var base64Audio = Convert.ToBase64String(fileBytes);
                 Console.WriteLine("Audio extracted successfully!");
 
                 response.Success = true;
@@ -653,6 +675,7 @@ namespace SocialButterflAi.Services.Analysis
                     Description = videoDto.Description,
                     VideoUrl = videoDto.Url,
                     VideoType = Enum.Parse<VideoType>($"{videoDto.Format}"),
+                    Base64Audio = videoDto.Base64Audio,
                     Duration = videoDto.Duration.TimeSpan,
                     Captions = null,
                     CreatedBy = $"{videoDto.UploaderIdentityId}",
@@ -703,6 +726,7 @@ namespace SocialButterflAi.Services.Analysis
                     Title = videoEntity.Title,
                     Description = videoEntity.Description,
                     Url = videoEntity.VideoUrl,
+                    Base64Audio = videoEntity.Base64Audio,
                     Format = Enum.Parse<VideoFormat>($"{videoEntity.VideoType}"),
                     FileStream = null,
                     Duration = null
