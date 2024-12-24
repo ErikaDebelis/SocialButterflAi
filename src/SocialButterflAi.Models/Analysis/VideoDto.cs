@@ -19,7 +19,7 @@ namespace SocialButterflAi.Models.Analysis
         public string Url { get; set; }
         public VideoFormat Format { get; set; }
         public FileStream FileStream { get; set; }
-        public string Base64Audio { get; set; }
+        public string Base64 { get; set; }
         public DurationData Duration { get; set; }
     }
 }

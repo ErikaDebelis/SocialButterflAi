@@ -17,6 +17,7 @@ using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.Analysis;
+using Serilog;
 
 namespace SocialButterflAi.Services.CueCoach
 {
@@ -86,6 +87,31 @@ namespace SocialButterflAi.Services.CueCoach
                 //analyze msg (optional)
                 if(toAnalyze)
                 {
+                    if(msg.MessageType == MessageType.Video)
+                    {
+                        var uploadResponse = await AnalysisService.UploadAsync(
+                                                identityId: msg.FromIdentityId,
+                                                relatedChatId: msg.ChatId,
+                                                relatedMessageId: msg.Id,
+                                                base64Video: msg.Text
+                                            );
+
+                        if(uploadResponse == null
+                            ||!uploadResponse.Success
+                        )
+                        {
+                            Logger.LogError($"failed to upload video");
+                            SeriLogger.Error($"failed to upload video");
+                            response.Success = false;
+                            response.Message = $"failed to upload video";
+                            response.Data = null;
+
+                            return response;
+                        }
+                        Logger.LogInformation($"Video uploaded successfully");
+                        SeriLogger.Information($"Video uploaded successfully");
+                    }
+
                     var analysisResponse = new BaseResponse<AnalysisData>(); //await AnalysisService();
 
                     if(analysisResponse == null

@@ -90,47 +90,35 @@ namespace SocialButterflAi.Services.Analysis
         /// 
         /// </summary>
         /// <param name="identityId"></param>
-        /// <param name="file"></param>
-        /// <param name="format"></param>
         /// <param name="relatedChatId"></param>
-        /// <param name="videoTitle"></param>
-        /// <param name="videoDescription"></param>
+        /// <param name="relatedMessageId"></param>
+        /// <param name="base64Video"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<UploadData>> UploadAsync(
             Guid identityId,
-            IFormFile file,
-            VideoFormat format,
-            Guid? relatedChatId,
-            string? videoTitle,
-            string? videoDescription = null
+            Guid relatedChatId,
+            Guid relatedMessageId,
+            string base64Video
         )
         {
             var response = new BaseResponse<UploadData>();
             var videoDto = new VideoDto();
             try
             {
-                var fileName = $"{videoTitle}:{Guid.NewGuid()}.{format}";
+                var fileName = $"{Guid.NewGuid()}.{VideoFormat.mp4}";
                 var filePath = Path.Combine(_uploadDirectory, fileName);
-                var base64Audio = string.Empty;
-
-                using (var memoryStream = new MemoryStream())
-                {
-                    await file.OpenReadStream().CopyToAsync(memoryStream);
-                    var fileBytes = memoryStream.ToArray();
-                    base64Audio = Convert.ToBase64String(fileBytes);
-                }
 
                 videoDto = new VideoDto
                 {
                     UploaderIdentityId = identityId,
                     RelatedChatId = relatedChatId,
-                    Title = videoTitle,
-                    Description = videoDescription,
-                    Format = format,
+                    Title = $"Video{relatedMessageId}",
+                    Description = "",
+                    Format = VideoFormat.mp4,
                     Url = filePath,
                     FileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read),
-                    Base64Audio = base64Audio
+                    Base64 = base64Video
                 };
 
                 var durationData = await GetDuration(
@@ -162,6 +150,105 @@ namespace SocialButterflAi.Services.Analysis
 
                     return response;
                 }
+
+                AnalysisDbContext.Videos.Add(videoEntity);
+                await AnalysisDbContext.SaveChangesAsync();
+
+                Logger.LogInformation("Video uploaded successfully");
+                SeriLogger.Information("Video uploaded successfully");
+
+                response.Success = true;
+                response.Data.VideoPath = filePath;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="identityId"></param>
+        /// <param name="file"></param>
+        /// <param name="format"></param>
+        /// <param name="relatedChatId"></param>
+        /// <param name="videoTitle"></param>
+        /// <param name="videoDescription"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<UploadData>> UploadAsync(
+            Guid identityId,
+            IFormFile file,
+            VideoFormat format,
+            Guid? relatedChatId,
+            string? videoTitle,
+            string? videoDescription = null
+        )
+        {
+            var response = new BaseResponse<UploadData>();
+            var videoDto = new VideoDto();
+            try
+            {
+                var fileName = $"{videoTitle}:{Guid.NewGuid()}.{format}";
+                var filePath = Path.Combine(_uploadDirectory, fileName);
+                var base64 = string.Empty;
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    await file.OpenReadStream().CopyToAsync(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
+                    base64 = Convert.ToBase64String(fileBytes);
+                }
+
+                videoDto = new VideoDto
+                {
+                    UploaderIdentityId = identityId,
+                    RelatedChatId = relatedChatId,
+                    Title = videoTitle,
+                    Description = videoDescription,
+                    Format = format,
+                    Url = filePath,
+                    FileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read),
+                    Base64 = base64
+                };
+
+                var durationData = await GetDuration(
+                                            filePath,
+                                            null,
+                                            null
+                                        );
+
+                if(durationData is not { Success: true } )
+                {
+                    Logger.LogError("Error getting video duration");
+                    SeriLogger.Error("Error getting video duration");
+                    response.Success = false;
+                    response.Message = "Error getting video duration";
+
+                    return response;
+                }
+
+                videoDto.Duration = durationData.Data;
+
+                var videoEntity = VideoDtoToEntity(videoDto);
+
+                if (videoEntity == null)
+                {
+                    Logger.LogError("Error uploading video");
+                    SeriLogger.Error("Error uploading video");
+                    response.Success = false;
+                    response.Message = "Error uploading video";
+
+                    return response;
+                }
+
+                AnalysisDbContext.Videos.Add(videoEntity);
+                await AnalysisDbContext.SaveChangesAsync();
 
                 Logger.LogInformation("Video uploaded successfully");
                 SeriLogger.Information("Video uploaded successfully");
@@ -676,7 +763,7 @@ namespace SocialButterflAi.Services.Analysis
                     Description = videoDto.Description,
                     VideoUrl = videoDto.Url,
                     VideoType = Enum.Parse<VideoType>($"{videoDto.Format}"),
-                    Base64Audio = videoDto.Base64Audio,
+                    Base64 = videoDto.Base64,
                     Duration = videoDto.Duration.TimeSpan,
                     Captions = null,
                     CreatedBy = $"{videoDto.UploaderIdentityId}",
@@ -727,7 +814,7 @@ namespace SocialButterflAi.Services.Analysis
                     Title = videoEntity.Title,
                     Description = videoEntity.Description,
                     Url = videoEntity.VideoUrl,
-                    Base64Audio = videoEntity.Base64Audio,
+                    Base64 = videoEntity.Base64,
                     Format = Enum.Parse<VideoFormat>($"{videoEntity.VideoType}"),
                     FileStream = null,
                     Duration = null
