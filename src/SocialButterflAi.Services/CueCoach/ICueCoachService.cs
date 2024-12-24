@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
+using SocialButterflAi.Models;
+using SocialButterflAi.Models.CueCoach;
 
 namespace SocialButterflAi.Services.CueCoach
 {
@@ -14,9 +16,11 @@ namespace SocialButterflAi.Services.CueCoach
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public Task<object> ProcessMessageAsync(
+        public Task<BaseResponse<MessageData>> ProcessMessageAsync(
+            Message msg,
+            bool toAnalyze = false
         );
-        
+
         #region FindChats
         /// <remarks></remarks>
         /// <summary>

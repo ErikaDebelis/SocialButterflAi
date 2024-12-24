@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.Analysis
+namespace SocialButterflAi.Models
 {
     public class BaseResponse<T>
     {

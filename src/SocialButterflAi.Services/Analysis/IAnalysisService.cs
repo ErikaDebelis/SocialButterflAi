@@ -10,6 +10,7 @@ using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using Microsoft.AspNetCore.Http;
 using SocialButterflAi.Models.LLMIntegration;
+using SocialButterflAi.Models;
 
 namespace SocialButterflAi.Services.Analysis
 {

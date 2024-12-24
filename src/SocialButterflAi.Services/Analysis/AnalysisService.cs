@@ -26,6 +26,7 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
+using SocialButterflAi.Models;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -201,7 +202,7 @@ namespace SocialButterflAi.Services.Analysis
 
                 //use ffmpeg to save gif from video with the same timestamp as the audio file
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
-                
+
                 var matchingVideo = FindVideos(v =>
                     (v.Identity.Id == request.RequesterIdentityId
                         || v.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null
@@ -218,7 +219,7 @@ namespace SocialButterflAi.Services.Analysis
 
                     return response;
                 }
-                
+
                 var durationData = await GetDuration(
                                     request.VideoPath,
                                     request.StartTime,
@@ -652,7 +653,7 @@ namespace SocialButterflAi.Services.Analysis
                 .Where(matchByStatement)
                 .ToArray();
         #endregion
-        
+
         #region VideoDtoToEntity
         /// <remarks></remarks>
         /// <summary>
