@@ -277,13 +277,13 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<AnalysisData>> AnalyzeAsync(
-            AnalysisDtoRequest request,
-            ModelProvider modelProvider = ModelProvider.Claude
+            AnalysisDtoRequest request
         )
         {
             var response = new BaseResponse<AnalysisData>();
             try
             {
+                var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
                 //use ffmpeg to extract audio from video file
                 //and save it as a wav file
 
@@ -740,6 +740,10 @@ namespace SocialButterflAi.Services.Analysis
                 .Where(matchByStatement)
                 .ToArray();
         #endregion
+
+        #endregion
+
+        #region Mappers
 
         #region VideoDtoToEntity
         /// <remarks></remarks>

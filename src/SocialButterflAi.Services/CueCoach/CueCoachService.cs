@@ -29,6 +29,7 @@ namespace SocialButterflAi.Services.CueCoach
         private ChatDbContext ChatDbContext;
         private ILogger<ICueCoachService> Logger;
         readonly Serilog.ILogger SeriLogger;
+        private const Models.LLMIntegration.ModelProvider _modelProvider = Models.LLMIntegration.ModelProvider.Claude;
         #endregion
 
         #region Constructor
@@ -49,17 +50,17 @@ namespace SocialButterflAi.Services.CueCoach
 
         #region Public/Main Methods
 
-        #region NewMethodAsync
+        #region ProcessMessageAsync
         /// <summary>
-        ///
+        /// 
         /// </summary>
-        /// <param name="request"></param>
-        /// <param name="file"></param>
+        /// <param name="msg"></param>
+        /// <param name="toAnalyze"></param>
         /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<MessageData>> ProcessMessageAsync(
             Message msg,
+            Guid transactionId,
             bool toAnalyze = false
         )
         {
@@ -87,9 +88,10 @@ namespace SocialButterflAi.Services.CueCoach
                 //analyze msg (optional)
                 if(toAnalyze)
                 {
+                    var uploadResponse = new BaseResponse<UploadData>();
                     if(msg.MessageType == MessageType.Video)
                     {
-                        var uploadResponse = await AnalysisService.UploadAsync(
+                        uploadResponse = await AnalysisService.UploadAsync(
                                                 identityId: msg.FromIdentityId,
                                                 relatedChatId: msg.ChatId,
                                                 relatedMessageId: msg.Id,
@@ -97,7 +99,7 @@ namespace SocialButterflAi.Services.CueCoach
                                             );
 
                         if(uploadResponse == null
-                            ||!uploadResponse.Success
+                            || !uploadResponse.Success
                         )
                         {
                             Logger.LogError($"failed to upload video");
@@ -112,7 +114,18 @@ namespace SocialButterflAi.Services.CueCoach
                         SeriLogger.Information($"Video uploaded successfully");
                     }
 
-                    var analysisResponse = new BaseResponse<AnalysisData>(); //await AnalysisService();
+                    var analysisRequest = new AnalysisDtoRequest()
+                    {
+                        RequesterIdentityId = msg.FromIdentityId,
+                        ModelProvider = $"{_modelProvider}",
+                        TransactionId = $"{transactionId}",
+                        VideoPath = uploadResponse.Data.VideoPath,
+                        // StartTime = ,
+                        // EndTime = ,
+                        // InitialUserPerception = ,
+                    };
+
+                    var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
 
                     if(analysisResponse == null
                         ||!analysisResponse.Success

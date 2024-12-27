@@ -39,6 +39,6 @@ namespace SocialButterflAi.Models.Analysis
         /// </summary>
         [JsonProperty("InitialUserPerception")]
         [JsonPropertyName("InitialUserPerception")]
-        public string InitialUserPerception { get; set; }
+        public string? InitialUserPerception { get; set; }
     }
 }

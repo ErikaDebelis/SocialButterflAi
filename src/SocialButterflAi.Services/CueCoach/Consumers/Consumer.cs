@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Caching.Distributed;
 
 using Serilog;
 using Serilog.Core;
+using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Models.CueCoach.Contracts;
 using SocialButterflAi.Services.CueCoach;
 namespace CueCoach.Consumers
@@ -74,10 +76,15 @@ namespace CueCoach.Consumers
             }
 
             var transactionId = messageContractContext.Message.TransactionId;
+            var msg = JsonSerializer.Deserialize<Message>(messageContractContext.Message.Body);
             try
             {
                 //continue here
-                // var response = await CueCoachService.ProcessMessageAsync();
+                var response = await CueCoachService.ProcessMessageAsync(
+                    msg,
+                    transactionId,
+                    true
+                );
             }
             catch (Exception ex)
             {

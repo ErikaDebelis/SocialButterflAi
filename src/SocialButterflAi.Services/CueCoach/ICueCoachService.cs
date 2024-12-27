@@ -18,6 +18,7 @@ namespace SocialButterflAi.Services.CueCoach
         /// <exception cref="Exception"></exception>
         public Task<BaseResponse<MessageData>> ProcessMessageAsync(
             Message msg,
+            Guid transactionId,
             bool toAnalyze = false
         );
 
