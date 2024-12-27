@@ -56,5 +56,15 @@ namespace SocialButterflAi.Services.Analysis
         public Task<BaseResponse<AnalysisData>> AnalyzeAsync(
             AnalysisDtoRequest request
         );
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public Task<BaseResponse<AnalysisData>> RunAiAnalyzeAsync(
+            Message message,
+            ModelProvider modelProvider
+        );
     }
 }

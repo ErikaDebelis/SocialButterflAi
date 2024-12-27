@@ -86,17 +86,17 @@ namespace SocialButterflAi.Services.CueCoach
                 response.Data.Message = savedMsgResponse.Data;
 
                 //analyze msg (optional)
-                if(toAnalyze)
+
+                Func<Task<BaseResponse<AnalysisData>>> analyze = (toAnalyze, msg.MessageType) switch
                 {
-                    var uploadResponse = new BaseResponse<UploadData>();
-                    if(msg.MessageType == MessageType.Video)
+                    (true, MessageType.Video) => async () =>
                     {
-                        uploadResponse = await AnalysisService.UploadAsync(
-                                                identityId: msg.FromIdentityId,
-                                                relatedChatId: msg.ChatId,
-                                                relatedMessageId: msg.Id,
-                                                base64Video: msg.Text
-                                            );
+                        var uploadResponse = await AnalysisService.UploadAsync(
+                                            identityId: msg.FromIdentityId,
+                                            relatedChatId: msg.ChatId,
+                                            relatedMessageId: msg.Id,
+                                            base64Video: msg.Text
+                                        );
 
                         if(uploadResponse == null
                             || !uploadResponse.Success
@@ -107,40 +107,91 @@ namespace SocialButterflAi.Services.CueCoach
                             response.Success = false;
                             response.Message = $"failed to upload video";
                             response.Data = null;
-
-                            return response;
                         }
                         Logger.LogInformation($"Video uploaded successfully");
                         SeriLogger.Information($"Video uploaded successfully");
-                    }
 
-                    var analysisRequest = new AnalysisDtoRequest()
+                        var analysisRequest = new AnalysisDtoRequest()
+                        {
+                            RequesterIdentityId = msg.FromIdentityId,
+                            ModelProvider = $"{_modelProvider}",
+                            TransactionId = $"{transactionId}",
+                            VideoPath = uploadResponse.Data.VideoPath,
+                            // StartTime = ,
+                            // EndTime = ,
+                            // InitialUserPerception = ,
+                        };
+
+                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
+
+                        if(analysisResponse == null
+                            ||!analysisResponse.Success
+                        )
+                        {
+                            Logger.LogError($"failed to analyze message");
+                            SeriLogger.Error($"failed to analyze message");
+                            response.Success = false;
+                            response.Message = $"failed to analyze message";
+                            response.Data = null;
+                        }
+                        response.Data.AnalysisData = analysisResponse.Data;
+
+                        return analysisResponse;
+                    },
+                    (true, MessageType.Image) => async () =>
                     {
-                        RequesterIdentityId = msg.FromIdentityId,
-                        ModelProvider = $"{_modelProvider}",
-                        TransactionId = $"{transactionId}",
-                        VideoPath = uploadResponse.Data.VideoPath,
-                        // StartTime = ,
-                        // EndTime = ,
-                        // InitialUserPerception = ,
-                    };
-
-                    var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
-
-                    if(analysisResponse == null
-                        ||!analysisResponse.Success
-                    )
+                        throw new NotImplementedException();
+                    },
+                    (true, MessageType.Text) => async () =>
                     {
-                        Logger.LogError($"failed to analyze message");
-                        SeriLogger.Error($"failed to analyze message");
-                        response.Success = false;
-                        response.Message = $"failed to analyze message";
-                        response.Data = null;
+                        var aiMessage = new Models.LLMIntegration.Message()
+                        {
+                            Content = msg.Text,
+                            Role = Models.LLMIntegration.Role.User,
+                        };
 
-                        return response;
+                        var analysisResponse = await AnalysisService.RunAiAnalyzeAsync(
+                            aiMessage,
+                            _modelProvider
+                        );
+
+                        if(analysisResponse == null
+                            || !analysisResponse.Success
+                        )
+                        {
+                            Logger.LogError($"failed to analyze message");
+                            SeriLogger.Error($"failed to analyze message");
+                            response.Success = false;
+                            response.Message = $"failed to analyze message";
+                            response.Data = null;
+                        }
+                        response.Data.AnalysisData = analysisResponse.Data;
+
+                        return analysisResponse;
+                    },
+                    (false, _) => async () =>
+                    {
+                        await Task.CompletedTask;
+                        return new BaseResponse<AnalysisData>()
+                        {
+                            Success = true,
+                            Message = "No analysis requested",
+                            Data = null
+                        };
+                    },
+                    _ => async () =>
+                    {
+                        await Task.CompletedTask;
+                        return new BaseResponse<AnalysisData>()
+                        {
+                            Success = false,
+                            Message = "Invalid message type",
+                            Data = null
+                        };
                     }
-                    response.Data.AnalysisData = analysisResponse.Data;
-                }
+                };
+
+                var analysisResponse = await analyze();
 
                 //return response to caller(Consumer)
                 Logger.LogInformation($"Message processed successfully");

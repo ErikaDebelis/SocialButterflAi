@@ -379,6 +379,47 @@ namespace SocialButterflAi.Services.Analysis
                     Role = Role.User
                 };
 
+                var aiResponse = await RunAiAnalyzeAsync(
+                    message,
+                    modelProvider
+                );
+                response.Success = aiResponse.Success;
+                response.Message = aiResponse.Message;
+                response.Data = aiResponse.Data;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Private/Helper Methods
+
+        #region Run Ai Analysis
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="modelProvider"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<AnalysisData>> RunAiAnalyzeAsync(
+            Message message,
+            ModelProvider modelProvider
+        )
+        {
+            var response = new BaseResponse<AnalysisData>();
+            try
+            {
+
                 //now that we have the audio text, we can send it to Claude or openai for analysis
                 Func<Task<BaseAiResponse<BaseAiResponseRequirements>>> aiResponse = modelProvider switch
                 {
@@ -428,11 +469,10 @@ namespace SocialButterflAi.Services.Analysis
                 Logger.LogInformation("Analysis completed");
                 SeriLogger.Information("Analysis completed");
 
-                response.Success = whisperResponse.Success;
-                response.Message = whisperResponse.Message;
-                response.Data.Transcript = whisperResponse.Text;
+                response.Success = runCompletion.Success;
+                response.Message = runCompletion.Message;
+                response.Data.Transcript = message.Content;
                 // response.Conclusion = aiResponse.Content.FirstOrDefault().Text;
-
                 return response;
             }
             catch (Exception ex)
@@ -443,10 +483,6 @@ namespace SocialButterflAi.Services.Analysis
             }
         }
         #endregion
-
-        #endregion
-
-        #region Private/Helper Methods
 
         #region Get Duration
         /// <summary>
