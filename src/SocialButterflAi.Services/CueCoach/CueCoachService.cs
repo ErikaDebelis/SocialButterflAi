@@ -18,6 +18,7 @@ using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.Analysis;
 using Serilog;
+using SocialButterflAi.Models.LLMIntegration.Claude.Content;
 
 namespace SocialButterflAi.Services.CueCoach
 {
@@ -140,7 +141,42 @@ namespace SocialButterflAi.Services.CueCoach
                     },
                     (true, MessageType.Image) => async () =>
                     {
-                        throw new NotImplementedException();
+                        //extract image type from base64 string
+                        string imageType = null;
+                        if (msg.Text.StartsWith("data:image/"))
+                        {
+                            var startIndex = "data:image/".Length;
+                            var endIndex = msg.Text.IndexOf(';', startIndex);
+                            if (endIndex > startIndex)
+                            {
+                                imageType = msg.Text.Substring(startIndex, endIndex - startIndex);
+                            }
+                        }
+                        var parsedType = Enum.Parse<MediaType>(imageType);
+
+                        var formedMsgResult = AnalysisService.FormImageContent(
+                            msg.Text,
+                            parsedType
+                        );
+
+                        var analysisResponse = await AnalysisService.RunAiAnalyzeAsync(
+                            formedMsgResult.Data,
+                            _modelProvider
+                        );
+
+                        if(analysisResponse == null
+                            || !analysisResponse.Success
+                        )
+                        {
+                            Logger.LogError($"failed to analyze message");
+                            SeriLogger.Error($"failed to analyze message");
+                            response.Success = false;
+                            response.Message = $"failed to analyze message";
+                            response.Data = null;
+                        }
+                        response.Data.AnalysisData = analysisResponse.Data;
+
+                        return analysisResponse;
                     },
                     (true, MessageType.Text) => async () =>
                     {

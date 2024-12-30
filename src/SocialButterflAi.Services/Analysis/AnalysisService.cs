@@ -27,6 +27,7 @@ using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 using SocialButterflAi.Models;
+using SocialButterflAi.Models.LLMIntegration.Claude.Content;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -346,6 +347,7 @@ namespace SocialButterflAi.Services.Analysis
                 {
                     AudioFormat = AudioFormat.wav,
                     Model = WhisperModel.Whisper_1,
+                    Base64Audio = processVideoResponse.Data.Base64Audio
                     // WavUrl = $"data:audio/wav;base64,{request.Base64Audio}"
                 };
 
@@ -373,16 +375,47 @@ namespace SocialButterflAi.Services.Analysis
                     return response;
                 }
 
-                var message = new Message
+                var formedImageMsg = FormImageContent(processVideoResponse.Data.Base64Media, MediaType.image_gif);
+
+                if(formedImageMsg is not { Success: true } )
                 {
-                    Content = whisperResponse.Text,
-                    Role = Role.User
-                };
+                    Logger.LogError("Error forming image content");
+                    SeriLogger.Error("Error forming image content");
+
+                    response.Success = false;
+                    response.Message = "Error forming image content";
+
+                    return response;
+                }
+
+                //add transcript to the message
+                var claudeMsg = formedImageMsg.Data;
+
+                claudeMsg.Content.ToList().Add(
+                    new TextContent
+                    {
+                        Text = whisperResponse.Text
+                    }
+                );
 
                 var aiResponse = await RunAiAnalyzeAsync(
-                    message,
+                    claudeMsg,
                     modelProvider
                 );
+
+                if(aiResponse == null
+                    || aiResponse is not { Success: true }
+                )
+                {
+                    Logger.LogError("Error running AI analysis");
+                    SeriLogger.Error("Error running AI analysis");
+
+                    response.Success = false;
+                    response.Message = "Error running AI analysis";
+
+                    return response;
+                }
+
                 response.Success = aiResponse.Success;
                 response.Message = aiResponse.Message;
                 response.Data = aiResponse.Data;
@@ -401,6 +434,57 @@ namespace SocialButterflAi.Services.Analysis
         #endregion
 
         #region Private/Helper Methods
+
+        #region Form Image Content
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="modelProvider"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public BaseResponse<ClaudeMessage> FormImageContent(
+            string base64Media,
+            MediaType mediaType
+        )
+        {
+            var response = new BaseResponse<ClaudeMessage>();
+            try
+            {
+                var message = new ClaudeMessage
+                {
+                    Role = Role.User,
+                    Content = new List<IContent>
+                    {
+                        new ImageContent
+                        {
+                            Source = new Source
+                            {
+                                Type = SourceType.base64,
+                                MediaType = mediaType,
+                                Data = base64Media
+                            }
+                        }
+                    }
+                };
+
+                Logger.LogInformation("Image content formed successfully");
+                SeriLogger.Information("Image content formed successfully");
+
+                response.Success = true;
+                response.Data = message;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
 
         #region Run Ai Analysis
         /// <summary>
@@ -581,13 +665,13 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="outputAudioPath"></param>
         /// <param name="outputGifPath"></param>
         /// <returns></returns>
-        private async Task<BaseResponse<string>> ProcessVideoFile(
+        private async Task<BaseResponse<ProcessVideoData>> ProcessVideoFile(
             ProcessStartInfo startInfo,
             string outputAudioPath,
             string outputGifPath
         )
         {
-            var response = new BaseResponse<string>();
+            var response = new BaseResponse<ProcessVideoData>();
             try
             {
                 // Extract audio to WAV
@@ -615,13 +699,15 @@ namespace SocialButterflAi.Services.Analysis
                     Logger.LogError("Error extracting GIF");
                     response.Success = false;
                     response.Message = "Error extracting GIF";
-
+                    response.Data.Base64Audio = audioResponse.Data;
                     return response;
                 }
                 Console.WriteLine("Processing completed successfully!");
 
                 response.Success = true;
                 response.Message = "Processing completed successfully!";
+                response.Data.Base64Audio = audioResponse.Data;
+                response.Data.Base64Media = gifResponse.Data;
 
                 return response;
             }
@@ -720,8 +806,7 @@ namespace SocialButterflAi.Services.Analysis
                 //fps=10: Controls frame rate (adjust for smoothness vs file size)
                 //scale=320:-1: Sets the width to 320 pixels and adjusts the height to maintain aspect ratio
                 //no audio - an: -an: no audio
-                startInfo.ArgumentList.Add("-vf fps=10, scale=320:-1, -an");
-
+                startInfo.ArgumentList.Add($"-vf fps=10, scale=320:-1, -an {outputPath}");
                 using (var process = new Process { StartInfo = startInfo })
                 {
                     process.Start();
@@ -738,8 +823,11 @@ namespace SocialButterflAi.Services.Analysis
                 }
                 Console.WriteLine("GIF extracted successfully!");
 
+                var gifBase64 = Convert.ToBase64String(File.ReadAllBytes(outputPath));
+
                 response.Success = true;
                 response.Message = "GIF extracted successfully!";
+                response.Data = gifBase64;
 
                 return response;
             }

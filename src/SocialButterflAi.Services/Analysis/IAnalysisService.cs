@@ -11,6 +11,7 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using Microsoft.AspNetCore.Http;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Models;
+using SocialButterflAi.Models.LLMIntegration.Claude.Content;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -55,6 +56,20 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         public Task<BaseResponse<AnalysisData>> AnalyzeAsync(
             AnalysisDtoRequest request
+        );
+
+        #region Form Image Content
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="modelProvider"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public BaseResponse<ClaudeMessage> FormImageContent(
+            string base64Media,
+            MediaType mediaType
         );
 
         /// <summary>
