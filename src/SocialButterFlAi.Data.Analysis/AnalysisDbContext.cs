@@ -18,6 +18,7 @@ namespace SocialButterflAi.Data.Analysis
 
         public DbSet<Video> Videos { get; set; }
         public DbSet<EnhancedCaption> Captions { get; set; }
+        public DbSet<Analysis.Entities.Image> Images { get; set; }
         public DbSet<Analysis.Entities.Analysis> Analyses { get; set; }
 
         private Dictionary<string, Guid> _Ids;
@@ -38,9 +39,12 @@ namespace SocialButterflAi.Data.Analysis
                 //keep the same id for the identity so that the seed data can be used for testing
                 { "Identity1Id", Guid.Parse("513227da-56e9-4ac8-9c82-857a55581ffe")},
                 { "Identity2Id", Guid.Parse("9c29abd3-4028-4081-878c-44b6bfb0e8d3")},
+                { "ChatId", Guid.Parse("890e2de0-e3b8-463f-bd16-b12fc754c955") },
                 { "VideoId", Guid.Parse("6fb87597-28e6-4cd7-b747-03e5c3f64aec") },
+                { "ImageId", Guid.Parse("d88da8d2-c6fe-11ef-92e8-08c7f780046d") },
                 { "CaptionId", Guid.Parse("3f175ab9-998b-40af-aca0-c21c38273ce7") },
-                { "AnalysisId", Guid.Parse("41aea377-95ff-420a-a77c-3b274a1bdc2b") },
+                { "Analysis1Id", Guid.Parse("41aea377-95ff-420a-a77c-3b274a1bdc2b") },
+                { "Analysis2Id", Guid.Parse("d6c6c224-c6fe-11ef-a402-5a0901f2d5ba") },
             };
 
             // Create test seed data (for each entity type in the module) initial migration/table generation
@@ -50,7 +54,34 @@ namespace SocialButterflAi.Data.Analysis
             {
                 new Video()
                 {
+                    IdentityId = _Ids["Identity1Id"],
+                    ChatId = _Ids["ChatId"],
                     Id = _Ids["VideoId"],
+                    Title = "",
+                    Description = "",
+                    VideoUrl = "",
+                    VideoType = VideoType.mp4,
+                    Base64 = SampleData.Base64Video,
+                    Duration = TimeSpan.FromSeconds(10),
+                    CreatedBy = "Test",
+                    ModifiedBy = "Test",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
+                }
+            };
+
+            var testImages = new List<Image>()
+            {
+                new Image()
+                {
+                    IdentityId = _Ids["Identity1Id"],
+                    ChatId = _Ids["ChatId"],
+                    Id = _Ids["ImageId"],
+                    Title = "",
+                    Description = "",
+                    ImageUrl = "",
+                    Base64 = SampleData.Base64Image,
+                    ImageType = ImageType.jpeg,
                     CreatedBy = "Test",
                     ModifiedBy = "Test",
                     CreatedOn = DateTime.UtcNow,
@@ -62,7 +93,13 @@ namespace SocialButterflAi.Data.Analysis
             {
                 new EnhancedCaption()
                 {
+                    VideoId = _Ids["VideoId"],
                     Id = _Ids["CaptionId"],
+                    StartTime = TimeSpan.MinValue.Add(TimeSpan.FromSeconds(0)),
+                    EndTime = TimeSpan.MinValue.Add(TimeSpan.FromSeconds(10)),
+                    StandardText = "",
+                    BackgroundContext = "",
+                    SoundEffects = "",
                     CreatedBy = "Test",
                     ModifiedBy = "Test",
                     CreatedOn = DateTime.UtcNow,
@@ -74,7 +111,28 @@ namespace SocialButterflAi.Data.Analysis
             {
                 new Analysis.Entities.Analysis()
                 {
-                    Id = _Ids["AnalysisId"],
+                    Id = _Ids["Analysis1Id"],
+                    VideoId = _Ids["VideoId"],
+                    CaptionId = _Ids["CaptionId"],
+                    Certainty = 100,
+                    EnhancedDescription = "",
+                    EmotionalContext = "",
+                    NonVerbalCues = "",
+                    Metadata = new Dictionary<string, string>(),
+                    CreatedBy = "Test",
+                    ModifiedBy = "Test",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
+                },
+                new Analysis.Entities.Analysis()
+                {
+                    Id = _Ids["Analysis2Id"],
+                    ImageId = _Ids["ImageId"],
+                    Certainty = 100,
+                    EnhancedDescription = "",
+                    EmotionalContext = "",
+                    NonVerbalCues = "",
+                    Metadata = new Dictionary<string, string>(),
                     CreatedBy = "Test",
                     ModifiedBy = "Test",
                     CreatedOn = DateTime.UtcNow,
@@ -93,6 +151,9 @@ namespace SocialButterflAi.Data.Analysis
             // Now seed the data into the database
             modelBuilder.Entity<Video>()
                 .HasData(testVideos);
+            
+            modelBuilder.Entity<Image>()
+                .HasData(testImages);
 
             modelBuilder.Entity<EnhancedCaption>()
                 .HasData(testCaptions);
@@ -116,11 +177,19 @@ namespace SocialButterflAi.Data.Analysis
                     nameof(Video),
                     t => t.ExcludeFromMigrations()
                 );
+
+            modelBuilder.Entity<Image>()
+                .ToTable(
+                    nameof(Image),
+                    t => t.ExcludeFromMigrations()
+                );
+
             modelBuilder.Entity<EnhancedCaption>()
                 .ToTable(
                     nameof(EnhancedCaption),
                     t => t.ExcludeFromMigrations()
                 );
+
             modelBuilder.Entity<Analysis.Entities.Analysis>()
                 .ToTable(
                     nameof(Analysis),
@@ -140,6 +209,7 @@ namespace SocialButterflAi.Data.Analysis
         {
             //create the type variables for the entities
             var videoType = typeof(Video);
+            var imageType = typeof(Analysis.Entities.Image);
             var captionType = typeof(EnhancedCaption);
             var analysisModelType = typeof(Analysis.Entities.Analysis);
 
@@ -147,6 +217,7 @@ namespace SocialButterflAi.Data.Analysis
             var entityHelper = new EntityHelper();
 
             entityHelper.EntityBuilder(modelBuilder, videoType, null);
+            entityHelper.EntityBuilder(modelBuilder, imageType, null);
             entityHelper.EntityBuilder(modelBuilder, captionType, null);
             entityHelper.EntityBuilder(modelBuilder, analysisModelType, null);
 
@@ -155,6 +226,31 @@ namespace SocialButterflAi.Data.Analysis
                 .HasMany(v => v.Captions)
                 .WithOne(c => c.Video)
                 .HasForeignKey(c => c.VideoId);
+
+            modelBuilder.Entity<Video>()
+                .HasOne(i => i.Identity)
+                .WithMany()
+                .HasForeignKey(i => i.IdentityId);
+
+            modelBuilder.Entity<Video>()
+                .HasOne(i => i.Chat)
+                .WithMany()
+                .HasForeignKey(i => i.ChatId);
+
+            modelBuilder.Entity<Image>()
+                .HasMany(i => i.Analyses)
+                .WithOne(a => a.Image)
+                .HasForeignKey(a => a.ImageId);
+
+            modelBuilder.Entity<Image>()
+                .HasOne(i => i.Identity)
+                .WithMany()
+                .HasForeignKey(i => i.IdentityId);
+
+            modelBuilder.Entity<Image>()
+                .HasOne(i => i.Chat)
+                .WithMany()
+                .HasForeignKey(i => i.ChatId);
 
             modelBuilder.Entity<EnhancedCaption>()
                 .HasMany(c => c.Analyses)
@@ -165,6 +261,11 @@ namespace SocialButterflAi.Data.Analysis
                 .HasOne(a => a.Video)
                 .WithMany()
                 .HasForeignKey(a => a.VideoId);
+
+                modelBuilder.Entity<Analysis.Entities.Analysis>()
+                .HasOne(a => a.Image)
+                .WithMany()
+                .HasForeignKey(a => a.ImageId);
         }
         #endregion
     }

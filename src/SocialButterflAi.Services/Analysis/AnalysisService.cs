@@ -277,7 +277,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<AnalysisData>> AnalyzeAsync(
+        public async Task<BaseResponse<AnalysisData>> VideoAnalyzeAsync(
             AnalysisDtoRequest request
         )
         {

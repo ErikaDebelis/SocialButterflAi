@@ -123,7 +123,7 @@ namespace SocialButterflAi.Services.CueCoach
                             // InitialUserPerception = ,
                         };
 
-                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
+                        var analysisResponse = await AnalysisService.VideoAnalyzeAsync(analysisRequest);
 
                         if(analysisResponse == null
                             ||!analysisResponse.Success

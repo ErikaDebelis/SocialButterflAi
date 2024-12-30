@@ -54,11 +54,10 @@ namespace SocialButterflAi.Services.Analysis
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public Task<BaseResponse<AnalysisData>> AnalyzeAsync(
+        public Task<BaseResponse<AnalysisData>> VideoAnalyzeAsync(
             AnalysisDtoRequest request
         );
 
-        #region Form Image Content
         /// <summary>
         /// 
         /// </summary>
