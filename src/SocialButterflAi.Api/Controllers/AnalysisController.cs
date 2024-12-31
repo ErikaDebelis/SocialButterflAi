@@ -84,13 +84,13 @@ namespace SocialButterflAi.Api.Controllers
                 }
 
                 var uploadResponse = await AnalysisService.UploadAsync(
-                                                            identity.Id,
-                                                            file,
-                                                            videoFormat,
-                                                            matchingChat.Id,
-                                                            request.Title,
-                                                            request.Description
-                                                        );
+                                                        identity.Id,
+                                                        file,
+                                                        videoFormat,
+                                                        matchingChat.Id,
+                                                        request.Title,
+                                                        request.Description
+                                                    );
 
                 if (uploadResponse is not { Success: true }
                     || string.IsNullOrWhiteSpace(uploadResponse.Data.VideoPath)
@@ -120,7 +120,7 @@ namespace SocialButterflAi.Api.Controllers
         [HttpPost]
         [Route("Analyze")]
         public async Task<IActionResult> Analyze(
-            AnalysisDtoRequest request
+            VideoAnalysisRequest request
         )
         {
             try
@@ -133,7 +133,7 @@ namespace SocialButterflAi.Api.Controllers
 
                 var modelProvider = Enum.Parse<ModelProvider>(request.ModelProvider);
                 
-                var analysis = await AnalysisService.AnalyzeAsync(request, modelProvider);
+                var analysis = await AnalysisService.AnalyzeAsync(request);
 
                 if (analysis == null)
                 {

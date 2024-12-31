@@ -528,6 +528,8 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
 
+                var parsedType = MediaType.unknown;
+                var base64Media = string.Empty;
                 var matchingImage = AnalysisDbContext.Images.FirstOrDefault(i => i.Id == request.ImageId);
 
                 if (matchingImage == null)
@@ -556,21 +558,44 @@ namespace SocialButterflAi.Services.Analysis
                         }
                     }
 
+                    if (string.IsNullOrWhiteSpace(imageType))
+                    {
+                        Logger.LogError("Image type not found");
+                        SeriLogger.Error("Image type not found");
+                        response.Success = false;
+                        response.Message = "Image type not found";
 
+                        return response;
+                    }
 
+                    parsedType = imageType.ToLower() switch
+                    {
+                        "jpeg" => MediaType.image_jpeg,
+                        "png" => MediaType.image_png,
+                        "gif" => MediaType.image_gif,
+                        "webp" => MediaType.image_webp,
+                        _ => throw new NotImplementedException()
+                    };
+
+                    base64Media = matchingMessage.Text;
+                }
+                else
+                {
+
+                    parsedType = matchingImage.ImageType switch
+                    {
+                        ImageType.jpeg => MediaType.image_jpeg,
+                        ImageType.png => MediaType.image_png,
+                        ImageType.gif => MediaType.image_gif,
+                        ImageType.webp => MediaType.image_webp,
+                        _ => throw new NotImplementedException()
+                    };
+
+                    base64Media = matchingImage.Base64;
                 }
 
-                var parsedType = matchingImage.ImageType switch
-                {
-                    ImageType.jpeg => MediaType.image_jpeg,
-                    ImageType.png => MediaType.image_png,
-                    ImageType.gif => MediaType.image_gif,
-                    ImageType.webp => MediaType.image_webp,
-                    _ => throw new NotImplementedException()
-                };
-
                 var formedMsgResult = FormImageContent(
-                    matchingImage.Base64,
+                    base64Media,
                     parsedType
                 );
 

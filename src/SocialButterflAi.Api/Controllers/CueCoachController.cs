@@ -22,15 +22,9 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
     [ApiController]
     public class CueCoachController : ControllerBase
     {
-    #region Private Variables
-
         private IdentityDbContext IdentityDbContext;
         private IBus Bus;
         private ILogger<CueCoachController> Logger;
-
-    #endregion
-
-    #region Constructors
 
         public CueCoachController(
             IBus bus,
@@ -42,13 +36,7 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
             IdentityDbContext = identityDbContext;
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-
-    #endregion
-
-#region API Methods
-
-    #region Post
-
+    
         #region IncomingMessage
         ///<remarks></remarks>
         /// <summary>
@@ -144,9 +132,5 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
             }
         }
     #endregion
-
-    #endregion
-
-#endregion
     }
 }

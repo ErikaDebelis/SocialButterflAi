@@ -12,9 +12,9 @@ namespace SocialButterflAi.Services.CueCoach
 {
     public class ChatMessageHub : Hub
     {
-		public IDistributedCache Cache;
-		public ILogger<ChatMessageHub> Logger;
-        public Serilog.ILogger SeriLogger;
+        private IDistributedCache Cache;
+        private ILogger<ChatMessageHub> Logger;
+        private Serilog.ILogger SeriLogger;
 
 		public ChatMessageHub(
 			IDistributedCache cache,

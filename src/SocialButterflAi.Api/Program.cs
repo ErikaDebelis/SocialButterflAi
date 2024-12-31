@@ -16,6 +16,8 @@ using Microsoft.Extensions.Logging;
 using Settings = SocialButterflAi.Models.IntegrationSettings.Settings;
 using SocialButterflAi.Services.LLMIntegration.OpenAi;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Distributed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -92,6 +94,7 @@ builder.Services.AddScoped<IAnalysisService>(x =>
             openaiClient,
             claudeClient,
 			x.GetRequiredService<AnalysisDbContext>(),
+            x.GetRequiredService<ChatDbContext>(),
 			x.GetRequiredService<ILogger<AnalysisService>>(),
             x.GetRequiredService<IWebHostEnvironment>(),
             appSettings.AnalysisSettings
@@ -100,15 +103,25 @@ builder.Services.AddScoped<IAnalysisService>(x =>
 );
 
 builder.Services.AddScoped<ICueCoachService>(x =>
-	{
-		return new CueCoachService(
-            x.GetRequiredService<IAnalysisService>(),
-			x.GetRequiredService<IdentityDbContext>(),
-			x.GetRequiredService<ChatDbContext>(),
-			x.GetRequiredService<ILogger<CueCoachService>>()
-		);
-	}
-);
+    new CueCoachService(
+    x.GetRequiredService<IAnalysisService>(),
+    x.GetRequiredService<IdentityDbContext>(),
+    x.GetRequiredService<ChatDbContext>(),
+    x.GetRequiredService<ILogger<CueCoachService>>()
+));
+
+builder.Services.AddScoped<ChatMessageHub>(x =>
+    new (
+        x.GetRequiredService<IDistributedCache>(),
+        x.GetRequiredService<ILogger<ChatMessageHub>>()
+    ));
+
+builder.Services.AddSignalR();
+builder.Services.Configure<HubOptions>(options =>
+{
+    options.EnableDetailedErrors = true;
+});
+
 #endregion
 
 // Configure the HTTP request pipeline.
