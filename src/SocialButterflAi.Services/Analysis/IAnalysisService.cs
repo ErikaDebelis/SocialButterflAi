@@ -50,16 +50,46 @@ namespace SocialButterflAi.Services.Analysis
         );
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public  Task<BaseResponse<AnalysisData>> AnalyzeAsync<T>(
+            T request
+        ) where T : BaseAnalysisRequest
+        ;
+
+        /// <summary>
         ///
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public Task<BaseResponse<AnalysisData>> VideoAnalyzeAsync(
-            AnalysisDtoRequest request
+        public Task<BaseResponse<AnalysisData>> AnalyzeVideoAsync(
+            VideoAnalysisRequest request
         );
 
         /// <summary>
-        /// 
+        ///
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public Task<BaseResponse<AnalysisData>> AnalyzeImageAsync(
+            ImageAnalysisRequest request
+        );
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public Task<BaseResponse<AnalysisData>> AnalyzeTextAsync(
+            TextAnalysisRequest request
+        );
+
+        /// <summary>
+        ///
         /// </summary>
         /// <param name="request"></param>
         /// <param name="modelProvider"></param>

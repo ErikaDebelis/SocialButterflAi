@@ -28,6 +28,8 @@ using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.LLMIntegration.Claude.Content;
+using SocialButterflAi.Models.LLMIntegration.OpenAi.Content;
+using SocialButterflAi.Data.Chat;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -37,6 +39,7 @@ namespace SocialButterflAi.Services.Analysis
         private OpenAiClient OpenAiClient;
         private IAiClient ClaudeClient;
         private AnalysisDbContext AnalysisDbContext;
+        private ChatDbContext ChatDbContext;
 
         private ILogger<IAnalysisService> Logger;
         readonly Serilog.ILogger SeriLogger;
@@ -53,6 +56,7 @@ namespace SocialButterflAi.Services.Analysis
             OpenAiClient openAiClient,
             IAiClient claudeClient,
             AnalysisDbContext analysisDbContext,
+            ChatDbContext chatDbContext,
             ILogger<IAnalysisService> logger,
             IWebHostEnvironment webHostEnvironment,
             AnalysisSettings configuration
@@ -62,6 +66,7 @@ namespace SocialButterflAi.Services.Analysis
             ClaudeClient = claudeClient;
 
             AnalysisDbContext = analysisDbContext;
+            ChatDbContext = chatDbContext;
 
             Logger = logger;
             SeriLogger = Serilog.Log.Logger;
@@ -268,7 +273,83 @@ namespace SocialButterflAi.Services.Analysis
         }
         #endregion
 
+        #region UploadImage
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<AnalysisData>> UploadImageAsync(
+            object s
+        )
+        {
+            try
+            {
+                throw new NotImplementedException();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
         #region Analyze/Process
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<AnalysisData>> AnalyzeAsync<T>(
+            T request
+        ) where T : BaseAnalysisRequest
+        {
+            var response = new BaseResponse<AnalysisData>();
+            try
+            {
+                var analysisResponse = request switch
+                {
+                    VideoAnalysisRequest videoRequest => await AnalyzeVideoAsync(videoRequest),
+                    ImageAnalysisRequest imageRequest => await AnalyzeImageAsync(imageRequest),
+                    TextAnalysisRequest textRequest => await AnalyzeTextAsync(textRequest),
+                    _ => throw new NotImplementedException()
+                };
+
+                if(analysisResponse == null
+                    || analysisResponse is not { Success: true }
+                )
+                {
+                    Logger.LogError("Error analyzing request");
+                    SeriLogger.Error("Error analyzing request");
+
+                    response.Success = false;
+                    response.Message = "Error analyzing request";
+
+                    return response;
+                }
+
+                SeriLogger.Information("Analysis completed");
+                Logger.LogInformation("Analysis completed");
+
+                response.Success = analysisResponse.Success;
+                response.Message = analysisResponse.Message;
+                response.Data = analysisResponse.Data;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -277,8 +358,8 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<AnalysisData>> VideoAnalyzeAsync(
-            AnalysisDtoRequest request
+        public async Task<BaseResponse<AnalysisData>> AnalyzeVideoAsync(
+            VideoAnalysisRequest request
         )
         {
             var response = new BaseResponse<AnalysisData>();
@@ -293,7 +374,7 @@ namespace SocialButterflAi.Services.Analysis
 
                 var matchingVideo = FindVideos(v =>
                     (v.Identity.Id == request.RequesterIdentityId
-                        || v.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null
+                        || v.Message.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null
                     )
                     && v.VideoUrl == request.VideoPath)
                 .FirstOrDefault();
@@ -392,7 +473,7 @@ namespace SocialButterflAi.Services.Analysis
                 var claudeMsg = formedImageMsg.Data;
 
                 claudeMsg.Content.ToList().Add(
-                    new TextContent
+                    new Models.LLMIntegration.Claude.Content.TextContent
                     {
                         Text = whisperResponse.Text
                     }
@@ -429,6 +510,184 @@ namespace SocialButterflAi.Services.Analysis
                 throw new Exception("Error", ex);
             }
         }
+
+        // <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="modelProvider"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<AnalysisData>> AnalyzeImageAsync(
+            ImageAnalysisRequest request
+        )
+        {
+            var response = new BaseResponse<AnalysisData>();
+            try
+            {
+                var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
+
+                var matchingImage = AnalysisDbContext.Images.FirstOrDefault(i => i.Id == request.ImageId);
+
+                if (matchingImage == null)
+                //save image to db from message
+                {
+                    var matchingMessage = ChatDbContext.Messages.FirstOrDefault(m => m.Id == request.MessageId);
+
+                    if(matchingMessage == null)
+                    {
+                        Logger.LogError("Message not found");
+                        SeriLogger.Error("Message not found");
+                        response.Success = false;
+                        response.Message = "Message not found";
+
+                        return response;
+                    }
+                    //extract image type from base64 string
+                    string imageType = null;
+                    if (matchingMessage.Text.StartsWith("data:image/"))
+                    {
+                        var startIndex = "data:image/".Length;
+                        var endIndex = matchingMessage.Text.IndexOf(';', startIndex);
+                        if (endIndex > startIndex)
+                        {
+                            imageType = matchingMessage.Text.Substring(startIndex, endIndex - startIndex);
+                        }
+                    }
+
+
+
+                }
+
+                var parsedType = matchingImage.ImageType switch
+                {
+                    ImageType.jpeg => MediaType.image_jpeg,
+                    ImageType.png => MediaType.image_png,
+                    ImageType.gif => MediaType.image_gif,
+                    ImageType.webp => MediaType.image_webp,
+                    _ => throw new NotImplementedException()
+                };
+
+                var formedMsgResult = FormImageContent(
+                    matchingImage.Base64,
+                    parsedType
+                );
+
+                if(formedMsgResult is not { Success: true } )
+                {
+                    Logger.LogError("Error forming image content");
+                    SeriLogger.Error("Error forming image content");
+
+                    response.Success = false;
+                    response.Message = "Error forming image content";
+
+                    return response;
+                }
+
+                var aiResponse = await RunAiAnalyzeAsync(
+                    formedMsgResult.Data,
+                    modelProvider
+                );
+
+                if(aiResponse == null
+                    || aiResponse is not { Success: true }
+                )
+                {
+                    Logger.LogError("Error running AI analysis");
+                    SeriLogger.Error("Error running AI analysis");
+
+                    response.Success = false;
+                    response.Message = "Error running AI analysis";
+
+                    return response;
+                }
+
+                SeriLogger.Information("Analysis completed");
+                Logger.LogInformation("Analysis completed");
+
+                response.Success = aiResponse.Success;
+                response.Message = aiResponse.Message;
+                response.Data = aiResponse.Data;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+
+        // <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="modelProvider"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<AnalysisData>> AnalyzeTextAsync(
+            TextAnalysisRequest request
+        )
+        {
+            var response = new BaseResponse<AnalysisData>();
+            try
+            {
+                var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
+                var matchingMessage = ChatDbContext.Messages.FirstOrDefault(m => m.Id == request.MessageId);
+
+                if(matchingMessage == null)
+                {
+                    Logger.LogError("Message not found");
+                    SeriLogger.Error("Message not found");
+                    response.Success = false;
+                    response.Message = "Message not found";
+
+                    return response;
+                }
+
+                var aiMessage = new Models.LLMIntegration.Message()
+                {
+                    Content = matchingMessage.Text,
+                    Role = Models.LLMIntegration.Role.User,
+                };
+
+                var analysisResponse = await RunAiAnalyzeAsync(
+                    aiMessage,
+                    modelProvider
+                );
+
+                if(analysisResponse == null
+                    || !analysisResponse.Success
+                )
+                {
+                    Logger.LogError($"failed to analyze message");
+                    SeriLogger.Error($"failed to analyze message");
+                    response.Success = false;
+                    response.Message = $"failed to analyze message";
+                    response.Data = null;
+
+                    return response;
+                }
+
+                Logger.LogInformation($"Analysis completed");
+                SeriLogger.Information($"Analysis completed");
+
+                response.Success = analysisResponse.Success;
+                response.Message = analysisResponse.Message;
+                response.Data = analysisResponse.Data;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
         #endregion
 
         #endregion
@@ -455,7 +714,7 @@ namespace SocialButterflAi.Services.Analysis
                 var message = new ClaudeMessage
                 {
                     Role = Role.User,
-                    Content = new List<IContent>
+                    Content = new List<Models.LLMIntegration.Claude.Content.IContent>
                     {
                         new ImageContent
                         {
@@ -857,8 +1116,9 @@ namespace SocialButterflAi.Services.Analysis
             => AnalysisDbContext
                 .Videos
                 .Include(v => v.Identity)
-                .Include(v => v.Chat)
-                    .ThenInclude(m => m.Members)
+                .Include(v => v.Message)
+                    .ThenInclude(v => v.Chat)
+                        .ThenInclude(m => m.Members)
                 .Include(v => v.Captions)
                     .ThenInclude(c => c.Analyses)
                 .Where(matchByStatement)
@@ -886,7 +1146,8 @@ namespace SocialButterflAi.Services.Analysis
                 {
                     Id = videoDto.Id,
                     IdentityId = videoDto.UploaderIdentityId,
-                    ChatId = videoDto.RelatedChatId,
+                    //todo:fix this
+                    // MessageId = ,
                     Title = videoDto.Title,
                     Description = videoDto.Description,
                     VideoUrl = videoDto.Url,
@@ -938,7 +1199,8 @@ namespace SocialButterflAi.Services.Analysis
                 {
                     Id = videoEntity.Id,
                     UploaderIdentityId = videoEntity.IdentityId,
-                    RelatedChatId = videoEntity.ChatId,
+                    //todo:fix this
+                    // RelatedChatId = videoEntity.ChatId,
                     Title = videoEntity.Title,
                     Description = videoEntity.Description,
                     Url = videoEntity.VideoUrl,

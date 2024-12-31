@@ -20,18 +20,12 @@ namespace SocialButterflAi.Services.CueCoach.Consumers
     /// </summary>
     public class ChatMessageConsumer : IConsumer<MessageContract>
     {
-
-    #region Private Variables
         public ICueCoachService CueCoachService;
         private ILogger<ChatMessageConsumer> Logger;
         private IBus Bus;
         private IDistributedCache Cache;
         private Serilog.ILogger SeriLogger;
         private IHubContext<ChatMessageHub> ChatMessageHub;
-
-    #endregion
-
-    #region Constructors
 
         public ChatMessageConsumer(
             ICueCoachService cueCoachService,
@@ -48,10 +42,6 @@ namespace SocialButterflAi.Services.CueCoach.Consumers
             Logger = logger;
             SeriLogger = Serilog.Log.Logger;
         }
-
-    #endregion
-
-    #region Methods
 
         /// <summary>
         /// This consumer will take the message and send it to the appropriate channel.
@@ -140,7 +130,5 @@ namespace SocialButterflAi.Services.CueCoach.Consumers
             }
             // await Cache.RemoveAsync(lockKey);
         }
-
-    #endregion
     }
 }

@@ -1,7 +1,8 @@
 using Newtonsoft.Json;
-using SocialButterflAi.Models.Analysis;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+
+using SocialButterflAi.Models.Analysis;
 
 namespace SocialButterflAi.Models.CueCoach
 {

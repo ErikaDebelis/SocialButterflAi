@@ -39,7 +39,7 @@ namespace SocialButterflAi.Data.Analysis
                 //keep the same id for the identity so that the seed data can be used for testing
                 { "Identity1Id", Guid.Parse("513227da-56e9-4ac8-9c82-857a55581ffe")},
                 { "Identity2Id", Guid.Parse("9c29abd3-4028-4081-878c-44b6bfb0e8d3")},
-                { "ChatId", Guid.Parse("890e2de0-e3b8-463f-bd16-b12fc754c955") },
+                { "MessageId",  Guid.Parse("579a2981-4a53-4801-8c86-0b543a90ff09") },
                 { "VideoId", Guid.Parse("6fb87597-28e6-4cd7-b747-03e5c3f64aec") },
                 { "ImageId", Guid.Parse("d88da8d2-c6fe-11ef-92e8-08c7f780046d") },
                 { "CaptionId", Guid.Parse("3f175ab9-998b-40af-aca0-c21c38273ce7") },
@@ -55,7 +55,7 @@ namespace SocialButterflAi.Data.Analysis
                 new Video()
                 {
                     IdentityId = _Ids["Identity1Id"],
-                    ChatId = _Ids["ChatId"],
+                    MessageId = _Ids["MessageId"],
                     Id = _Ids["VideoId"],
                     Title = "cats video",
                     Description = "",
@@ -75,7 +75,7 @@ namespace SocialButterflAi.Data.Analysis
                 new Image()
                 {
                     IdentityId = _Ids["Identity1Id"],
-                    ChatId = _Ids["ChatId"],
+                    MessageId = _Ids["MessageId"],
                     Id = _Ids["ImageId"],
                     Title = "cat",
                     Description = "",
@@ -234,9 +234,9 @@ namespace SocialButterflAi.Data.Analysis
                 .HasForeignKey(i => i.IdentityId);
 
             modelBuilder.Entity<Video>()
-                .HasOne(i => i.Chat)
+                .HasOne(i => i.Message)
                 .WithMany()
-                .HasForeignKey(i => i.ChatId);
+                .HasForeignKey(i => i.MessageId);
 
             modelBuilder.Entity<Image>()
                 .HasMany(i => i.Analyses)
@@ -249,9 +249,9 @@ namespace SocialButterflAi.Data.Analysis
                 .HasForeignKey(i => i.IdentityId);
 
             modelBuilder.Entity<Image>()
-                .HasOne(i => i.Chat)
+                .HasOne(i => i.Message)
                 .WithMany()
-                .HasForeignKey(i => i.ChatId);
+                .HasForeignKey(i => i.MessageId);
 
             modelBuilder.Entity<EnhancedCaption>()
                 .HasMany(c => c.Analyses)

@@ -111,7 +111,7 @@ namespace SocialButterflAi.Services.CueCoach
                         Logger.LogInformation($"Video uploaded successfully");
                         SeriLogger.Information($"Video uploaded successfully");
 
-                        var analysisRequest = new AnalysisDtoRequest()
+                        var analysisRequest = new VideoAnalysisRequest()
                         {
                             RequesterIdentityId = msg.FromIdentityId,
                             ModelProvider = $"{_modelProvider}",
@@ -122,7 +122,7 @@ namespace SocialButterflAi.Services.CueCoach
                             // InitialUserPerception = ,
                         };
 
-                        var analysisResponse = await AnalysisService.VideoAnalyzeAsync(analysisRequest);
+                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
 
                         if(analysisResponse == null
                             ||!analysisResponse.Success
@@ -142,31 +142,19 @@ namespace SocialButterflAi.Services.CueCoach
                     },
                     (true, MessageType.Image) => async () =>
                     {
-                        //extract image type from base64 string
-                        string imageType = null;
-                        if (msg.Text.StartsWith("data:image/"))
+                        var analysisRequest = new ImageAnalysisRequest()
                         {
-                            var startIndex = "data:image/".Length;
-                            var endIndex = msg.Text.IndexOf(';', startIndex);
-                            if (endIndex > startIndex)
-                            {
-                                imageType = msg.Text.Substring(startIndex, endIndex - startIndex);
-                            }
-                        }
-                        var parsedType = Enum.Parse<MediaType>(imageType);
+                            RequesterIdentityId = msg.FromIdentityId,
+                            ModelProvider = $"{_modelProvider}",
+                            TransactionId = $"{transactionId}",
+                            MessageId = msg.Id,
+                            // InitialUserPerception = ,
+                        };
 
-                        var formedMsgResult = AnalysisService.FormImageContent(
-                            msg.Text,
-                            parsedType
-                        );
-
-                        var analysisResponse = await AnalysisService.RunAiAnalyzeAsync(
-                            formedMsgResult.Data,
-                            _modelProvider
-                        );
+                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
 
                         if(analysisResponse == null
-                            || !analysisResponse.Success
+                            ||!analysisResponse.Success
                         )
                         {
                             Logger.LogError($"failed to analyze message");
@@ -183,19 +171,19 @@ namespace SocialButterflAi.Services.CueCoach
                     },
                     (true, MessageType.Text) => async () =>
                     {
-                        var aiMessage = new Models.LLMIntegration.Message()
+                        var analysisRequest = new TextAnalysisRequest()
                         {
-                            Content = msg.Text,
-                            Role = Models.LLMIntegration.Role.User,
+                            RequesterIdentityId = msg.FromIdentityId,
+                            ModelProvider = $"{_modelProvider}",
+                            TransactionId = $"{transactionId}",
+                            MessageId = msg.Id,
+                            // InitialUserPerception = ,
                         };
 
-                        var analysisResponse = await AnalysisService.RunAiAnalyzeAsync(
-                            aiMessage,
-                            _modelProvider
-                        );
+                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
 
                         if(analysisResponse == null
-                            || !analysisResponse.Success
+                            ||!analysisResponse.Success
                         )
                         {
                             Logger.LogError($"failed to analyze message");

@@ -19,8 +19,8 @@ namespace SocialButterflAi.Data.Analysis.Entities
         public Guid IdentityId { get; set; }
         public Identity.Entities.Identity Identity { get; set; }
 
-        public Guid? ChatId { get; set; }
-        public Chat.Entities.Chat? Chat { get; set; }
+        public Guid? MessageId { get; set; }
+        public Chat.Entities.Message? Message { get; set; }
 
         public string Title { get; set; }
         public string Description { get; set; }

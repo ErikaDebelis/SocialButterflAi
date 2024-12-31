@@ -12,7 +12,6 @@ namespace SocialButterflAi.Data.Chat.Entities
         public string Name { get; set; }
         public ChatStatus ChatStatus { get; set; }
         public List<Message> Messages { get; set; }
-        
         public List<Identity.Entities.Identity> Members { get; set; }
     }
 }

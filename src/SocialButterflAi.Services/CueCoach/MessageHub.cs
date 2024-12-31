@@ -47,7 +47,7 @@ namespace SocialButterflAi.Services.CueCoach
                     return;
                 }
                 // Get the connectionId from the cache based on the token
-                var connectionId = await Cache.GetStringAsync($"ChatMessages:TokenCID:{token}");
+                var connectionId = await Cache.GetStringAsync($"ChatMessages:TokenCId:{token}");
 
                 if(string.IsNullOrWhiteSpace(connectionId))
                 {
@@ -86,7 +86,7 @@ namespace SocialButterflAi.Services.CueCoach
             {
                 await Cache.SetStringAsync($"ChatMessages:Identity:{identityId}", bearerToken);
                 await Cache.SetStringAsync($"ChatMessages:CIdToken:{Context.ConnectionId}", bearerToken);
-                await Cache.SetStringAsync($"ChatMessages:TokenCID:{bearerToken}", Context.ConnectionId);
+                await Cache.SetStringAsync($"ChatMessages:TokenCId:{bearerToken}", Context.ConnectionId);
                 await Cache.SetStringAsync($"ChatMessages:TokenIdentity:{bearerToken}", $"{identityId}");
 
                 await Clients
