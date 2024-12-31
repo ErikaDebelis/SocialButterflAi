@@ -12,7 +12,12 @@ namespace SocialButterflAi.Models.CueCoach.Contracts
         ///
         /// </summary>
         public Dictionary<string, string> Headers { get; set; }
-        
+
+        /// <summary>
+        ///
+        /// </summary>
+        public Guid IdentityId { get; set; }
+
         /// <summary>
         ///
         /// </summary>

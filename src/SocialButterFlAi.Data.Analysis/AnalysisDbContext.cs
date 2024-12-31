@@ -57,7 +57,7 @@ namespace SocialButterflAi.Data.Analysis
                     IdentityId = _Ids["Identity1Id"],
                     ChatId = _Ids["ChatId"],
                     Id = _Ids["VideoId"],
-                    Title = "",
+                    Title = "cats video",
                     Description = "",
                     VideoUrl = "",
                     VideoType = VideoType.mp4,
@@ -77,7 +77,7 @@ namespace SocialButterflAi.Data.Analysis
                     IdentityId = _Ids["Identity1Id"],
                     ChatId = _Ids["ChatId"],
                     Id = _Ids["ImageId"],
-                    Title = "",
+                    Title = "cat",
                     Description = "",
                     ImageUrl = "",
                     Base64 = SampleData.Base64Image,
@@ -143,6 +143,7 @@ namespace SocialButterflAi.Data.Analysis
             // Add Identity and Chat Models (Dependencies) + Ignore Dependant Tables for Migration (they've already been added/created)
             IdentityDbContext.SetupModelNavigation(modelBuilder);
             IdentityDbContext.IgnoreTables(modelBuilder);
+
             ChatDbContext.SetupModelNavigation(modelBuilder);
             ChatDbContext.IgnoreTables(modelBuilder);
 
@@ -151,7 +152,7 @@ namespace SocialButterflAi.Data.Analysis
             // Now seed the data into the database
             modelBuilder.Entity<Video>()
                 .HasData(testVideos);
-            
+
             modelBuilder.Entity<Image>()
                 .HasData(testImages);
 

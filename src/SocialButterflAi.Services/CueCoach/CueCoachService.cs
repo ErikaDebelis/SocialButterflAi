@@ -80,7 +80,6 @@ namespace SocialButterflAi.Services.CueCoach
                     SeriLogger.Error($"failed to save message");
                     response.Success = false;
                     response.Message = $"failed to save message";
-                    response.Data = null;
 
                     return response;
                 }
@@ -88,7 +87,7 @@ namespace SocialButterflAi.Services.CueCoach
 
                 //analyze msg (optional)
 
-                Func<Task<BaseResponse<AnalysisData>>> analyze = (toAnalyze, msg.MessageType) switch
+                Func<Task<bool>> analyze = (toAnalyze, msg.MessageType) switch
                 {
                     (true, MessageType.Video) => async () =>
                     {
@@ -107,7 +106,7 @@ namespace SocialButterflAi.Services.CueCoach
                             SeriLogger.Error($"failed to upload video");
                             response.Success = false;
                             response.Message = $"failed to upload video";
-                            response.Data = null;
+                            response.Data.AnalysisData = null;
                         }
                         Logger.LogInformation($"Video uploaded successfully");
                         SeriLogger.Information($"Video uploaded successfully");
@@ -133,11 +132,13 @@ namespace SocialButterflAi.Services.CueCoach
                             SeriLogger.Error($"failed to analyze message");
                             response.Success = false;
                             response.Message = $"failed to analyze message";
-                            response.Data = null;
+                            response.Data.AnalysisData = null;
+
+                            return false;
                         }
                         response.Data.AnalysisData = analysisResponse.Data;
 
-                        return analysisResponse;
+                        return true;
                     },
                     (true, MessageType.Image) => async () =>
                     {
@@ -172,11 +173,13 @@ namespace SocialButterflAi.Services.CueCoach
                             SeriLogger.Error($"failed to analyze message");
                             response.Success = false;
                             response.Message = $"failed to analyze message";
-                            response.Data = null;
+                            response.Data.AnalysisData = null;
+
+                            return false;
                         }
                         response.Data.AnalysisData = analysisResponse.Data;
 
-                        return analysisResponse;
+                        return true;
                     },
                     (true, MessageType.Text) => async () =>
                     {
@@ -199,31 +202,35 @@ namespace SocialButterflAi.Services.CueCoach
                             SeriLogger.Error($"failed to analyze message");
                             response.Success = false;
                             response.Message = $"failed to analyze message";
-                            response.Data = null;
+                            response.Data.AnalysisData = null;
+
+                            return false;
                         }
                         response.Data.AnalysisData = analysisResponse.Data;
 
-                        return analysisResponse;
+                        return true;
                     },
                     (false, _) => async () =>
                     {
                         await Task.CompletedTask;
-                        return new BaseResponse<AnalysisData>()
-                        {
-                            Success = true,
-                            Message = "No analysis requested",
-                            Data = null
-                        };
+                        Logger.LogError($"no analysis requested");
+                        SeriLogger.Error($"no analysis requested");
+                        response.Success = false;
+                        response.Message = $"no analysis requested";
+                        response.Data.AnalysisData = null;
+
+                        return false;
                     },
                     _ => async () =>
                     {
                         await Task.CompletedTask;
-                        return new BaseResponse<AnalysisData>()
-                        {
-                            Success = false,
-                            Message = "Invalid message type",
-                            Data = null
-                        };
+                        Logger.LogError($"request fell through- unexpected values sent in for evaluation");
+                        SeriLogger.Error($"request fell through- unexpected values sent in for evaluation");
+                        response.Success = false;
+                        response.Message = $"request fell through- unexpected values sent in for evaluation";
+                        response.Data.AnalysisData = null;
+
+                        return false;
                     }
                 };
 

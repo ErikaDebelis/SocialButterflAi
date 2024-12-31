@@ -1,43 +1,51 @@
 using System;
+using Serilog;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
 using MassTransit;
+using Microsoft.AspNetCore.SignalR;
+using SocialButterflAi.Services.CueCoach;
 using Microsoft.Extensions.Caching.Distributed;
 
-using Serilog;
-using Serilog.Core;
 using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Models.CueCoach.Contracts;
-using SocialButterflAi.Services.CueCoach;
-namespace CueCoach.Consumers
+using Microsoft.Extensions.Logging;
+
+namespace SocialButterflAi.Services.CueCoach.Consumers
 {
     /// <summary>
     /// The consumer
     /// </summary>
-    public class Consumer : IConsumer<MessageContract>
+    public class ChatMessageConsumer : IConsumer<MessageContract>
     {
 
     #region Private Variables
         public ICueCoachService CueCoachService;
-        private readonly IBus Bus;
-        private readonly IDistributedCache DistributedCache;
-        private readonly Serilog.ILogger SeriLogger;
+        private ILogger<ChatMessageConsumer> Logger;
+        private IBus Bus;
+        private IDistributedCache Cache;
+        private Serilog.ILogger SeriLogger;
+        private IHubContext<ChatMessageHub> ChatMessageHub;
 
     #endregion
 
     #region Constructors
 
-        public Consumer(
+        public ChatMessageConsumer(
             ICueCoachService cueCoachService,
             IBus bus,
-            IDistributedCache distributedCache
+            IDistributedCache cache,
+            IHubContext<ChatMessageHub> chatMessageHub,
+            ILogger<ChatMessageConsumer> logger
         )
         {
             CueCoachService = cueCoachService;
+            ChatMessageHub = chatMessageHub;
             Bus = bus;
-            DistributedCache = distributedCache;
+            Cache = cache;
+            Logger = logger;
             SeriLogger = Serilog.Log.Logger;
         }
 
@@ -55,21 +63,6 @@ namespace CueCoach.Consumers
             ConsumeContext<MessageContract> messageContractContext
         )
         {
-	        // Only one consumption of this type allowed (Regardless of node). Pick a wait interval...
-            // todo: there probably is a way to do this cleaner...
-            var randomTo1k = new Random().Next(1000, 3000);
-            Thread.Sleep(randomTo1k);
-
-            var lockKey = $"MessageContract:{messageContractContext.MessageId}:Lock";
-            var lockValue = await DistributedCache.GetStringAsync(lockKey) ?? string.Empty;
-            if (lockValue == "Locked")
-            {
-                SeriLogger.Information($"Another server is taking care of this contract. All done.");
-                return;
-            }
-
-            await DistributedCache.SetStringAsync(lockKey, "Locked");
-
             if (string.IsNullOrWhiteSpace($"{messageContractContext.Message.TransactionId}"))
             {
                 messageContractContext.Message.TransactionId = Guid.NewGuid();
@@ -77,6 +70,7 @@ namespace CueCoach.Consumers
 
             var transactionId = messageContractContext.Message.TransactionId;
             var msg = JsonSerializer.Deserialize<Message>(messageContractContext.Message.Body);
+
             try
             {
                 //continue here
@@ -85,13 +79,66 @@ namespace CueCoach.Consumers
                     transactionId,
                     true
                 );
+
+                if (response == null)
+                {
+                    Logger.LogError($"Failed to process message in Consumer. Response is null.");
+                    SeriLogger.Error($"Failed to process message in Consumer. Response is null.");
+                    return;
+                }
+
+                if(!response.Success)
+                {
+                    Logger.LogError($"Failed to process message in Consumer. {response.Message}");
+                    SeriLogger.Error($"Failed to process message in Consumer. {response.Message}");
+                    return;
+                }
+
+                Logger.LogInformation($"Successfully processed message in Consumer. {response.Message}");
+                SeriLogger.Information($"Successfully processed message in Consumer. {response.Message}");
+
+                try
+                {
+                    var token = await Cache.GetStringAsync($"IT:{messageContractContext.Message.IdentityId}");
+
+                    if(string.IsNullOrWhiteSpace(token))
+                    {
+                        Logger.LogError($"Token not found for {messageContractContext.Message.IdentityId} - need to register in cache/ w signalR");
+                        SeriLogger.Error($"Token not found for {messageContractContext.Message.IdentityId} - need to register in cache/ w signalR");
+                        return;
+                    }
+
+                    var connectionId = await Cache.GetStringAsync($"T:{token}");
+
+                    if(string.IsNullOrWhiteSpace(connectionId))
+                    {
+                        Logger.LogError($"ConnectionId not found for {token} - need to register in cache/ w signalR");
+                        SeriLogger.Error($"ConnectionId not found for {token} - need to register in cache/ w signalR");
+                        return;
+                    }
+
+                    await ChatMessageHub.Clients
+                        .Client(connectionId)
+                        .SendAsync(
+                            "ChatMessage",
+                            response.Data.AnalysisData
+                        );
+
+                    Logger.LogInformation($"({messageContractContext.Message.IdentityId}) chat message sent.");
+                    SeriLogger.Information($"({messageContractContext.Message.IdentityId}) chat message sent.");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogCritical($"Error sending {ex.Message}", ex);
+                    SeriLogger.Fatal(ex, $"Error sending {ex.Message}");
+                }
             }
             catch (Exception ex)
             {
+                Logger.LogCritical($" failed to process Contract message in Consumer. {ex.Message}", ex);
                 SeriLogger.Fatal($" failed to process Contract message in Consumer. {ex.Message}");
             }
-
-            await DistributedCache.RemoveAsync(lockKey);
+            // await Cache.RemoveAsync(lockKey);
         }
 
     #endregion
