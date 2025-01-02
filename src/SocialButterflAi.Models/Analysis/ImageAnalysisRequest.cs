@@ -10,5 +10,12 @@ namespace SocialButterflAi.Models.Analysis
     {
         public Guid? MessageId { get; set; }
         public Guid? ImageId { get; set; }
+
+        /// <summary>
+        ///
+        /// </summary>
+        [JsonProperty("Transcript")]
+        [JsonPropertyName("Transcript")]
+        public string? Transcript { get; set; }
     }
 }

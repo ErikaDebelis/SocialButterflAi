@@ -13,8 +13,11 @@ namespace SocialButterflAi.Data.Analysis.Entities
         /// <summary>
         /// Navigation property
         /// </summary>
-        public Guid VideoId { get; set; }
-        public Video Video { get; set; }
+        public Guid? VideoId { get; set; }
+        public Video? Video { get; set; }
+
+        public Guid? AudioId { get; set; }
+        public Audio? Audio { get; set; }
 
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }

@@ -22,6 +22,9 @@ namespace SocialButterflAi.Data.Analysis.Entities
         public Guid? ImageId { get; set; }
         public Image? Image { get; set; }
 
+        public Guid? AudioId { get; set; }
+        public Audio? Audio { get; set; }
+
         public double Certainty { get; set; }
         public string EnhancedDescription { get; set; }
         public string EmotionalContext { get; set; }

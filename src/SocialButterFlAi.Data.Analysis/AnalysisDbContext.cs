@@ -19,6 +19,7 @@ namespace SocialButterflAi.Data.Analysis
         public DbSet<Video> Videos { get; set; }
         public DbSet<EnhancedCaption> Captions { get; set; }
         public DbSet<Analysis.Entities.Image> Images { get; set; }
+        public DbSet<Analysis.Entities.Audio> Audios { get; set; }
         public DbSet<Analysis.Entities.Analysis> Analyses { get; set; }
 
         private Dictionary<string, Guid> _Ids;
@@ -39,12 +40,16 @@ namespace SocialButterflAi.Data.Analysis
                 //keep the same id for the identity so that the seed data can be used for testing
                 { "Identity1Id", Guid.Parse("513227da-56e9-4ac8-9c82-857a55581ffe")},
                 { "Identity2Id", Guid.Parse("9c29abd3-4028-4081-878c-44b6bfb0e8d3")},
-                { "MessageId",  Guid.Parse("579a2981-4a53-4801-8c86-0b543a90ff09") },
+                { "Message1Id",  Guid.Parse("579a2981-4a53-4801-8c86-0b543a90ff09") },
+                { "Message2Id",  Guid.Parse("5103543e-c959-11ef-be94-5ff2ce75ed71") },
+                { "Message3Id",  Guid.Parse("6059ecce-c959-11ef-8e2c-1556ca6766f7") },
                 { "VideoId", Guid.Parse("6fb87597-28e6-4cd7-b747-03e5c3f64aec") },
                 { "ImageId", Guid.Parse("d88da8d2-c6fe-11ef-92e8-08c7f780046d") },
+                { "AudioId", Guid.Parse("6a353bf0-c959-11ef-b07b-577712103d2c") },
                 { "CaptionId", Guid.Parse("3f175ab9-998b-40af-aca0-c21c38273ce7") },
                 { "Analysis1Id", Guid.Parse("41aea377-95ff-420a-a77c-3b274a1bdc2b") },
                 { "Analysis2Id", Guid.Parse("d6c6c224-c6fe-11ef-a402-5a0901f2d5ba") },
+                { "Analysis3Id", Guid.Parse("70424177-c959-11ef-b781-f79868ee873a") }
             };
 
             // Create test seed data (for each entity type in the module) initial migration/table generation
@@ -55,7 +60,7 @@ namespace SocialButterflAi.Data.Analysis
                 new Video()
                 {
                     IdentityId = _Ids["Identity1Id"],
-                    MessageId = _Ids["MessageId"],
+                    MessageId = _Ids["Message1Id"],
                     Id = _Ids["VideoId"],
                     Title = "cats video",
                     Description = "",
@@ -75,13 +80,28 @@ namespace SocialButterflAi.Data.Analysis
                 new Image()
                 {
                     IdentityId = _Ids["Identity1Id"],
-                    MessageId = _Ids["MessageId"],
+                    MessageId = _Ids["Message2Id"],
                     Id = _Ids["ImageId"],
                     Title = "cat",
                     Description = "",
                     ImageUrl = "",
                     Base64 = SampleData.Base64Image,
                     ImageType = ImageType.jpeg,
+                    CreatedBy = "Test",
+                    ModifiedBy = "Test",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
+                }
+            };
+
+            var testAudios = new List<Audio>()
+            {
+                new Audio()
+                {
+                    IdentityId = _Ids["Identity1Id"],
+                    MessageId = _Ids["Message3Id"],
+                    Id = _Ids["AudioId"],
+                    Base64 = SampleData.Base64Audio,
                     CreatedBy = "Test",
                     ModifiedBy = "Test",
                     CreatedOn = DateTime.UtcNow,
@@ -137,6 +157,20 @@ namespace SocialButterflAi.Data.Analysis
                     ModifiedBy = "Test",
                     CreatedOn = DateTime.UtcNow,
                     ModifiedOn = DateTime.UtcNow,
+                },
+                new Analysis.Entities.Analysis()
+                {
+                    Id = _Ids["Analysis3Id"],
+                    AudioId = _Ids["AudioId"],
+                    Certainty = 100,
+                    EnhancedDescription = "",
+                    EmotionalContext = "",
+                    NonVerbalCues = "",
+                    Metadata = new Dictionary<string, string>(),
+                    CreatedBy = "Test",
+                    ModifiedBy = "Test",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
                 }
             };
 
@@ -155,6 +189,9 @@ namespace SocialButterflAi.Data.Analysis
 
             modelBuilder.Entity<Image>()
                 .HasData(testImages);
+
+            modelBuilder.Entity<Audio>()
+                .HasData(testAudios);
 
             modelBuilder.Entity<EnhancedCaption>()
                 .HasData(testCaptions);
@@ -185,6 +222,12 @@ namespace SocialButterflAi.Data.Analysis
                     t => t.ExcludeFromMigrations()
                 );
 
+            modelBuilder.Entity<Audio>()
+                .ToTable(
+                    nameof(Audio),
+                    t => t.ExcludeFromMigrations()
+                );
+
             modelBuilder.Entity<EnhancedCaption>()
                 .ToTable(
                     nameof(EnhancedCaption),
@@ -210,7 +253,8 @@ namespace SocialButterflAi.Data.Analysis
         {
             //create the type variables for the entities
             var videoType = typeof(Video);
-            var imageType = typeof(Analysis.Entities.Image);
+            var imageType = typeof(Image);
+            var audioType = typeof(Audio);
             var captionType = typeof(EnhancedCaption);
             var analysisModelType = typeof(Analysis.Entities.Analysis);
 
@@ -219,6 +263,7 @@ namespace SocialButterflAi.Data.Analysis
 
             entityHelper.EntityBuilder(modelBuilder, videoType, null);
             entityHelper.EntityBuilder(modelBuilder, imageType, null);
+            entityHelper.EntityBuilder(modelBuilder, audioType, null);
             entityHelper.EntityBuilder(modelBuilder, captionType, null);
             entityHelper.EntityBuilder(modelBuilder, analysisModelType, null);
 
@@ -239,6 +284,11 @@ namespace SocialButterflAi.Data.Analysis
                 .HasForeignKey(i => i.MessageId);
 
             modelBuilder.Entity<Image>()
+                .HasOne(i => i.Message)
+                .WithMany()
+                .HasForeignKey(i => i.MessageId);
+
+            modelBuilder.Entity<Image>()
                 .HasMany(i => i.Analyses)
                 .WithOne(a => a.Image)
                 .HasForeignKey(a => a.ImageId);
@@ -248,25 +298,50 @@ namespace SocialButterflAi.Data.Analysis
                 .WithMany()
                 .HasForeignKey(i => i.IdentityId);
 
-            modelBuilder.Entity<Image>()
+            modelBuilder.Entity<Audio>()
                 .HasOne(i => i.Message)
                 .WithMany()
                 .HasForeignKey(i => i.MessageId);
+
+            modelBuilder.Entity<Audio>()
+                .HasMany(v => v.Captions)
+                .WithOne(a => a.Audio)
+                .HasForeignKey(a => a.AudioId);
+
+            modelBuilder.Entity<Audio>()
+                .HasOne(i => i.Identity)
+                .WithMany()
+                .HasForeignKey(i => i.IdentityId);
 
             modelBuilder.Entity<EnhancedCaption>()
                 .HasMany(c => c.Analyses)
                 .WithOne(a => a.Caption)
                 .HasForeignKey(a => a.CaptionId);
 
+            modelBuilder.Entity<EnhancedCaption>()
+                .HasOne(v => v.Video)
+                .WithMany()
+                .HasForeignKey(v => v.VideoId);
+
+            modelBuilder.Entity<EnhancedCaption>()
+                .HasOne(a => a.Audio)
+                .WithMany()
+                .HasForeignKey(a => a.AudioId);
+
             modelBuilder.Entity<Analysis.Entities.Analysis>()
                 .HasOne(a => a.Video)
                 .WithMany()
                 .HasForeignKey(a => a.VideoId);
 
-                modelBuilder.Entity<Analysis.Entities.Analysis>()
+            modelBuilder.Entity<Analysis.Entities.Analysis>()
                 .HasOne(a => a.Image)
                 .WithMany()
                 .HasForeignKey(a => a.ImageId);
+
+            modelBuilder.Entity<Analysis.Entities.Analysis>()
+                .HasOne(a => a.Audio)
+                .WithMany()
+                .HasForeignKey(a => a.AudioId);
         }
         #endregion
     }

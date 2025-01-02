@@ -148,6 +148,7 @@ namespace SocialButterflAi.Services.CueCoach
                             ModelProvider = $"{_modelProvider}",
                             TransactionId = $"{transactionId}",
                             MessageId = msg.Id,
+                            // Transcript = ,
                             // InitialUserPerception = ,
                         };
 

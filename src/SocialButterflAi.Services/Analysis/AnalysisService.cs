@@ -25,6 +25,8 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
+using ImageEntity = SocialButterflAi.Data.Analysis.Entities.Image;
+using AudioEntity = SocialButterflAi.Data.Analysis.Entities.Audio;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.LLMIntegration.Claude.Content;
@@ -317,12 +319,15 @@ namespace SocialButterflAi.Services.Analysis
                     VideoAnalysisRequest videoRequest => await AnalyzeVideoAsync(videoRequest),
                     ImageAnalysisRequest imageRequest => await AnalyzeImageAsync(imageRequest),
                     TextAnalysisRequest textRequest => await AnalyzeTextAsync(textRequest),
-                    _ => throw new NotImplementedException()
+                    _ => new BaseResponse<AnalysisData>
+                    {
+                        Success = false,
+                        Message = "request type not supported- did not perform analysis",
+                        Data = null
+                    }
                 };
 
-                if(analysisResponse == null
-                    || analysisResponse is not { Success: true }
-                )
+                if(analysisResponse is not { Success: true } )
                 {
                     Logger.LogError("Error analyzing request");
                     SeriLogger.Error("Error analyzing request");
@@ -344,9 +349,9 @@ namespace SocialButterflAi.Services.Analysis
             }
             catch (Exception ex)
             {
-                Logger.LogCritical(ex, "Error");
-                SeriLogger.Fatal(ex, "Error");
-                throw new Exception("Error", ex);
+                Logger.LogCritical(ex, "an exception occurred while performing analysis- see exception for details");
+                SeriLogger.Fatal(ex, "an exception occurred while performing analysis- see exception for details");
+                throw new Exception("an exception occurred while performing analysis- see exception for details", ex);
             }
         }
 
@@ -456,37 +461,16 @@ namespace SocialButterflAi.Services.Analysis
                     return response;
                 }
 
-                var formedImageMsg = FormImageContent(processVideoResponse.Data.Base64Media, MediaType.image_gif);
-
-                if(formedImageMsg is not { Success: true } )
+                var analyzeImageRequest = new ImageAnalysisRequest
                 {
-                    Logger.LogError("Error forming image content");
-                    SeriLogger.Error("Error forming image content");
+                    ModelProvider = request.ModelProvider,
+                    ImageId = matchingVideo.Id,
+                    Transcript = whisperResponse.Text,
+                };
 
-                    response.Success = false;
-                    response.Message = "Error forming image content";
+                var aiResponse = await AnalyzeImageAsync(analyzeImageRequest);
 
-                    return response;
-                }
-
-                //add transcript to the message
-                var claudeMsg = formedImageMsg.Data;
-
-                claudeMsg.Content.ToList().Add(
-                    new Models.LLMIntegration.Claude.Content.TextContent
-                    {
-                        Text = whisperResponse.Text
-                    }
-                );
-
-                var aiResponse = await RunAiAnalyzeAsync(
-                    claudeMsg,
-                    modelProvider
-                );
-
-                if(aiResponse == null
-                    || aiResponse is not { Success: true }
-                )
+                if(aiResponse is not { Success: true })
                 {
                     Logger.LogError("Error running AI analysis");
                     SeriLogger.Error("Error running AI analysis");
@@ -595,9 +579,9 @@ namespace SocialButterflAi.Services.Analysis
                 }
 
                 var formedMsgResult = FormImageContent(
-                    base64Media,
-                    parsedType
-                );
+                                        base64Media,
+                                        parsedType
+                                    );
 
                 if(formedMsgResult is not { Success: true } )
                 {
@@ -610,14 +594,23 @@ namespace SocialButterflAi.Services.Analysis
                     return response;
                 }
 
-                var aiResponse = await RunAiAnalyzeAsync(
-                    formedMsgResult.Data,
-                    modelProvider
-                );
+                // //add transcript to the message
+                if(!string.IsNullOrWhiteSpace(request.Transcript))
+                {
+                    formedMsgResult.Data.Content.ToList().Add(
+                        new Models.LLMIntegration.Claude.Content.TextContent
+                        {
+                            Text = request.Transcript
+                        }
+                    );
+                }
 
-                if(aiResponse == null
-                    || aiResponse is not { Success: true }
-                )
+                var aiResponse = await RunAiAnalyzeAsync(
+                                    formedMsgResult.Data,
+                                    modelProvider
+                                );
+
+                if(aiResponse is not { Success: true })
                 {
                     Logger.LogError("Error running AI analysis");
                     SeriLogger.Error("Error running AI analysis");
@@ -680,9 +673,9 @@ namespace SocialButterflAi.Services.Analysis
                 };
 
                 var analysisResponse = await RunAiAnalyzeAsync(
-                    aiMessage,
-                    modelProvider
-                );
+                                                aiMessage,
+                                                modelProvider
+                                            );
 
                 if(analysisResponse == null
                     || !analysisResponse.Success
@@ -1150,6 +1143,49 @@ namespace SocialButterflAi.Services.Analysis
                 .ToArray();
         #endregion
 
+        #region FindImages
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="matchByStatement"></param>
+        /// <returns></returns>
+        private IEnumerable<ImageEntity> FindImages(
+            Func<ImageEntity, bool> matchByStatement
+        )
+            => AnalysisDbContext
+                .Images
+                .Include(i => i.Identity)
+                .Include(i => i.Message)
+                    .ThenInclude(i => i.Chat)
+                        .ThenInclude(m => m.Members)
+                .Include(i => i.Analyses)
+                .Where(matchByStatement)
+                .ToArray();
+        #endregion
+
+        #region FindAudios
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="matchByStatement"></param>
+        /// <returns></returns>
+        private IEnumerable<AudioEntity> FindAudios(
+            Func<AudioEntity, bool> matchByStatement
+        )
+            => AnalysisDbContext
+                .Audios
+                .Include(i => i.Identity)
+                .Include(i => i.Message)
+                    .ThenInclude(i => i.Chat)
+                        .ThenInclude(m => m.Members)
+                .Include(v => v.Captions)
+                    .ThenInclude(c => c.Analyses)
+                .Where(matchByStatement)
+                .ToArray();
+        #endregion
+
         #endregion
 
         #region Mappers
@@ -1219,7 +1255,6 @@ namespace SocialButterflAi.Services.Analysis
         {
             try
             {
-
                 var videoDto = new VideoDto
                 {
                     Id = videoEntity.Id,
@@ -1234,8 +1269,9 @@ namespace SocialButterflAi.Services.Analysis
                     FileStream = null,
                     Duration = null
                 };
-                
+
                 var durationData = await GetDuration(videoDto.Url, null, null);
+
                 if (durationData == null
                     || !durationData.Success
                 )
@@ -1246,11 +1282,155 @@ namespace SocialButterflAi.Services.Analysis
                 }
 
                 videoDto.Duration = durationData.Data;
-                
+
                 Logger.LogTrace($"");
                 SeriLogger.Information($"");
 
                 return videoDto;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region ImageDtoToEntity
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="Image"> </param>
+        /// <returns></returns>
+        private ImageEntity ImageDtoToEntity(
+            object imageDto
+        )
+        {
+            try
+            {
+                var imageEntity = new ImageEntity
+                {
+                };
+
+                if(imageEntity == null)
+                {
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
+                }
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return imageEntity;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region ImageEntityToDto
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="ImageEntity"> </param>
+        /// <returns></returns>
+        private async Task<object> ImageEntityToDto(
+            ImageEntity imageEntity
+        )
+        {
+            try
+            {
+                // var imageDto = new ImageDto
+                // {
+                //     Id = imageEntity.Id,
+                //     UploaderIdentityId = imageEntity.IdentityId,
+                //     //todo:fix this
+                // };
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                throw new NotImplementedException();
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region AudioDtoToEntity
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="audioDto"> </param>
+        /// <returns></returns>
+        private AudioEntity AudioDtoToEntity(
+            object audioDto
+        )
+        {
+            try
+            {
+                var audioEntity = new AudioEntity
+                {
+                };
+
+                if(audioEntity == null)
+                {
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
+                }
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return audioEntity;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region AudioEntityToDto
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="audioEntity"> </param>
+        /// <returns></returns>
+        private async Task<object> AudioEntityToDto(
+            AudioEntity audioEntity
+        )
+        {
+            try
+            {
+                // var audioDto = new AudioDto
+                // {
+                //     Id = audioEntity.Id,
+                //     UploaderIdentityId = audioEntity.IdentityId,
+                //     //todo:fix this
+                // };
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                throw new NotImplementedException();
             }
             catch(Exception ex)
             {
