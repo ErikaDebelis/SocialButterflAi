@@ -27,6 +27,8 @@ using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
 using ImageEntity = SocialButterflAi.Data.Analysis.Entities.Image;
 using AudioEntity = SocialButterflAi.Data.Analysis.Entities.Audio;
+using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
+using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.LLMIntegration.Claude.Content;
@@ -318,6 +320,7 @@ namespace SocialButterflAi.Services.Analysis
                 {
                     VideoAnalysisRequest videoRequest => await AnalyzeVideoAsync(videoRequest),
                     ImageAnalysisRequest imageRequest => await AnalyzeImageAsync(imageRequest),
+                    AudioAnalysisRequest audioRequest => await AnalyzeAudioAsync(audioRequest),
                     TextAnalysisRequest textRequest => await AnalyzeTextAsync(textRequest),
                     _ => new BaseResponse<AnalysisData>
                     {
@@ -378,11 +381,12 @@ namespace SocialButterflAi.Services.Analysis
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
 
                 var matchingVideo = FindVideos(v =>
-                    (v.Identity.Id == request.RequesterIdentityId
-                        || v.Message.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null
+                    v.Id == request.VideoId
+                    || ((v.Identity.Id == request.RequesterIdentityId
+                        || v.Message.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null)
+                        && v.VideoUrl == request.VideoPath
                     )
-                    && v.VideoUrl == request.VideoPath)
-                .FirstOrDefault();
+                ).FirstOrDefault();
 
                 if (matchingVideo is null)
                 {
@@ -514,7 +518,12 @@ namespace SocialButterflAi.Services.Analysis
 
                 var parsedType = MediaType.unknown;
                 var base64Media = string.Empty;
-                var matchingImage = AnalysisDbContext.Images.FirstOrDefault(i => i.Id == request.ImageId);
+                var matchingImage = FindImages(i =>
+                    i.Id == request.ImageId
+                    && (i.Identity.Id == request.RequesterIdentityId
+                        || i.Message.Chat.Members.FirstOrDefault(x => x.Id == i.Identity.Id) != null
+                    )
+                ).FirstOrDefault();
 
                 if (matchingImage == null)
                 //save image to db from message
@@ -638,6 +647,106 @@ namespace SocialButterflAi.Services.Analysis
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<AnalysisData>> AnalyzeAudioAsync(
+            AudioAnalysisRequest request
+        )
+        {
+            var response = new BaseResponse<AnalysisData>();
+            try
+            {
+                var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
+
+                var matchingAudio = FindAudios(a =>
+                    a.Id == request.AudioId
+                    || ((a.Identity.Id == request.RequesterIdentityId
+                        || a.Message.Chat.Members.FirstOrDefault(x => x.Id == a.Identity.Id) != null)
+                        && a.Base64 == request.Base64Audio
+                    )
+                ).FirstOrDefault();
+
+                if (matchingAudio is null)
+                {
+                    Logger.LogError("Audio not found");
+                    SeriLogger.Error("Audio not found");
+                    response.Success = false;
+                    response.Message = "Audio not found";
+
+                    return response;
+                }
+
+                var whisperRequest = new WhisperRequest
+                {
+                    AudioFormat = AudioFormat.wav,
+                    Model = WhisperModel.Whisper_1,
+                    Base64Audio = request.Base64Audio
+                    // WavUrl = $"data:audio/wav;base64,{request.Base64Audio}"
+                };
+
+                var whisperResponse = await OpenAiClient.ExecuteWhisperAsync(whisperRequest);
+
+                if(whisperResponse is not { Success: true } )
+                {
+                    Logger.LogError("Whisper failed");
+                    SeriLogger.Error("Whisper failed");
+
+                    response.Success = false;
+                    response.Message = "Whisper failed";
+
+                    return response;
+                }
+
+                if(string.IsNullOrWhiteSpace(whisperResponse.Text))
+                {
+                    Logger.LogError("Whisper text is empty");
+                    SeriLogger.Error("Whisper text is empty");
+
+                    response.Success = false;
+                    response.Message = "Whisper text is empty";
+
+                    return response;
+                }
+
+                var analyzeTextRequest = new TextAnalysisRequest
+                {
+                    ModelProvider = request.ModelProvider,
+                    // MessageId = ,
+                    Text = whisperResponse.Text,
+                };
+
+                var aiResponse = await AnalyzeTextAsync(analyzeTextRequest);
+
+                if(aiResponse is not { Success: true })
+                {
+                    Logger.LogError("Error running AI analysis");
+                    SeriLogger.Error("Error running AI analysis");
+
+                    response.Success = false;
+                    response.Message = "Error running AI analysis";
+
+                    return response;
+                }
+
+                response.Success = aiResponse.Success;
+                response.Message = aiResponse.Message;
+                response.Data = aiResponse.Data;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+
         // <summary>
         /// 
         /// </summary>
@@ -654,7 +763,7 @@ namespace SocialButterflAi.Services.Analysis
             try
             {
                 var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
-                var matchingMessage = ChatDbContext.Messages.FirstOrDefault(m => m.Id == request.MessageId);
+                var matchingMessage = FindMessages(m => m.Id == request.MessageId).FirstOrDefault();
 
                 if(matchingMessage == null)
                 {
@@ -1182,6 +1291,46 @@ namespace SocialButterflAi.Services.Analysis
                         .ThenInclude(m => m.Members)
                 .Include(v => v.Captions)
                     .ThenInclude(c => c.Analyses)
+                .Where(matchByStatement)
+                .ToArray();
+        #endregion
+
+        #region FindChats
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="matchByStatement"></param>
+        /// <returns></returns>
+        public IEnumerable<ChatEntity> FindChats(
+            Func<ChatEntity, bool> matchByStatement
+        )
+            => ChatDbContext
+                .Chats
+                .Include(m => m.Members)
+                .Include(v => v.Messages)
+                    .ThenInclude(ti => ti.FromIdentity)
+                .Include(v => v.Messages)
+                    .ThenInclude(ti => ti.ToIdentity)
+                .Where(matchByStatement)
+                .ToArray();
+        #endregion
+
+        #region FindMessages
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="matchByStatement"></param>
+        /// <returns></returns>
+        public IEnumerable<MessageEntity> FindMessages(
+            Func<MessageEntity, bool> matchByStatement
+        )
+            => ChatDbContext
+                .Messages
+                .Include(ti => ti.FromIdentity)
+                .Include(ti => ti.ToIdentity)
+                .Include(m => m.Chat)
                 .Where(matchByStatement)
                 .ToArray();
         #endregion

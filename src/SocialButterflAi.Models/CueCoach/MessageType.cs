@@ -5,6 +5,7 @@ namespace SocialButterflAi.Models.CueCoach
         Text,
         Image,
         Video,
+        Audio,
         System
     }
 }

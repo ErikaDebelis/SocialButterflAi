@@ -170,6 +170,36 @@ namespace SocialButterflAi.Services.CueCoach
 
                         return true;
                     },
+                    (true, MessageType.Audio) => async () =>
+                    {
+                        var analysisRequest = new AudioAnalysisRequest()
+                        {
+                            RequesterIdentityId = msg.FromIdentityId,
+                            ModelProvider = $"{_modelProvider}",
+                            TransactionId = $"{transactionId}",
+                            MessageId = msg.Id,
+                            // Transcript = ,
+                            // InitialUserPerception = ,
+                        };
+
+                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
+
+                        if(analysisResponse == null
+                           ||!analysisResponse.Success
+                          )
+                        {
+                            Logger.LogError($"failed to analyze message");
+                            SeriLogger.Error($"failed to analyze message");
+                            response.Success = false;
+                            response.Message = $"failed to analyze message";
+                            response.Data.AnalysisData = null;
+
+                            return false;
+                        }
+                        response.Data.AnalysisData = analysisResponse.Data;
+
+                        return true;
+                    },
                     (true, MessageType.Text) => async () =>
                     {
                         var analysisRequest = new TextAnalysisRequest()

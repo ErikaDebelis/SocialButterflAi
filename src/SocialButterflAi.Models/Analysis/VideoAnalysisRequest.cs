@@ -8,6 +8,10 @@ namespace SocialButterflAi.Models.Analysis
 {
     public class VideoAnalysisRequest : BaseAnalysisRequest
     {
+        [JsonProperty("VideoId")]
+        [JsonPropertyName("VideoId")]
+        public Guid? VideoId { get; set; }
+
         [JsonProperty("VideoPath")]
         [JsonPropertyName("VideoPath")]
         public string VideoPath { get; set; }
