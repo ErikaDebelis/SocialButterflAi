@@ -185,8 +185,8 @@ namespace SocialButterflAi.Services.CueCoach
                         var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
 
                         if(analysisResponse == null
-                           ||!analysisResponse.Success
-                          )
+                            ||!analysisResponse.Success
+                        )
                         {
                             Logger.LogError($"failed to analyze message");
                             SeriLogger.Error($"failed to analyze message");
@@ -234,11 +234,11 @@ namespace SocialButterflAi.Services.CueCoach
                         await Task.CompletedTask;
                         Logger.LogError($"no analysis requested");
                         SeriLogger.Error($"no analysis requested");
-                        response.Success = false;
+                        response.Success = true;
                         response.Message = $"no analysis requested";
                         response.Data.AnalysisData = null;
 
-                        return false;
+                        return true;
                     },
                     _ => async () =>
                     {
@@ -255,11 +255,15 @@ namespace SocialButterflAi.Services.CueCoach
 
                 var analysisResponse = await analyze();
 
+                if (analysisResponse is not true)
+                {
+                    Logger.LogError($"request fell through- unexpected values sent in for evaluation");
+                    SeriLogger.Error($"request fell through- unexpected values sent in for evaluation");
+                    return response;
+                }
                 //return response to caller(Consumer)
                 Logger.LogInformation($"Message processed successfully");
                 SeriLogger.Information($"Message processed successfully");
-                response.Success = true;
-                response.Message = "Message processed successfully";
 
                 return response;
             }
@@ -271,9 +275,70 @@ namespace SocialButterflAi.Services.CueCoach
             }
         }
         #endregion
+
         #endregion
 
         #region Entity/Database Methods
+
+        #region SaveChatAsync
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="chat"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<Chat>> SaveChatAsync(
+            Chat chat
+        )
+        {
+            var response = new BaseResponse<Chat>();
+            try
+            {
+                //save to db
+                var matchingChat = FindChats(c => c.Id == chat.Id).FirstOrDefault();
+
+                if(matchingChat == null)
+                {
+                    Logger.LogError($"Chat not found for Id: {chat.Id}");
+                    SeriLogger.Error($"Chat not found for Id: {chat.Id}");
+                    response.Success = false;
+                    response.Chat = $"Chat not found for Id: {chat.Id}";
+                    response.Data = null;
+
+                    return response;
+                }
+                var chatEntity = ChatDtoToEntity(chat);
+
+                if(chatEntity == null)
+                {
+                    Logger.LogError($"ChatDtoToEntity failed");
+                    SeriLogger.Error($"ChatDtoToEntity failed");
+                    response.Success = false;
+                    response.Chat = $"ChatDtoToEntity failed";
+                    response.Data = null;
+
+                    return response;
+                }
+
+                ChatDbContext.Chats.Add(chatEntity);
+                await ChatDbContext.SaveChangesAsync();
+
+                Logger.LogInformation($"Chat saved successfully");
+                SeriLogger.Information($"Chat saved successfully");
+                response.Success = true;
+                response.Chat = "Chat saved successfully";
+                response.Data = chat;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
 
         #region SaveMessageAsync
         /// <summary>
@@ -392,6 +457,81 @@ namespace SocialButterflAi.Services.CueCoach
         #endregion
 
         #region Mappers
+
+        #region ChatDtoToEntity
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="Chat"> </param>
+        /// <returns></returns>
+        private ChatEntity ChatDtoToEntity(
+            ChatDto chatDto
+        )
+        {
+            try
+            {
+                var chatEntity = new ChatEntity
+                {
+                    Id = chatDto.Id,
+                    CreatedBy = $"",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedBy = $"",
+                    ModifiedOn = DateTime.UtcNow
+                };
+
+                if(chatEntity == null)
+                {
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
+                }
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return chatEntity;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region ChatEntityToDto
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="msgEntity"> </param>
+        /// <returns></returns>
+        private async Task<MessageDto> ChatEntityToDto(
+            ChatEntity chatEntity
+        )
+        {
+            try
+            {
+                var chatDto = new ChatDto
+                {
+                    Id = chatEntity.Id,
+                    ChatStatus = Enum.Parse<ChatStatus>($"{chatEntity.ChatStatus}"),
+                };
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return chatDto;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
 
         #region MessageDtoToEntity
         /// <remarks></remarks>

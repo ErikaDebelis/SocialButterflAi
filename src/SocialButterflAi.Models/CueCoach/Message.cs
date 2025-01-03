@@ -9,7 +9,7 @@ namespace SocialButterflAi.Models.CueCoach
     {
         public Guid Id { get; set; }
         public Guid ChatId { get; set; }
-        public Guid ToIdentityId { get; set; }
+        public Guid? ToIdentityId { get; set; }
         public Guid FromIdentityId { get; set; }
 
         /// <summary>

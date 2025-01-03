@@ -1335,6 +1335,126 @@ namespace SocialButterflAi.Services.Analysis
                 .ToArray();
         #endregion
 
+        #region SaveImageAsync
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="Image"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<Image>> SaveImageAsync(
+            Image image
+        )
+        {
+            var response = new BaseResponse<Image>();
+            try
+            {
+                //save to db
+                var matchingImage = FindImages(c => c.Id == image.Id).FirstOrDefault();
+
+                if(matchingImage == null)
+                {
+                    Logger.LogError($"Image not found for Id: {image.Id}");
+                    SeriLogger.Error($"Image not found for Id: {image.Id}");
+                    response.Success = false;
+                    response.Image = $"Image not found for Id: {image.Id}";
+                    response.Data = null;
+
+                    return response;
+                }
+                var imageEntity = ImageDtoToEntity(image);
+
+                if(imageEntity == null)
+                {
+                    Logger.LogError($"ImageDtoToEntity failed");
+                    SeriLogger.Error($"ImageDtoToEntity failed");
+                    response.Success = false;
+                    response.Image = $"ImageDtoToEntity failed";
+                    response.Data = null;
+
+                    return response;
+                }
+
+                AnalysisDbContext.Images.Add(imageEntity);
+                await AnalysisDbContext.SaveChangesAsync();
+
+                Logger.LogInformation($"Image saved successfully");
+                SeriLogger.Information($"Image saved successfully");
+                response.Success = true;
+                response.Image = "Image saved successfully";
+                response.Data = image;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
+        #region SaveAudioAsync
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="Audio"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<Audio>> SaveAudioAsync(
+            Audio audio
+        )
+        {
+            var response = new BaseResponse<Audio>();
+            try
+            {
+                //save to db
+                var matchingAudio = FindAudios(c => c.Id == audio.Id).FirstOrDefault();
+
+                if(matchingAudio == null)
+                {
+                    Logger.LogError($"Audio not found for Id: {audio.Id}");
+                    SeriLogger.Error($"Audio not found for Id: {audio.Id}");
+                    response.Success = false;
+                    response.Audio = $"Audio not found for Id: {audio.Id}";
+                    response.Data = null;
+
+                    return response;
+                }
+                var audioEntity = AudioDtoToEntity(audio);
+
+                if(audioEntity == null)
+                {
+                    Logger.LogError($"AudioDtoToEntity failed");
+                    SeriLogger.Error($"AudioDtoToEntity failed");
+                    response.Success = false;
+                    response.Audio = $"AudioDtoToEntity failed";
+                    response.Data = null;
+
+                    return response;
+                }
+
+                AnalysisDbContext.Audios.Add(audioEntity);
+                await AnalysisDbContext.SaveChangesAsync();
+
+                Logger.LogInformation($"Audio saved successfully");
+                SeriLogger.Information($"Audio saved successfully");
+                response.Success = true;
+                response.Audio = "Audio saved successfully";
+                response.Data = audio;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Mappers
