@@ -28,7 +28,6 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="Exception"></exception>
         public Task<BaseResponse<UploadData>> UploadAsync(
             Guid identityId,
-            Guid relatedChatId,
             Guid relatedMessageId,
             string base64Video
         );
@@ -44,9 +43,9 @@ namespace SocialButterflAi.Services.Analysis
             Guid identityId,
             IFormFile file,
             VideoFormat format,
-            Guid? relatedChatId,
             string? title,
-            string? description
+            string? description = null,
+            Guid? relatedMessageId = null
         );
 
         /// <summary>

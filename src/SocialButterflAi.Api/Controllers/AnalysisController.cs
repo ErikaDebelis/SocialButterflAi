@@ -87,9 +87,9 @@ namespace SocialButterflAi.Api.Controllers
                                                         identity.Id,
                                                         file,
                                                         videoFormat,
-                                                        matchingChat.Id,
                                                         request.Title,
-                                                        request.Description
+                                                        request.Description,
+                                                        null
                                                     );
 
                 if (uploadResponse is not { Success: true }

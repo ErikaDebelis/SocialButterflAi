@@ -12,12 +12,14 @@ using SocialButterflAi.Data.Identity;
 using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Services.Analysis;
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
-using MessageDto = SocialButterflAi.Models.CueCoach.Message;
+using MessageDto = SocialButterflAi.Models.CueCoach.Dtos.Message;
+using ChatDto = SocialButterflAi.Models.CueCoach.Dtos.Chat;
 using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.Analysis;
 using Serilog;
+using SocialButterflAi.Models.CueCoach.Dtos;
 using SocialButterflAi.Models.LLMIntegration.Claude.Content;
 
 namespace SocialButterflAi.Services.CueCoach
@@ -60,7 +62,7 @@ namespace SocialButterflAi.Services.CueCoach
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<MessageData>> ProcessMessageAsync(
-            Message msg,
+            MessageDto msg,
             Guid transactionId,
             bool toAnalyze = false
         )
@@ -93,7 +95,6 @@ namespace SocialButterflAi.Services.CueCoach
                     {
                         var uploadResponse = await AnalysisService.UploadAsync(
                                             identityId: msg.FromIdentityId,
-                                            relatedChatId: msg.ChatId,
                                             relatedMessageId: msg.Id,
                                             base64Video: msg.Text
                                         );
@@ -287,11 +288,12 @@ namespace SocialButterflAi.Services.CueCoach
         /// <param name="chat"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<Chat>> SaveChatAsync(
-            Chat chat
+        public async Task<BaseResponse<ChatDto>> SaveChatAsync(
+            ChatDto chat,
+            Guid creatorIdentityId
         )
         {
-            var response = new BaseResponse<Chat>();
+            var response = new BaseResponse<ChatDto>();
             try
             {
                 //save to db
@@ -302,19 +304,19 @@ namespace SocialButterflAi.Services.CueCoach
                     Logger.LogError($"Chat not found for Id: {chat.Id}");
                     SeriLogger.Error($"Chat not found for Id: {chat.Id}");
                     response.Success = false;
-                    response.Chat = $"Chat not found for Id: {chat.Id}";
+                    response.Message = $"Chat not found for Id: {chat.Id}";
                     response.Data = null;
 
                     return response;
                 }
-                var chatEntity = ChatDtoToEntity(chat);
+                var chatEntity = ChatDtoToEntity(chat, creatorIdentityId);
 
                 if(chatEntity == null)
                 {
                     Logger.LogError($"ChatDtoToEntity failed");
                     SeriLogger.Error($"ChatDtoToEntity failed");
                     response.Success = false;
-                    response.Chat = $"ChatDtoToEntity failed";
+                    response.Message = $"ChatDtoToEntity failed";
                     response.Data = null;
 
                     return response;
@@ -326,7 +328,7 @@ namespace SocialButterflAi.Services.CueCoach
                 Logger.LogInformation($"Chat saved successfully");
                 SeriLogger.Information($"Chat saved successfully");
                 response.Success = true;
-                response.Chat = "Chat saved successfully";
+                response.Message = "Chat saved successfully";
                 response.Data = chat;
 
                 return response;
@@ -347,11 +349,11 @@ namespace SocialButterflAi.Services.CueCoach
         /// <param name="msg"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<Message>> SaveMessageAsync(
-            Message msg
+        public async Task<BaseResponse<MessageDto>> SaveMessageAsync(
+            MessageDto msg
         )
         {
-            var response = new BaseResponse<Message>();
+            var response = new BaseResponse<MessageDto>();
             try
             {
                 //save msg to db
@@ -466,7 +468,8 @@ namespace SocialButterflAi.Services.CueCoach
         /// <param name="Chat"> </param>
         /// <returns></returns>
         private ChatEntity ChatDtoToEntity(
-            ChatDto chatDto
+            ChatDto chatDto,
+            Guid identityId
         )
         {
             try
@@ -474,9 +477,13 @@ namespace SocialButterflAi.Services.CueCoach
                 var chatEntity = new ChatEntity
                 {
                     Id = chatDto.Id,
-                    CreatedBy = $"",
+                    Name = chatDto.Name,
+                    ChatStatus = Enum.Parse<Data.Chat.Entities.ChatStatus>($"{chatDto.ChatStatus}"),
+                    Messages = chatDto.Messages.Select(m => MessageDtoToEntity(m)).ToList(),
+                    // Members = ,
+                    CreatedBy = $"{identityId}",
                     CreatedOn = DateTime.UtcNow,
-                    ModifiedBy = $"",
+                    ModifiedBy = $"{identityId}",
                     ModifiedOn = DateTime.UtcNow
                 };
 
@@ -507,7 +514,7 @@ namespace SocialButterflAi.Services.CueCoach
         ///</summary>
         /// <param name="msgEntity"> </param>
         /// <returns></returns>
-        private async Task<MessageDto> ChatEntityToDto(
+        private ChatDto ChatEntityToDto(
             ChatEntity chatEntity
         )
         {
@@ -515,8 +522,11 @@ namespace SocialButterflAi.Services.CueCoach
             {
                 var chatDto = new ChatDto
                 {
-                    Id = chatEntity.Id,
-                    ChatStatus = Enum.Parse<ChatStatus>($"{chatEntity.ChatStatus}"),
+                    Id = default,
+                    Name = null,
+                    ChatStatus = ChatStatus.Unknown,
+                    Messages = chatEntity.Messages.Select(m => MessageEntityToDto(m)).ToArray(),
+                    MemberIdentityIds = chatEntity.Members.Select(m => m.Id).ToList(),
                 };
 
                 Logger.LogTrace($"");
@@ -551,7 +561,7 @@ namespace SocialButterflAi.Services.CueCoach
                     Id = msgDto.Id,
                     ChatId = msgDto.ChatId,
                     FromIdentityId = msgDto.FromIdentityId,
-                    ToIdentityId = msgDto.ToIdentityId,
+                    ToIdentityId = msgDto.ToIdentityId ?? default,
                     MessageType = Enum.Parse<Data.Chat.Entities.MessageType>($"{msgDto.MessageType}"),
                     Metadata = msgDto.Metadata,
                     CreatedBy = $"{msgDto.FromIdentityId}",
@@ -587,13 +597,12 @@ namespace SocialButterflAi.Services.CueCoach
         ///</summary>
         /// <param name="msgEntity"> </param>
         /// <returns></returns>
-        private async Task<MessageDto> MessageEntityToDto(
+        private MessageDto MessageEntityToDto(
             MessageEntity msgEntity
         )
         {
             try
             {
-
                 var msgDto = new MessageDto
                 {
                     Id = msgEntity.Id,

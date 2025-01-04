@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
-
+using MessageDto = SocialButterflAi.Models.CueCoach.Dtos.Message;
+using ChatDto = SocialButterflAi.Models.CueCoach.Dtos.Chat;
 using SocialButterflAi.Data.Identity;
 using MassTransit;
 using RabbitMQ.Client;
@@ -89,7 +90,7 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
 	                PropertyNameCaseInsensitive = true
                 };
 
-                var deserializedMessage = await JsonSerializer.DeserializeAsync<Message>(incomingMessage.Stream, jsonSerializationOptions);
+                var deserializedMessage = await JsonSerializer.DeserializeAsync<MessageDto>(incomingMessage.Stream, jsonSerializationOptions);
                 if (deserializedMessage == null)
                 {
                     return StatusCode(500, "Unable to deserialize incoming message");

@@ -1,9 +1,9 @@
-using Newtonsoft.Json;
 using System;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.CueCoach
+namespace SocialButterflAi.Models.CueCoach.Dtos
 {
     public class Message
     {

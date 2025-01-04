@@ -3,6 +3,9 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
+using MessageDto = SocialButterflAi.Models.CueCoach.Dtos.Message;
+using ChatDto = SocialButterflAi.Models.CueCoach.Dtos.Chat;
+using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.CueCoach;
 
@@ -17,7 +20,7 @@ namespace SocialButterflAi.Services.CueCoach
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
         public Task<BaseResponse<MessageData>> ProcessMessageAsync(
-            Message msg,
+            MessageDto msg,
             Guid transactionId,
             bool toAnalyze = false
         );

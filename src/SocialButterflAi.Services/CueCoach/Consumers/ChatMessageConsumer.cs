@@ -3,15 +3,15 @@ using Serilog;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 using MassTransit;
 using Microsoft.AspNetCore.SignalR;
 using SocialButterflAi.Services.CueCoach;
 using Microsoft.Extensions.Caching.Distributed;
-
+using MessageDto = SocialButterflAi.Models.CueCoach.Dtos.Message;
 using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Models.CueCoach.Contracts;
-using Microsoft.Extensions.Logging;
 
 namespace SocialButterflAi.Services.CueCoach.Consumers
 {
@@ -59,7 +59,7 @@ namespace SocialButterflAi.Services.CueCoach.Consumers
             }
 
             var transactionId = messageContractContext.Message.TransactionId;
-            var msg = JsonSerializer.Deserialize<Message>(messageContractContext.Message.Body);
+            var msg = JsonSerializer.Deserialize<MessageDto>(messageContractContext.Message.Body);
 
             try
             {

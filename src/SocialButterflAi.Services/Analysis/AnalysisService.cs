@@ -25,6 +25,9 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
 using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
+using VideoDto = SocialButterflAi.Models.Analysis.Video;
+using ImageDto = SocialButterflAi.Models.Analysis.Image;
+using AudioDto = SocialButterflAi.Models.Analysis.Audio;
 using ImageEntity = SocialButterflAi.Data.Analysis.Entities.Image;
 using AudioEntity = SocialButterflAi.Data.Analysis.Entities.Audio;
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
@@ -107,7 +110,6 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<UploadData>> UploadAsync(
             Guid identityId,
-            Guid relatedChatId,
             Guid relatedMessageId,
             string base64Video
         )
@@ -122,7 +124,7 @@ namespace SocialButterflAi.Services.Analysis
                 videoDto = new VideoDto
                 {
                     UploaderIdentityId = identityId,
-                    RelatedChatId = relatedChatId,
+                    MessageId = relatedMessageId,
                     Title = $"Video{relatedMessageId}",
                     Description = "",
                     Format = VideoFormat.mp4,
@@ -195,9 +197,9 @@ namespace SocialButterflAi.Services.Analysis
             Guid identityId,
             IFormFile file,
             VideoFormat format,
-            Guid? relatedChatId,
             string? videoTitle,
-            string? videoDescription = null
+            string? videoDescription = null,
+            Guid? relatedMessageId = null
         )
         {
             var response = new BaseResponse<UploadData>();
@@ -218,13 +220,13 @@ namespace SocialButterflAi.Services.Analysis
                 videoDto = new VideoDto
                 {
                     UploaderIdentityId = identityId,
-                    RelatedChatId = relatedChatId,
                     Title = videoTitle,
                     Description = videoDescription,
                     Format = format,
                     Url = filePath,
                     FileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read),
-                    Base64 = base64
+                    Base64 = base64,
+                    MessageId = relatedMessageId
                 };
 
                 var durationData = await GetDuration(
@@ -1342,11 +1344,11 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="Image"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<Image>> SaveImageAsync(
-            Image image
+        public async Task<BaseResponse<ImageDto>> SaveImageAsync(
+            ImageDto image
         )
         {
-            var response = new BaseResponse<Image>();
+            var response = new BaseResponse<ImageDto>();
             try
             {
                 //save to db
@@ -1357,7 +1359,7 @@ namespace SocialButterflAi.Services.Analysis
                     Logger.LogError($"Image not found for Id: {image.Id}");
                     SeriLogger.Error($"Image not found for Id: {image.Id}");
                     response.Success = false;
-                    response.Image = $"Image not found for Id: {image.Id}";
+                    response.Message = $"Image not found for Id: {image.Id}";
                     response.Data = null;
 
                     return response;
@@ -1369,7 +1371,7 @@ namespace SocialButterflAi.Services.Analysis
                     Logger.LogError($"ImageDtoToEntity failed");
                     SeriLogger.Error($"ImageDtoToEntity failed");
                     response.Success = false;
-                    response.Image = $"ImageDtoToEntity failed";
+                    response.Message = $"ImageDtoToEntity failed";
                     response.Data = null;
 
                     return response;
@@ -1381,7 +1383,7 @@ namespace SocialButterflAi.Services.Analysis
                 Logger.LogInformation($"Image saved successfully");
                 SeriLogger.Information($"Image saved successfully");
                 response.Success = true;
-                response.Image = "Image saved successfully";
+                response.Message = "Image saved successfully";
                 response.Data = image;
 
                 return response;
@@ -1402,11 +1404,11 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="Audio"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<Audio>> SaveAudioAsync(
-            Audio audio
+        public async Task<BaseResponse<AudioDto>> SaveAudioAsync(
+            AudioDto audio
         )
         {
-            var response = new BaseResponse<Audio>();
+            var response = new BaseResponse<AudioDto>();
             try
             {
                 //save to db
@@ -1417,7 +1419,7 @@ namespace SocialButterflAi.Services.Analysis
                     Logger.LogError($"Audio not found for Id: {audio.Id}");
                     SeriLogger.Error($"Audio not found for Id: {audio.Id}");
                     response.Success = false;
-                    response.Audio = $"Audio not found for Id: {audio.Id}";
+                    response.Message = $"Audio not found for Id: {audio.Id}";
                     response.Data = null;
 
                     return response;
@@ -1429,7 +1431,7 @@ namespace SocialButterflAi.Services.Analysis
                     Logger.LogError($"AudioDtoToEntity failed");
                     SeriLogger.Error($"AudioDtoToEntity failed");
                     response.Success = false;
-                    response.Audio = $"AudioDtoToEntity failed";
+                    response.Message = $"AudioDtoToEntity failed";
                     response.Data = null;
 
                     return response;
@@ -1441,7 +1443,7 @@ namespace SocialButterflAi.Services.Analysis
                 Logger.LogInformation($"Audio saved successfully");
                 SeriLogger.Information($"Audio saved successfully");
                 response.Success = true;
-                response.Audio = "Audio saved successfully";
+                response.Message = "Audio saved successfully";
                 response.Data = audio;
 
                 return response;
@@ -1529,7 +1531,7 @@ namespace SocialButterflAi.Services.Analysis
                     Id = videoEntity.Id,
                     UploaderIdentityId = videoEntity.IdentityId,
                     //todo:fix this
-                    // RelatedChatId = videoEntity.ChatId,
+                    // MessageId = 
                     Title = videoEntity.Title,
                     Description = videoEntity.Description,
                     Url = videoEntity.VideoUrl,
@@ -1581,6 +1583,21 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var imageEntity = new ImageEntity
                 {
+                    Id = default,
+                    CreatedOn = default,
+                    CreatedBy = null,
+                    ModifiedOn = default,
+                    ModifiedBy = null,
+                    IdentityId = default,
+                    Identity = null,
+                    MessageId = null,
+                    Message = null,
+                    Title = null,
+                    Description = null,
+                    ImageUrl = null,
+                    Base64 = null,
+                    ImageType = ImageType.unknown,
+                    Analyses = null
                 };
 
                 if(imageEntity == null)
@@ -1617,12 +1634,16 @@ namespace SocialButterflAi.Services.Analysis
         {
             try
             {
-                // var imageDto = new ImageDto
-                // {
-                //     Id = imageEntity.Id,
-                //     UploaderIdentityId = imageEntity.IdentityId,
-                //     //todo:fix this
-                // };
+                var imageDto = new ImageDto
+                {
+                    Id = default,
+                    UploaderIdentityId = default,
+                    MessageId = null,
+                    Title = null,
+                    Description = null,
+                    ImageUrl = null,
+                    Base64 = null
+                };
 
                 Logger.LogTrace($"");
                 SeriLogger.Information($"");
@@ -1653,6 +1674,17 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var audioEntity = new AudioEntity
                 {
+                    Id = default,
+                    CreatedOn = default,
+                    CreatedBy = null,
+                    ModifiedOn = default,
+                    ModifiedBy = null,
+                    IdentityId = default,
+                    Identity = null,
+                    MessageId = null,
+                    Message = null,
+                    Base64 = null,
+                    Captions = null
                 };
 
                 if(audioEntity == null)
@@ -1689,12 +1721,13 @@ namespace SocialButterflAi.Services.Analysis
         {
             try
             {
-                // var audioDto = new AudioDto
-                // {
-                //     Id = audioEntity.Id,
-                //     UploaderIdentityId = audioEntity.IdentityId,
-                //     //todo:fix this
-                // };
+                var audioDto = new AudioDto
+                {
+                    Id = default,
+                    UploaderIdentityId = default,
+                    MessageId = null,
+                    Base64 = null
+                };
 
                 Logger.LogTrace($"");
                 SeriLogger.Information($"");
