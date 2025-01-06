@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SocialButterflAi.Models.CueCoach.Dtos
+namespace SocialButterflAi.Models.Dtos
 {
     public class Identity
     {

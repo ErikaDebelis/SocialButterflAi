@@ -12,14 +12,14 @@ using SocialButterflAi.Data.Identity;
 using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Services.Analysis;
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
-using MessageDto = SocialButterflAi.Models.CueCoach.Dtos.Message;
-using ChatDto = SocialButterflAi.Models.CueCoach.Dtos.Chat;
+using MessageDto = SocialButterflAi.Models.Dtos.Message;
+using ChatDto = SocialButterflAi.Models.Dtos.Chat;
 using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.Analysis;
 using Serilog;
-using SocialButterflAi.Models.CueCoach.Dtos;
+using SocialButterflAi.Models.Dtos;
 using SocialButterflAi.Models.LLMIntegration.Claude.Content;
 
 namespace SocialButterflAi.Services.CueCoach
@@ -27,7 +27,7 @@ namespace SocialButterflAi.Services.CueCoach
     public class CueCoachService : ICueCoachService
     {
         #region Properties (public and private)
-        public IAnalysisService AnalysisService;
+        private IAnalysisService AnalysisService;
         private IdentityDbContext IdentityDbContext;
         private ChatDbContext ChatDbContext;
         private ILogger<ICueCoachService> Logger;

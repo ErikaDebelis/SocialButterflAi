@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
-namespace SocialButterflAi.Models.CueCoach.Dtos
+namespace SocialButterflAi.Models.Dtos
 {
     public enum MessageType
     {

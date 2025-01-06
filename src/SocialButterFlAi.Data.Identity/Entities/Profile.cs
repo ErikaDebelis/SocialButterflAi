@@ -15,7 +15,6 @@ namespace SocialButterflAi.Data.Identity.Entities
         public Guid IdentityId { get; set; }
         public Identity Identity { get; set; }
 
-
         public string Name { get; set; }
         public ProfileStatus Status { get; set; }
         public string FirstName { get; set; }

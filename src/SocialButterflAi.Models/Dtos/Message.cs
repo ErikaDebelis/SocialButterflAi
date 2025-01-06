@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace SocialButterflAi.Models.CueCoach.Dtos
+namespace SocialButterflAi.Models.Dtos
 {
     public class Message
     {

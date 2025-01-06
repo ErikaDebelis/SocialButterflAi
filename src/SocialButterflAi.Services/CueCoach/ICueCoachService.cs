@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
-using MessageDto = SocialButterflAi.Models.CueCoach.Dtos.Message;
-using ChatDto = SocialButterflAi.Models.CueCoach.Dtos.Chat;
+using MessageDto = SocialButterflAi.Models.Dtos.Message;
+using ChatDto = SocialButterflAi.Models.Dtos.Chat;
 using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.CueCoach;

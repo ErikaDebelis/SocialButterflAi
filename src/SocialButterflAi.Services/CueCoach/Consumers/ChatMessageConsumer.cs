@@ -9,7 +9,7 @@ using MassTransit;
 using Microsoft.AspNetCore.SignalR;
 using SocialButterflAi.Services.CueCoach;
 using Microsoft.Extensions.Caching.Distributed;
-using MessageDto = SocialButterflAi.Models.CueCoach.Dtos.Message;
+using MessageDto = SocialButterflAi.Models.Dtos.Message;
 using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Models.CueCoach.Contracts;
 
@@ -111,7 +111,8 @@ namespace SocialButterflAi.Services.CueCoach.Consumers
                         .Client(connectionId)
                         .SendAsync(
                             "ChatMessage",
-                            response.Data.AnalysisData
+                            response.Data.AnalysisData,
+                            new CancellationToken()
                         );
 
                     Logger.LogInformation($"({messageContractContext.Message.IdentityId}) chat message sent.");

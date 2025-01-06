@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using MessageDto = SocialButterflAi.Models.CueCoach.Dtos.Message;
+using MessageDto = SocialButterflAi.Models.Dtos.Message;
 using SocialButterflAi.Models.Analysis;
 
 namespace SocialButterflAi.Models.CueCoach
