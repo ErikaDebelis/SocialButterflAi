@@ -11,21 +11,12 @@ namespace SocialButterflAi.Data.Analysis.Entities
 {
     [PrimaryKey(nameof(Id))]
     [Table("Image")]
-    public class Image: BaseEntity
+    public class Image: Media
     {
-        /// <summary>
-        /// Navigation property
-        /// </summary>
-        public Guid IdentityId { get; set; }
-        public Identity.Entities.Identity Identity { get; set; }
-
-        public Guid? MessageId { get; set; }
-        public Chat.Entities.Message? Message { get; set; }
-
         public string Title { get; set; }
         public string Description { get; set; }
-        public string Path { get; set; }
-        public string Base64 { get; set; }
+        public override string Path { get; set; }
+        public override string Base64 { get; set; }
         public ImageType Type { get; set; }
         public List<Analysis>? Analyses { get; set; }
     }

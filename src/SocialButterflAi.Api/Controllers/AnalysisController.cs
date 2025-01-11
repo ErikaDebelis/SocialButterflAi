@@ -50,8 +50,8 @@ namespace SocialButterflAi.Api.Controllers
         [Route("")]
         public async Task<IActionResult> GetAnalysis(
             string type,
-            string? id,
-            string? path
+            string path,
+            string? id
         )
         {
             try
@@ -64,7 +64,7 @@ namespace SocialButterflAi.Api.Controllers
 
                 var analysisType = Enum.Parse<AnalysisType>(type);
 
-                var matchingAnalysisResult = await AnalysisService.GetAnalysisAsync(identity.Id, analysisType, parsedId, path);
+                var matchingAnalysisResult = await AnalysisService.GetAnalysisAsync(identity.Id, analysisType, path, parsedId);
 
                 Logger.LogInformation("completed");
 

@@ -11,21 +11,12 @@ namespace SocialButterflAi.Data.Analysis.Entities
 {
     [PrimaryKey(nameof(Id))]
     [Table("Video")]
-    public class Video: BaseEntity
+    public class Video: Media
     {
-        /// <summary>
-        /// Navigation property
-        /// </summary>
-        public Guid IdentityId { get; set; }
-        public Identity.Entities.Identity Identity { get; set; }
-
-        public Guid? MessageId { get; set; }
-        public Chat.Entities.Message? Message { get; set; }
-
         public string Title { get; set; }
         public string Description { get; set; }
-        public string Path { get; set; }
-        public string Base64 { get; set; }
+        public override string Path { get; set; }
+        public override string Base64 { get; set; }
         public VideoType VideoType { get; set; }
         public TimeSpan Duration { get; set; }
         public List<EnhancedCaption>? Captions { get; set; }

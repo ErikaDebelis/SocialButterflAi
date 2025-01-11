@@ -11,20 +11,15 @@ namespace SocialButterflAi.Data.Analysis.Entities
 {
     [PrimaryKey(nameof(Id))]
     [Table("Audio")]
-    public class Audio: BaseEntity
+    public class Audio: Media
     {
         /// <summary>
         /// Navigation property
         /// </summary>
-        public Guid IdentityId { get; set; }
-        public Identity.Entities.Identity Identity { get; set; }
-
-        public Guid? MessageId { get; set; }
-        public Chat.Entities.Message? Message { get; set; }
 
         public AudioType Type { get; set; }
-        public string Path { get; set; }
-        public string Base64 { get; set; }
+        public override string Path { get; set; }
+        public override string Base64 { get; set; }
         public List<EnhancedCaption>? Captions { get; set; }
     }
 }

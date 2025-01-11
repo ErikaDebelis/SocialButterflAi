@@ -111,30 +111,153 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="base64Video"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<UploadData>> GetAnalysisAsync(
+        public async Task<BaseResponse<IEnumerable<object>>> GetAnalysisAsync(
             Guid identityId,
             AnalysisType analysisType,
-            Guid? analysisId,
-            string? path
+            string path,
+            Guid? analysisId
         )
         {
+            var response = new BaseResponse<IEnumerable<object>>();
             try
             {
-                BaseEntity typeMatch = analysisType switch
+                Func<Task<IEnumerable<AnalysisEntity>?>> media = analysisType switch
                 {
-                    AnalysisType.Video => FindVideos(x => x.Path == path).FirstOrDefault(),
-                    AnalysisType.Image => FindImages(x => x.Path == path).FirstOrDefault(),
-                    AnalysisType.Audio => FindAudios(x => x.Path == path).FirstOrDefault(),
+                    AnalysisType.Video => async () =>
+                    {
+                        var video = FindVideos(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
+
+                        if (video == null)
+                        {
+                            response.Success = false;
+                            response.Message = "Video not found";
+
+                            return null;
+                        }
+
+                        if (analysisId != null)
+                        {
+                            var analysis = video.Captions
+                                .Select(c => c.Analyses
+                                .FirstOrDefault(a => a.Id == analysisId)
+                            ).FirstOrDefault();
+
+                            if (analysis == null)
+                            {
+                                response.Success = false;
+                                response.Message = "Analysis not found";
+
+                                return null;
+                            }
+                            
+                            response.Success = true;
+                            response.Message = "Analysis successfully found";
+
+                            return [ analysis ];
+
+                        }
+
+                        var analyses = video.Captions.SelectMany(c => c.Analyses).ToList();
+                        if (analyses == null && !analyses.Any())
+                        {
+                            response.Success = false;
+                            response.Message = "Analysis is not found";
+                            
+                            return null;
+                        }
+                        
+                        response.Success = true;
+                        response.Message = "Analysis successfully found";
+
+                        return analyses;
+                    },
+                    AnalysisType.Image => async () =>
+                    {
+                        var image = FindImages(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
+
+                        if (image == null)
+                        {
+                            response.Success = false;
+                            response.Message = "Image not found";
+                            return null;
+                        }
+
+                        if (analysisId != null)
+                        {
+                            var analysis = image.Analyses.FirstOrDefault(a => a.Id == analysisId);
+                            
+                            if (analysis == null)
+                            {
+                                response.Success = false;
+                                response.Message = "Analysis not found";
+
+                                return null;
+                            }
+                            
+                            response.Success = true;
+                            response.Message = "Analysis successfully found";
+
+                            return [ analysis ];
+                        }
+                        
+                        response.Success = true;
+                        response.Message = "Analysis successfully found";
+                        return image.Analyses;
+                    },
+                    AnalysisType.Audio => async () =>
+                    {
+                        var audio = FindAudios(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
+                        
+                        if (audio == null)
+                        {
+                            response.Success = false;
+                            response.Message = "audio not found";
+
+                            return null;
+                        }
+
+                        if (analysisId != null)
+                        {
+                            var analysis = audio.Captions
+                                .Select(c => c.Analyses
+                                    .FirstOrDefault(a => a.Id == analysisId)
+                                ).FirstOrDefault();
+
+                            if (analysis == null)
+                            {
+                                response.Success = false;
+                                response.Message = "Analysis not found";
+
+                                return null;
+                            }
+                            
+                            response.Success = true;
+                            response.Message = "Analysis successfully found";
+
+                            return [ analysis ];
+
+                        }
+                        var analyses = audio.Captions.SelectMany(c => c.Analyses).ToList();
+                        
+                        if (analyses == null && !analyses.Any())
+                        {
+                            response.Success = false;
+                            response.Message = "Analysis is not found";
+                            
+                            return null;
+                        }
+                        
+                        response.Success = true;
+                        response.Message = "Analysis successfully found";
+
+                        return analyses;
+                    },
                     _ => throw new NotImplementedException()
                 };
+                
+                var result = await media();
 
-
-                var matchingAnalysis = FindAnalyses(a =>
-                    a.Type == analysisType
-                ).FirstOrDefault();
-
-                throw new NotImplementedException();
-
+                return response;
             }
             catch (Exception ex)
             {

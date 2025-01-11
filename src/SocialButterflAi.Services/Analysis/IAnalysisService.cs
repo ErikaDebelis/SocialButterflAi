@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 using System.Text.Json;
@@ -27,11 +28,11 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="base64Video"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public Task<BaseResponse<UploadData>> GetAnalysisAsync(
+        public Task<BaseResponse<IEnumerable<object>>> GetAnalysisAsync(
             Guid identityId,
             AnalysisType analysisType,
-            Guid? analysisId,
-            string? path
+            string path,
+            Guid? analysisId
         );
         
         /// <summary>
