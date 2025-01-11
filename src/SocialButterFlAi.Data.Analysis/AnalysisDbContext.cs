@@ -64,7 +64,7 @@ namespace SocialButterflAi.Data.Analysis
                     Id = _Ids["VideoId"],
                     Title = "cats video",
                     Description = "",
-                    VideoUrl = "",
+                    Path = "",
                     VideoType = VideoType.mp4,
                     Base64 = SampleData.Base64Video,
                     Duration = TimeSpan.FromSeconds(10),
@@ -84,9 +84,9 @@ namespace SocialButterflAi.Data.Analysis
                     Id = _Ids["ImageId"],
                     Title = "cat",
                     Description = "",
-                    ImageUrl = "",
+                    Path = "",
                     Base64 = SampleData.Base64Image,
-                    ImageType = ImageType.jpeg,
+                    Type = ImageType.jpeg,
                     CreatedBy = "Test",
                     ModifiedBy = "Test",
                     CreatedOn = DateTime.UtcNow,
@@ -132,7 +132,6 @@ namespace SocialButterflAi.Data.Analysis
                 new Analysis.Entities.Analysis()
                 {
                     Id = _Ids["Analysis1Id"],
-                    VideoId = _Ids["VideoId"],
                     CaptionId = _Ids["CaptionId"],
                     Certainty = 100,
                     EnhancedDescription = "",
@@ -147,7 +146,6 @@ namespace SocialButterflAi.Data.Analysis
                 new Analysis.Entities.Analysis()
                 {
                     Id = _Ids["Analysis2Id"],
-                    ImageId = _Ids["ImageId"],
                     Certainty = 100,
                     EnhancedDescription = "",
                     EmotionalContext = "",
@@ -161,7 +159,6 @@ namespace SocialButterflAi.Data.Analysis
                 new Analysis.Entities.Analysis()
                 {
                     Id = _Ids["Analysis3Id"],
-                    AudioId = _Ids["AudioId"],
                     Certainty = 100,
                     EnhancedDescription = "",
                     EmotionalContext = "",
@@ -290,8 +287,7 @@ namespace SocialButterflAi.Data.Analysis
 
             modelBuilder.Entity<Image>()
                 .HasMany(i => i.Analyses)
-                .WithOne(a => a.Image)
-                .HasForeignKey(a => a.ImageId);
+                .WithOne();
 
             modelBuilder.Entity<Image>()
                 .HasOne(i => i.Identity)
@@ -329,19 +325,9 @@ namespace SocialButterflAi.Data.Analysis
                 .HasForeignKey(a => a.AudioId);
 
             modelBuilder.Entity<Analysis.Entities.Analysis>()
-                .HasOne(a => a.Video)
+                .HasOne(a => a.Caption)
                 .WithMany()
-                .HasForeignKey(a => a.VideoId);
-
-            modelBuilder.Entity<Analysis.Entities.Analysis>()
-                .HasOne(a => a.Image)
-                .WithMany()
-                .HasForeignKey(a => a.ImageId);
-
-            modelBuilder.Entity<Analysis.Entities.Analysis>()
-                .HasOne(a => a.Audio)
-                .WithMany()
-                .HasForeignKey(a => a.AudioId);
+                .HasForeignKey(a => a.CaptionId);
         }
         #endregion
     }

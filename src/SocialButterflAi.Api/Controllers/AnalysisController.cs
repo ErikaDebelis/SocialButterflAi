@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-
+using SocialButterflAi.Data.Analysis.Entities;
 using SocialButterflAi.Data.Identity;
 using SocialButterflAi.Data.Identity.Entities;
 using SocialButterflAi.Services.Analysis;
@@ -38,6 +38,43 @@ namespace SocialButterflAi.Api.Controllers
             CueCoachService = cueCoachService;
             IdentityDbContext = identityDbContext;
             Logger = logger;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        [HttpGet]
+        [Route("")]
+        public async Task<IActionResult> GetAnalysis(
+            string type,
+            string? id,
+            string? path
+        )
+        {
+            try
+            {
+                var identityName = HttpContext?.User?.Identity?.Name;
+
+                var identity = IdentityDbContext.Identities.SingleOrDefault(i => i.Email == identityName);
+
+                var parsedId = Guid.Parse(id);
+
+                var analysisType = Enum.Parse<AnalysisType>(type);
+
+                var matchingAnalysisResult = await AnalysisService.GetAnalysisAsync(identity.Id, analysisType, parsedId, path);
+
+                Logger.LogInformation("completed");
+
+                return Ok(matchingAnalysisResult);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                throw new Exception("Error", ex);
+            }
         }
 
         /// <summary>

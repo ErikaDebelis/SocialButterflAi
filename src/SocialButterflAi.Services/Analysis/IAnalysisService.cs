@@ -9,6 +9,7 @@ using SocialButterflAi.Models.LLMIntegration.Claude;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using Microsoft.AspNetCore.Http;
+using SocialButterflAi.Data.Analysis.Entities;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.LLMIntegration.Claude.Content;
@@ -17,6 +18,22 @@ namespace SocialButterflAi.Services.Analysis
 {
     public interface IAnalysisService
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="identityId"></param>
+        /// <param name="relatedChatId"></param>
+        /// <param name="relatedMessageId"></param>
+        /// <param name="base64Video"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public Task<BaseResponse<UploadData>> GetAnalysisAsync(
+            Guid identityId,
+            AnalysisType analysisType,
+            Guid? analysisId,
+            string? path
+        );
+        
         /// <summary>
         /// 
         /// </summary>

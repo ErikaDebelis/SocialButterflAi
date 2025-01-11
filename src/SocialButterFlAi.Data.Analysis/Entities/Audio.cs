@@ -22,6 +22,8 @@ namespace SocialButterflAi.Data.Analysis.Entities
         public Guid? MessageId { get; set; }
         public Chat.Entities.Message? Message { get; set; }
 
+        public AudioType Type { get; set; }
+        public string Path { get; set; }
         public string Base64 { get; set; }
         public List<EnhancedCaption>? Captions { get; set; }
     }

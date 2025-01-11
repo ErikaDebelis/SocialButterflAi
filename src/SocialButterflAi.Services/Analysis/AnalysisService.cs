@@ -24,6 +24,7 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
+using AnalysisEntity = SocialButterflAi.Data.Analysis.Entities.Analysis;
 using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
 using VideoDto = SocialButterflAi.Models.Analysis.Video;
 using ImageDto = SocialButterflAi.Models.Analysis.Image;
@@ -37,6 +38,7 @@ using SocialButterflAi.Models;
 using SocialButterflAi.Models.LLMIntegration.Claude.Content;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Content;
 using SocialButterflAi.Data.Chat;
+using SocialButterflAi.Data.Identity;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -97,6 +99,51 @@ namespace SocialButterflAi.Services.Analysis
         #endregion
 
         #region Public/Main Methods
+
+
+        #region Get Analysis
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="identityId"></param>
+        /// <param name="relatedChatId"></param>
+        /// <param name="relatedMessageId"></param>
+        /// <param name="base64Video"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<UploadData>> GetAnalysisAsync(
+            Guid identityId,
+            AnalysisType analysisType,
+            Guid? analysisId,
+            string? path
+        )
+        {
+            try
+            {
+                BaseEntity typeMatch = analysisType switch
+                {
+                    AnalysisType.Video => FindVideos(x => x.Path == path).FirstOrDefault(),
+                    AnalysisType.Image => FindImages(x => x.Path == path).FirstOrDefault(),
+                    AnalysisType.Audio => FindAudios(x => x.Path == path).FirstOrDefault(),
+                    _ => throw new NotImplementedException()
+                };
+
+
+                var matchingAnalysis = FindAnalyses(a =>
+                    a.Type == analysisType
+                ).FirstOrDefault();
+
+                throw new NotImplementedException();
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
 
         #region Upload
         /// <summary>
@@ -386,7 +433,7 @@ namespace SocialButterflAi.Services.Analysis
                     v.Id == request.VideoId
                     || ((v.Identity.Id == request.RequesterIdentityId
                         || v.Message.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null)
-                        && v.VideoUrl == request.VideoPath
+                        && v.Path == request.VideoPath
                     )
                 ).FirstOrDefault();
 
@@ -577,7 +624,7 @@ namespace SocialButterflAi.Services.Analysis
                 else
                 {
 
-                    parsedType = matchingImage.ImageType switch
+                    parsedType = matchingImage.Type switch
                     {
                         ImageType.jpeg => MediaType.image_jpeg,
                         ImageType.png => MediaType.image_png,
@@ -1232,6 +1279,26 @@ namespace SocialButterflAi.Services.Analysis
 
         #region Entity/Database Methods
 
+        #region FindAnalysis
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="matchByStatement"></param>
+        /// <returns></returns>
+        private IEnumerable<AnalysisEntity> FindAnalyses(
+            Func<AnalysisEntity, bool> matchByStatement
+        )
+            => AnalysisDbContext
+                .Analyses
+                .Include(a => a.Caption)
+                    .ThenInclude(v => v.Video)
+                .Include(a => a.Caption)
+                    .ThenInclude(v => v.Audio)
+                .Where(matchByStatement)
+                .ToArray();
+        #endregion
+
         #region FindVideos
         /// <remarks></remarks>
         /// <summary>
@@ -1482,7 +1549,7 @@ namespace SocialButterflAi.Services.Analysis
                     // MessageId = ,
                     Title = videoDto.Title,
                     Description = videoDto.Description,
-                    VideoUrl = videoDto.Url,
+                    Path = videoDto.Url,
                     VideoType = Enum.Parse<VideoType>($"{videoDto.Format}"),
                     Base64 = videoDto.Base64,
                     Duration = videoDto.Duration.TimeSpan,
@@ -1534,7 +1601,7 @@ namespace SocialButterflAi.Services.Analysis
                     // MessageId = 
                     Title = videoEntity.Title,
                     Description = videoEntity.Description,
-                    Url = videoEntity.VideoUrl,
+                    Url = videoEntity.Path,
                     Base64 = videoEntity.Base64,
                     Format = Enum.Parse<VideoFormat>($"{videoEntity.VideoType}"),
                     FileStream = null,
@@ -1594,9 +1661,9 @@ namespace SocialButterflAi.Services.Analysis
                     Message = null,
                     Title = null,
                     Description = null,
-                    ImageUrl = null,
+                    Path = null,
                     Base64 = null,
-                    ImageType = ImageType.unknown,
+                    Type = ImageType.unknown,
                     Analyses = null
                 };
 

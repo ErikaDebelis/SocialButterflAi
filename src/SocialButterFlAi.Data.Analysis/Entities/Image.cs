@@ -24,9 +24,9 @@ namespace SocialButterflAi.Data.Analysis.Entities
 
         public string Title { get; set; }
         public string Description { get; set; }
-        public string ImageUrl { get; set; }
+        public string Path { get; set; }
         public string Base64 { get; set; }
-        public ImageType ImageType { get; set; }
+        public ImageType Type { get; set; }
         public List<Analysis>? Analyses { get; set; }
     }
 }

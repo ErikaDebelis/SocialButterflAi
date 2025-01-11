@@ -24,7 +24,7 @@ namespace SocialButterflAi.Data.Analysis.Entities
 
         public string Title { get; set; }
         public string Description { get; set; }
-        public string VideoUrl { get; set; }
+        public string Path { get; set; }
         public string Base64 { get; set; }
         public VideoType VideoType { get; set; }
         public TimeSpan Duration { get; set; }

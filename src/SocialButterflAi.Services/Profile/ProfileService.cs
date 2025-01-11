@@ -19,6 +19,9 @@ using Serilog;
 
 namespace SocialButterflAi.Services.Profile
 {
+    /// <summary>
+    /// WIP/ UNIMPLEMENTED
+    /// </summary>
     public class ProfileService : IProfileService
     {
         #region Properties (public and private)
