@@ -1,6 +1,5 @@
 namespace SocialButterflAi.Data.Analysis.Entities
-{
-    public enum AnalysisType
+    public enum MediaType
     {
         Text,
         Image,

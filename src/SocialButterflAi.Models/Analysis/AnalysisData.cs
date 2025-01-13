@@ -8,16 +8,32 @@ namespace SocialButterflAi.Models.Analysis
 {
     public class AnalysisData
     {
-        [JsonProperty("Transcript")]
-        [JsonPropertyName("Transcript")]
-        public string Transcript { get; set; }
-        //
-        [JsonProperty("")]
-        [JsonPropertyName("")]
-        public IEnumerable<EnhancedCaption>? EnhancedCaptions { get; set; }
+        [JsonProperty("caption")]
+        [JsonPropertyName("caption")]
+        public EnhancedCaption Caption { get; set; }
 
-        [JsonProperty("Conclusion")]
-        [JsonPropertyName("Conclusion")]
-        public string? Conclusion { get; set; }
+        [JsonProperty("type")]
+        [JsonPropertyName("type")]
+        public AnalysisType? Type { get; set; }
+
+        [JsonProperty("certainty")]
+        [JsonPropertyName("certainty")]
+        public double Certainty { get; set; }
+
+        [JsonProperty("enhancedDescription")]
+        [JsonPropertyName("enhancedDescription")]
+        public string EnhancedDescription { get; set; }
+
+        [JsonProperty("emotionalContext")]
+        [JsonPropertyName("emotionalContext")]
+        public string EmotionalContext { get; set; }
+
+        [JsonProperty("nonVerbalCues")]
+        [JsonPropertyName("nonVerbalCues")]
+        public string? NonVerbalCues { get; set; }
+
+        [JsonProperty("metadata")]
+        [JsonPropertyName("metadata")]
+        public Dictionary<string, string>? Metadata { get; set; }
     }
 }

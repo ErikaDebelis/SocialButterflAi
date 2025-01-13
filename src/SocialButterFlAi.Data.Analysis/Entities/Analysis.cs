@@ -15,7 +15,7 @@ namespace SocialButterflAi.Data.Analysis.Entities
         /// </summary>
         public Guid? CaptionId { get; set; }
         public EnhancedCaption? Caption { get; set; }
-        public AnalysisType Type { get; set; }
+        public MediaType Type { get; set; }
 
         public double Certainty { get; set; }
         public string EnhancedDescription { get; set; }

@@ -1,3 +1,4 @@
+#region Usings
 using System;
 using System.IO;
 using System.Linq;
@@ -11,34 +12,35 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 
+using SocialButterflAi.Data.Chat;
+using SocialButterflAi.Data.Identity;
 using SocialButterflAi.Data.Analysis;
 using SocialButterflAi.Services.LLMIntegration;
 using SocialButterflAi.Services.LLMIntegration.OpenAi;
 
+using SocialButterflAi.Models;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Data.Analysis.Entities;
 using SocialButterflAi.Models.IntegrationSettings;
 using SocialButterflAi.Models.LLMIntegration.Claude;
 using SocialButterflAi.Models.LLMIntegration.OpenAi;
+using SocialButterflAi.Models.LLMIntegration.Claude.Content;
+using SocialButterflAi.Models.LLMIntegration.OpenAi.Content;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 using SocialButterflAi.Models.LLMIntegration.OpenAi.Response;
 using SocialButterflAi.Models.LLMIntegration.HttpAbstractions;
-using AnalysisEntity = SocialButterflAi.Data.Analysis.Entities.Analysis;
-using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
 using VideoDto = SocialButterflAi.Models.Analysis.Video;
+using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
 using ImageDto = SocialButterflAi.Models.Analysis.Image;
-using AudioDto = SocialButterflAi.Models.Analysis.Audio;
 using ImageEntity = SocialButterflAi.Data.Analysis.Entities.Image;
+using AudioDto = SocialButterflAi.Models.Analysis.Audio;
 using AudioEntity = SocialButterflAi.Data.Analysis.Entities.Audio;
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
 using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
+using AnalysisEntity = SocialButterflAi.Data.Analysis.Entities.Analysis;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
-using SocialButterflAi.Models;
-using SocialButterflAi.Models.LLMIntegration.Claude.Content;
-using SocialButterflAi.Models.LLMIntegration.OpenAi.Content;
-using SocialButterflAi.Data.Chat;
-using SocialButterflAi.Data.Identity;
+#endregion
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -111,14 +113,14 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="base64Video"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<IEnumerable<object>>> GetAnalysisAsync(
+        public async Task<BaseResponse<IEnumerable<AnalysisData>>> GetAnalysisAsync(
             Guid identityId,
             AnalysisType analysisType,
             string path,
             Guid? analysisId
         )
         {
-            var response = new BaseResponse<IEnumerable<object>>();
+            var response = new BaseResponse<IEnumerable<AnalysisData>>();
             try
             {
                 Func<Task<IEnumerable<AnalysisEntity>?>> media = analysisType switch
@@ -149,7 +151,7 @@ namespace SocialButterflAi.Services.Analysis
 
                                 return null;
                             }
-                            
+
                             response.Success = true;
                             response.Message = "Analysis successfully found";
 
@@ -162,10 +164,10 @@ namespace SocialButterflAi.Services.Analysis
                         {
                             response.Success = false;
                             response.Message = "Analysis is not found";
-                            
+
                             return null;
                         }
-                        
+
                         response.Success = true;
                         response.Message = "Analysis successfully found";
 
@@ -185,7 +187,7 @@ namespace SocialButterflAi.Services.Analysis
                         if (analysisId != null)
                         {
                             var analysis = image.Analyses.FirstOrDefault(a => a.Id == analysisId);
-                            
+
                             if (analysis == null)
                             {
                                 response.Success = false;
@@ -193,13 +195,13 @@ namespace SocialButterflAi.Services.Analysis
 
                                 return null;
                             }
-                            
+
                             response.Success = true;
                             response.Message = "Analysis successfully found";
 
                             return [ analysis ];
                         }
-                        
+
                         response.Success = true;
                         response.Message = "Analysis successfully found";
                         return image.Analyses;
@@ -207,7 +209,7 @@ namespace SocialButterflAi.Services.Analysis
                     AnalysisType.Audio => async () =>
                     {
                         var audio = FindAudios(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
-                        
+
                         if (audio == null)
                         {
                             response.Success = false;
@@ -230,7 +232,7 @@ namespace SocialButterflAi.Services.Analysis
 
                                 return null;
                             }
-                            
+
                             response.Success = true;
                             response.Message = "Analysis successfully found";
 
@@ -238,15 +240,15 @@ namespace SocialButterflAi.Services.Analysis
 
                         }
                         var analyses = audio.Captions.SelectMany(c => c.Analyses).ToList();
-                        
+
                         if (analyses == null && !analyses.Any())
                         {
                             response.Success = false;
                             response.Message = "Analysis is not found";
-                            
+
                             return null;
                         }
-                        
+
                         response.Success = true;
                         response.Message = "Analysis successfully found";
 
@@ -254,9 +256,21 @@ namespace SocialButterflAi.Services.Analysis
                     },
                     _ => throw new NotImplementedException()
                 };
-                
+
                 var result = await media();
 
+                if(result is null)
+                    return response;
+
+                var analysesDtos = result.Select(a => AnalysisEntityToDto(a)).ToList();
+
+                if (analysesDtos == null && !analysesDtos.Any())
+                {
+                    response.Success = false;
+                    response.Message = "Analysis mapping failed";
+
+                    return response;
+                }
                 return response;
             }
             catch (Exception ex)
@@ -1113,8 +1127,7 @@ namespace SocialButterflAi.Services.Analysis
 
                 response.Success = runCompletion.Success;
                 response.Message = runCompletion.Message;
-                response.Data.Transcript = message.Content;
-                // response.Conclusion = aiResponse.Content.FirstOrDefault().Text;
+
                 return response;
             }
             catch (Exception ex)
@@ -1651,7 +1664,7 @@ namespace SocialButterflAi.Services.Analysis
 
         #region Mappers
 
-        #region VideoDtoToEntity
+                #region VideoDtoToEntity
         /// <remarks></remarks>
         /// <summary>
         ///
@@ -1718,36 +1731,86 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var videoDto = new VideoDto
                 {
-                    Id = videoEntity.Id,
-                    UploaderIdentityId = videoEntity.IdentityId,
-                    //todo:fix this
-                    // MessageId = 
-                    Title = videoEntity.Title,
-                    Description = videoEntity.Description,
-                    Url = videoEntity.Path,
-                    Base64 = videoEntity.Base64,
-                    Format = Enum.Parse<VideoFormat>($"{videoEntity.VideoType}"),
-                    FileStream = null,
-                    Duration = null
                 };
-
-                var durationData = await GetDuration(videoDto.Url, null, null);
-
-                if (durationData == null
-                    || !durationData.Success
-                )
-                {
-                    Logger.LogError($"");
-                    SeriLogger.Error($"");
-                    throw new Exception($"");
-                }
-
-                videoDto.Duration = durationData.Data;
 
                 Logger.LogTrace($"");
                 SeriLogger.Information($"");
 
                 return videoDto;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region AnalysisDtoToEntity
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="Analysis"> </param>
+        /// <returns></returns>
+        private AnalysisEntity AnalysisDtoToEntity(
+            AnalysisDto analysisDto
+        )
+        {
+            try
+            {
+                var analysisEntity = new AnalysisEntity
+                {
+                    Id = analysisDto.Id,
+                    CreatedBy = $"{.IdentityId}",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedBy = $"{analysisDto.IdentityId}",
+                    ModifiedOn = DateTime.UtcNow
+                };
+
+                if(analysisEntity == null)
+                {
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
+                }
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return analysisEntity;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region AnalysisEntityToDto
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="AnalysisEntity"> </param>
+        /// <returns></returns>
+        private async Task<AnalysisDto> AnalysisEntityToDto(
+            AnalysisEntity analysisEntity
+        )
+        {
+            try
+            {
+                var analysisDto = new AnalysisDto
+                {
+                    Id = analysisEntity.Id,
+                };
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return analysisDto;
             }
             catch(Exception ex)
             {
