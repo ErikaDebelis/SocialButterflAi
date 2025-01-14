@@ -19,8 +19,8 @@ namespace SocialButterflAi.Data.Analysis.Entities
 
         public double Certainty { get; set; }
         public string EnhancedDescription { get; set; }
-        public string EmotionalContext { get; set; }
-        public string? NonVerbalCues { get; set; }
+        public Tone Tone { get; set; }
+        public Intent Intent { get; set; }
         public Dictionary<string, string>? Metadata { get; set; }
     }
 }

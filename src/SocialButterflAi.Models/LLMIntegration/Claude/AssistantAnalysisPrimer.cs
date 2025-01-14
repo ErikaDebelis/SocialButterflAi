@@ -24,9 +24,9 @@ namespace SocialButterflAi.Models.LLMIntegration.Claude
 
 
         FORMATTING:
-        (!important) you should ONLY respond in the RESPONSE FORMAT provided below
+        (!important) you should ONLY respond in the FORMAT provided below
 
-        RESPONSE FORMAT:
+        FORMAT:
         {{
             ""caption"":
             {{

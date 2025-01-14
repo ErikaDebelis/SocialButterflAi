@@ -19,8 +19,6 @@ namespace SocialButterflAi.Data.Analysis.Entities
         public Guid? AudioId { get; set; }
         public Audio? Audio { get; set; }
 
-        public TimeSpan StartTime { get; set; }
-        public TimeSpan EndTime { get; set; }
         public string StandardText { get; set; }
         public List<Analysis> Analyses { get; set; }
         public string? BackgroundContext { get; set; }

@@ -6,7 +6,7 @@ namespace SocialButterflAi.Data.Identity
     /// <summary>
     /// the core entity that all other entities inherit from. standard audit fields and id
     /// </summary>
-    public class BaseEntity
+    public abstract class BaseEntity
     {
         public BaseEntity()
         {

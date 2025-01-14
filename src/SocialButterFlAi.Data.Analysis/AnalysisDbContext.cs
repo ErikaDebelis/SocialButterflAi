@@ -21,6 +21,8 @@ namespace SocialButterflAi.Data.Analysis
         public DbSet<Analysis.Entities.Image> Images { get; set; }
         public DbSet<Analysis.Entities.Audio> Audios { get; set; }
         public DbSet<Analysis.Entities.Analysis> Analyses { get; set; }
+        public DbSet<Analysis.Entities.Tone> Tones { get; set; }
+        public DbSet<Analysis.Entities.> Intents { get; set; }
 
         private Dictionary<string, Guid> _Ids;
 
@@ -49,7 +51,11 @@ namespace SocialButterflAi.Data.Analysis
                 { "CaptionId", Guid.Parse("3f175ab9-998b-40af-aca0-c21c38273ce7") },
                 { "Analysis1Id", Guid.Parse("41aea377-95ff-420a-a77c-3b274a1bdc2b") },
                 { "Analysis2Id", Guid.Parse("d6c6c224-c6fe-11ef-a402-5a0901f2d5ba") },
-                { "Analysis3Id", Guid.Parse("70424177-c959-11ef-b781-f79868ee873a") }
+                { "Analysis3Id", Guid.Parse("70424177-c959-11ef-b781-f79868ee873a") },
+                { "Tone1Id", Guid.Parse("") },
+                { "Tone2Id", Guid.Parse("") },
+                { "Intent1Id", Guid.Parse("") },
+                { "Intent2Id", Guid.Parse("") },
             };
 
             // Create test seed data (for each entity type in the module) initial migration/table generation
@@ -171,6 +177,84 @@ namespace SocialButterflAi.Data.Analysis
                 }
             };
 
+            var testTones = new List<Tone>()
+            {
+                new()
+                {
+                    Id = _Ids["Tone1Id"],
+                    AnalysisId = _Ids["Analysis1Id"],
+                    PrimaryEmotion = "hurt",
+                    EmotionalSpectrum = new Dictionary<string, double>()
+                    {
+                        { "anger", 0.5 },
+                        { "joy", 0.3 },
+                        { "sadness", 0.2 }
+                    },
+                    EmotionalContext = "their voice quivered",
+                    NonVerbalCues = "they were frowning",
+                    IntensityScore = 0.8,
+                    CreatedBy = "Test",
+                    ModifiedBy = "Test",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
+                },
+                new()
+                {
+                    Id = _Ids["Tone2Id"],
+                    AnalysisId = _Ids["Analysis2Id"],
+                    PrimaryEmotion = "remorse",
+                    EmotionalSpectrum = new Dictionary<string, double>()
+                    {
+                        { "self-conscious", 0.6 },
+                        { "annoyance", 0.4 }
+                    },
+                    EmotionalContext = "the speaker is uncomfortable",
+                    NonVerbalCues = "the speaker's eyes darted around",
+                    IntensityScore = 0.6,
+                    CreatedBy = "Test",
+                    ModifiedBy = "Test",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
+                }
+            };
+
+            var testIntents = new List<Intent>()
+            {
+                new()
+                {
+                    Id = _Ids["Intent1Id"],
+                    AnalysisId = _Ids["Analysis1Id"],
+                    PrimaryIntent = "convince them to buy a car",
+                    SecondaryIntents = new Dictionary<string, double>()
+                    {
+                        { "make them feel good", 0.5 },
+                        { "make them feel safe", 0.3 }
+                    },
+                    CertaintyScore = 0.8,
+                    SubtextualMeaning = "they are working hard to make a sale",
+                    CreatedBy = "Test",
+                    ModifiedBy = "Test",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
+                },
+                new()
+                {
+                    Id = _Ids["Intent2Id"],
+                    AnalysisId = _Ids["Analysis2Id"],
+                    PrimaryIntent = "to gain their forgiveness",
+                    SecondaryIntents = new Dictionary<string, double>()
+                    {
+                        { "alleviate the tension", 0.5 }
+                    },
+                    CertaintyScore = 0.4,
+                    SubtextualMeaning = "the speaker is trying to seem polite",
+                    CreatedBy = "Test",
+                    ModifiedBy = "Test",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedOn = DateTime.UtcNow,
+                }
+            }
+
             // Add Identity and Chat Models (Dependencies) + Ignore Dependant Tables for Migration (they've already been added/created)
             IdentityDbContext.SetupModelNavigation(modelBuilder);
             IdentityDbContext.IgnoreTables(modelBuilder);
@@ -195,6 +279,12 @@ namespace SocialButterflAi.Data.Analysis
 
             modelBuilder.Entity<Analysis.Entities.Analysis>()
                 .HasData(testAnalyses);
+
+            modelBuilder.Entity<Analysis.Entities.Tone>()
+                .HasData(testTones);
+
+            modelBuilder.Entity<Analysis.Entities.Intent>()
+                .HasData(testIntents);
         }
         #endregion
 
@@ -236,6 +326,18 @@ namespace SocialButterflAi.Data.Analysis
                     nameof(Analysis),
                     t => t.ExcludeFromMigrations()
                 );
+
+            modelBuilder.Entity<Analysis.Entities.Tone>()
+                .ToTable(
+                    nameof(Tone),
+                    t => t.ExcludeFromMigrations()
+                );
+
+            modelBuilder.Entity<Analysis.Entities.Intent>()
+                .ToTable(
+                    nameof(Intent),
+                    t => t.ExcludeFromMigrations()
+                );
         }
         #endregion
 
@@ -254,6 +356,8 @@ namespace SocialButterflAi.Data.Analysis
             var audioType = typeof(Audio);
             var captionType = typeof(EnhancedCaption);
             var analysisModelType = typeof(Analysis.Entities.Analysis);
+            var toneType = typeof(Analysis.Entities.Tone);
+            var intentType = typeof(Analysis.Entities.Intent);
 
             //create the entity helper and pass in the model builder and the types and recurse to build the entities
             var entityHelper = new EntityHelper();
@@ -263,6 +367,8 @@ namespace SocialButterflAi.Data.Analysis
             entityHelper.EntityBuilder(modelBuilder, audioType, null);
             entityHelper.EntityBuilder(modelBuilder, captionType, null);
             entityHelper.EntityBuilder(modelBuilder, analysisModelType, null);
+            entityHelper.EntityBuilder(modelBuilder, toneType, null);
+            entityHelper.EntityBuilder(modelBuilder, intentType, null);
 
             // Set up model relationships for navigation with keys and such
             modelBuilder.Entity<Video>()
@@ -328,6 +434,16 @@ namespace SocialButterflAi.Data.Analysis
                 .HasOne(a => a.Caption)
                 .WithMany()
                 .HasForeignKey(a => a.CaptionId);
+
+            modelBuilder.Entity<Analysis.Entities.Analysis>()
+                .HasOne(a => a.Tone)
+                .WithOne(t => t.Analysis)
+                .HasForeignKey<Tone>(t => t.AnalysisId);
+
+            modelBuilder.Entity<Analysis.Entities.Analysis>()
+                .HasOne(a => a.Intent)
+                .WithOne(i => i.Analysis)
+                .HasForeignKey<Intent>(i => i.AnalysisId);
         }
         #endregion
     }
