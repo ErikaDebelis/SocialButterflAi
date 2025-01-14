@@ -68,7 +68,7 @@ namespace SocialButterflAi.Data.Identity
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="baseType"></param>
-        public void AdjustProperty(
+        private void AdjustProperty(
             ModelBuilder builder,
             Type currentType
         )

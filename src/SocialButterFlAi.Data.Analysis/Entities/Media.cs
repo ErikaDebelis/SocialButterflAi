@@ -8,7 +8,7 @@ using SocialButterflAi.Data.Identity;
 namespace SocialButterflAi.Data.Analysis.Entities
 {
     [NotMapped]
-    public class Media: BaseEntity
+    public abstract class Media: BaseEntity
     {
         /// <summary>
         /// Navigation properties

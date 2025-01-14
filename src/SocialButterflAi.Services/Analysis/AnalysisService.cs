@@ -39,6 +39,7 @@ using AudioEntity = SocialButterflAi.Data.Analysis.Entities.Audio;
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
 using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 using AnalysisEntity = SocialButterflAi.Data.Analysis.Entities.Analysis;
+using MediaType = SocialButterflAi.Models.Analysis.MediaType;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 #endregion
 
@@ -115,7 +116,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<IEnumerable<AnalysisData>>> GetAnalysisAsync(
             Guid identityId,
-            AnalysisType analysisType,
+            MediaType analysisType,
             string path,
             Guid? analysisId
         )
@@ -125,7 +126,7 @@ namespace SocialButterflAi.Services.Analysis
             {
                 Func<Task<IEnumerable<AnalysisEntity>?>> media = analysisType switch
                 {
-                    AnalysisType.Video => async () =>
+                    MediaType.Video => async () =>
                     {
                         var video = FindVideos(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
 
@@ -173,7 +174,7 @@ namespace SocialButterflAi.Services.Analysis
 
                         return analyses;
                     },
-                    AnalysisType.Image => async () =>
+                    MediaType.Image => async () =>
                     {
                         var image = FindImages(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
 
@@ -206,7 +207,7 @@ namespace SocialButterflAi.Services.Analysis
                         response.Message = "Analysis successfully found";
                         return image.Analyses;
                     },
-                    AnalysisType.Audio => async () =>
+                    MediaType.Audio => async () =>
                     {
                         var audio = FindAudios(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
 
@@ -702,7 +703,7 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
 
-                var parsedType = MediaType.unknown;
+                var parsedType =  Models.LLMIntegration.Claude.Content.MediaType.unknown;
                 var base64Media = string.Empty;
                 var matchingImage = FindImages(i =>
                     i.Id == request.ImageId
@@ -749,10 +750,10 @@ namespace SocialButterflAi.Services.Analysis
 
                     parsedType = imageType.ToLower() switch
                     {
-                        "jpeg" => MediaType.image_jpeg,
-                        "png" => MediaType.image_png,
-                        "gif" => MediaType.image_gif,
-                        "webp" => MediaType.image_webp,
+                        "jpeg" => Models.LLMIntegration.Claude.Content.MediaType.image_jpeg,
+                        "png" =>  Models.LLMIntegration.Claude.Content.MediaType.image_png,
+                        "gif" =>  Models.LLMIntegration.Claude.Content.MediaType.image_gif,
+                        "webp" =>  Models.LLMIntegration.Claude.Content.MediaType.image_webp,
                         _ => throw new NotImplementedException()
                     };
 
@@ -763,10 +764,10 @@ namespace SocialButterflAi.Services.Analysis
 
                     parsedType = matchingImage.Type switch
                     {
-                        ImageType.jpeg => MediaType.image_jpeg,
-                        ImageType.png => MediaType.image_png,
-                        ImageType.gif => MediaType.image_gif,
-                        ImageType.webp => MediaType.image_webp,
+                        ImageType.jpeg =>  Models.LLMIntegration.Claude.Content.MediaType.image_jpeg,
+                        ImageType.png =>  Models.LLMIntegration.Claude.Content.MediaType.image_png,
+                        ImageType.gif =>  Models.LLMIntegration.Claude.Content.MediaType.image_gif,
+                        ImageType.webp =>  Models.LLMIntegration.Claude.Content.MediaType.image_webp,
                         _ => throw new NotImplementedException()
                     };
 
@@ -1018,7 +1019,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="Exception"></exception>
         public BaseResponse<ClaudeMessage> FormImageContent(
             string base64Media,
-            MediaType mediaType
+            Models.LLMIntegration.Claude.Content.MediaType mediaType
         )
         {
             var response = new BaseResponse<ClaudeMessage>();
@@ -1664,7 +1665,7 @@ namespace SocialButterflAi.Services.Analysis
 
         #region Mappers
 
-                #region VideoDtoToEntity
+        #region VideoDtoToEntity
         /// <remarks></remarks>
         /// <summary>
         ///
@@ -1755,17 +1756,26 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="Analysis"> </param>
         /// <returns></returns>
         private AnalysisEntity AnalysisDtoToEntity(
-            AnalysisDto analysisDto
+            AnalysisData analysisDto,
+            Guid identityId
         )
         {
             try
             {
                 var analysisEntity = new AnalysisEntity
                 {
-                    Id = analysisDto.Id,
-                    CreatedBy = $"{.IdentityId}",
+                    Id = analysisDto.Id ?? Guid.NewGuid(),
+                    CaptionId = null,
+                    Caption = null,
+                    Type = Enum.Parse<Data.Analysis.Entities.MediaType>($"{analysisDto.Type}"),
+                    Certainty = 0,
+                    EnhancedDescription = null,
+                    Tone = null,
+                    Intent = null,
+                    Metadata = null,
+                    CreatedBy = $"{identityId}",
                     CreatedOn = DateTime.UtcNow,
-                    ModifiedBy = $"{analysisDto.IdentityId}",
+                    ModifiedBy = $"{identityId}",
                     ModifiedOn = DateTime.UtcNow
                 };
 
@@ -1796,15 +1806,22 @@ namespace SocialButterflAi.Services.Analysis
         ///</summary>
         /// <param name="AnalysisEntity"> </param>
         /// <returns></returns>
-        private async Task<AnalysisDto> AnalysisEntityToDto(
+        private async Task<AnalysisData> AnalysisEntityToDto(
             AnalysisEntity analysisEntity
         )
         {
             try
             {
-                var analysisDto = new AnalysisDto
+                var analysisDto = new AnalysisData
                 {
                     Id = analysisEntity.Id,
+                    Caption = null,
+                    Type = null,
+                    Certainty = 0,
+                    EnhancedDescription = null,
+                    EmotionalContext = null,
+                    NonVerbalCues = null,
+                    Metadata = null
                 };
 
                 Logger.LogTrace($"");

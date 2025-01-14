@@ -15,6 +15,7 @@ using SocialButterflAi.Services.Analysis;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Services.CueCoach;
+using MediaType = SocialButterflAi.Models.Analysis.MediaType;
 
 namespace SocialButterflAi.Api.Controllers
 {
@@ -62,7 +63,7 @@ namespace SocialButterflAi.Api.Controllers
 
                 var parsedId = Guid.Parse(id);
 
-                var analysisType = Enum.Parse<AnalysisType>(type);
+                var analysisType = Enum.Parse<MediaType>(type);
 
                 var matchingAnalysisResult = await AnalysisService.GetAnalysisAsync(identity.Id, analysisType, path, parsedId);
 

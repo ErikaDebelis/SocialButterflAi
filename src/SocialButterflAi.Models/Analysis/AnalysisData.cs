@@ -1,3 +1,4 @@
+using System;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -8,13 +9,17 @@ namespace SocialButterflAi.Models.Analysis
 {
     public class AnalysisData
     {
+        [JsonProperty("Id")]
+        [JsonPropertyName("Id")]
+        public Guid? Id { get; set; }
+        
         [JsonProperty("caption")]
         [JsonPropertyName("caption")]
         public EnhancedCaption Caption { get; set; }
 
         [JsonProperty("type")]
         [JsonPropertyName("type")]
-        public AnalysisType? Type { get; set; }
+        public MediaType? Type { get; set; }
 
         [JsonProperty("certainty")]
         [JsonPropertyName("certainty")]

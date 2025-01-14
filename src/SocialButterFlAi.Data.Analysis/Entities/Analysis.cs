@@ -19,7 +19,9 @@ namespace SocialButterflAi.Data.Analysis.Entities
 
         public double Certainty { get; set; }
         public string EnhancedDescription { get; set; }
+        public Guid ToneId { get; set; }
         public Tone Tone { get; set; }
+        public Guid IntentId { get; set; }
         public Intent Intent { get; set; }
         public Dictionary<string, string>? Metadata { get; set; }
     }

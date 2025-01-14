@@ -14,6 +14,7 @@ using SocialButterflAi.Data.Analysis.Entities;
 using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.LLMIntegration.Claude.Content;
+using MediaType = SocialButterflAi.Models.Analysis.MediaType;
 
 namespace SocialButterflAi.Services.Analysis
 {
@@ -28,9 +29,9 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="base64Video"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public Task<BaseResponse<IEnumerable<object>>> GetAnalysisAsync(
+        public Task<BaseResponse<IEnumerable<AnalysisData>>> GetAnalysisAsync(
             Guid identityId,
-            AnalysisType analysisType,
+            MediaType analysisType,
             string path,
             Guid? analysisId
         );
@@ -115,7 +116,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <exception cref="Exception"></exception>
         public BaseResponse<ClaudeMessage> FormImageContent(
             string base64Media,
-            MediaType mediaType
+            Models.LLMIntegration.Claude.Content.MediaType mediaType
         );
 
         /// <summary>

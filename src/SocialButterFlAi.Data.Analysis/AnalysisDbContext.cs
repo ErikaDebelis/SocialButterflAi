@@ -22,7 +22,7 @@ namespace SocialButterflAi.Data.Analysis
         public DbSet<Analysis.Entities.Audio> Audios { get; set; }
         public DbSet<Analysis.Entities.Analysis> Analyses { get; set; }
         public DbSet<Analysis.Entities.Tone> Tones { get; set; }
-        public DbSet<Analysis.Entities.> Intents { get; set; }
+        public DbSet<Analysis.Entities.Intent> Intents { get; set; }
 
         private Dictionary<string, Guid> _Ids;
 
@@ -121,8 +121,6 @@ namespace SocialButterflAi.Data.Analysis
                 {
                     VideoId = _Ids["VideoId"],
                     Id = _Ids["CaptionId"],
-                    StartTime = TimeSpan.MinValue.Add(TimeSpan.FromSeconds(0)),
-                    EndTime = TimeSpan.MinValue.Add(TimeSpan.FromSeconds(10)),
                     StandardText = "",
                     BackgroundContext = "",
                     SoundEffects = "",
@@ -141,8 +139,8 @@ namespace SocialButterflAi.Data.Analysis
                     CaptionId = _Ids["CaptionId"],
                     Certainty = 100,
                     EnhancedDescription = "",
-                    EmotionalContext = "",
-                    NonVerbalCues = "",
+                    ToneId = _Ids["Tone1Id"],
+                    IntentId = _Ids["Intent1Id"],
                     Metadata = new Dictionary<string, string>(),
                     CreatedBy = "Test",
                     ModifiedBy = "Test",
@@ -154,27 +152,27 @@ namespace SocialButterflAi.Data.Analysis
                     Id = _Ids["Analysis2Id"],
                     Certainty = 100,
                     EnhancedDescription = "",
-                    EmotionalContext = "",
-                    NonVerbalCues = "",
+                    ToneId = _Ids["Tone2Id"],
+                    IntentId = _Ids["Intent2Id"],
                     Metadata = new Dictionary<string, string>(),
                     CreatedBy = "Test",
                     ModifiedBy = "Test",
                     CreatedOn = DateTime.UtcNow,
                     ModifiedOn = DateTime.UtcNow,
                 },
-                new Analysis.Entities.Analysis()
-                {
-                    Id = _Ids["Analysis3Id"],
-                    Certainty = 100,
-                    EnhancedDescription = "",
-                    EmotionalContext = "",
-                    NonVerbalCues = "",
-                    Metadata = new Dictionary<string, string>(),
-                    CreatedBy = "Test",
-                    ModifiedBy = "Test",
-                    CreatedOn = DateTime.UtcNow,
-                    ModifiedOn = DateTime.UtcNow,
-                }
+                // new Analysis.Entities.Analysis()
+                // {
+                //     Id = _Ids["Analysis3Id"],
+                //     Certainty = 100,
+                //     EnhancedDescription = "",
+                //     ToneId = _Ids["ToneId"],
+                //     IntentId = _Ids["IntentId"],
+                //     Metadata = new Dictionary<string, string>(),
+                //     CreatedBy = "Test",
+                //     ModifiedBy = "Test",
+                //     CreatedOn = DateTime.UtcNow,
+                //     ModifiedOn = DateTime.UtcNow,
+                // }
             };
 
             var testTones = new List<Tone>()
@@ -253,7 +251,7 @@ namespace SocialButterflAi.Data.Analysis
                     CreatedOn = DateTime.UtcNow,
                     ModifiedOn = DateTime.UtcNow,
                 }
-            }
+            };
 
             // Add Identity and Chat Models (Dependencies) + Ignore Dependant Tables for Migration (they've already been added/created)
             IdentityDbContext.SetupModelNavigation(modelBuilder);
