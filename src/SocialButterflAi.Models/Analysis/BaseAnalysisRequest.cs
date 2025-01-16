@@ -6,7 +6,7 @@ using SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class BaseAnalysisRequest
+    public abstract class BaseAnalysisRequest
     {
         public Guid RequesterIdentityId { get; set; }
 

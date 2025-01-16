@@ -12,10 +12,10 @@ namespace SocialButterflAi.Models.Analysis
         [JsonProperty("Id")]
         [JsonPropertyName("Id")]
         public Guid? Id { get; set; }
-        
+
         [JsonProperty("caption")]
         [JsonPropertyName("caption")]
-        public EnhancedCaption Caption { get; set; }
+        public EnhancedCaption? Caption { get; set; }
 
         [JsonProperty("type")]
         [JsonPropertyName("type")]

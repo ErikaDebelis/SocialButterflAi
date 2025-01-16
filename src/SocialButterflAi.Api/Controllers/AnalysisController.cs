@@ -65,7 +65,12 @@ namespace SocialButterflAi.Api.Controllers
 
                 var analysisType = Enum.Parse<MediaType>(type);
 
-                var matchingAnalysisResult = await AnalysisService.GetAnalysisAsync(identity.Id, analysisType, path, parsedId);
+                var matchingAnalysisResult = await AnalysisService.GetAnalysisAsync(
+                                                                    identity.Id,
+                                                                    analysisType,
+                                                                    path,
+                                                                    parsedId
+                                                                );
 
                 Logger.LogInformation("completed");
 
@@ -122,13 +127,13 @@ namespace SocialButterflAi.Api.Controllers
                 }
 
                 var uploadResponse = await AnalysisService.UploadAsync(
-                                                        identity.Id,
-                                                        file,
-                                                        videoFormat,
-                                                        request.Title,
-                                                        request.Description,
-                                                        null
-                                                    );
+                                                    identity.Id,
+                                                    file,
+                                                    videoFormat,
+                                                    request.Title,
+                                                    request.Description,
+                                                    null
+                                                );
 
                 if (uploadResponse is not { Success: true }
                     || string.IsNullOrWhiteSpace(uploadResponse.Data.VideoPath)
@@ -170,7 +175,7 @@ namespace SocialButterflAi.Api.Controllers
                 }
 
                 var modelProvider = Enum.Parse<ModelProvider>(request.ModelProvider);
-                
+
                 var analysis = await AnalysisService.AnalyzeAsync(request);
 
                 if (analysis == null)

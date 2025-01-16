@@ -19,7 +19,7 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
         private HttpClient _httpClient;
         private ILogger<OpenAiClient> Logger;
         private OpenAiSettings _settings;
-
+        private TypedAiResponseHelper _typedAiResponseHelper;
         readonly Serilog.ILogger SeriLogger;
 
         private const string _authHeaderKey = "Authorization";
@@ -28,7 +28,7 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
 
         public OpenAiClient(
             OpenAiSettings settings,
-            ILogger<OpenAiClient> logger
+            ILoggerFactory loggerFactory
         )
         {
             _settings = settings;
@@ -40,7 +40,8 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
             _httpClient.BaseAddress = new Uri(_settings.Url);
 
             SeriLogger = Serilog.Log.Logger;
-            Logger = logger;
+            Logger = loggerFactory.CreateLogger<OpenAiClient>();
+            _typedAiResponseHelper = new TypedAiResponseHelper(loggerFactory);
         }
 
         #region AiExecution
@@ -83,11 +84,14 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
                     return response;
                 }
 
+                var deserializeContent = _typedAiResponseHelper.DeserializeResponse(contentString);
+
                 Logger.LogInformation("response received and deserialized");
                 SeriLogger.Information("response received and deserialized");;
                 response.Success = true;
                 response.Message = "Success";
                 response.AiData = deserializedOpenAiResponse;
+                response.TypedData = deserializeContent.Data;
 
                 return response;
             }

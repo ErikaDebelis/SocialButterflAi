@@ -17,7 +17,7 @@ namespace SocialButterflAi.Data.Identity
         }
 
         /// <summary>
-        /// EntityBuilder
+        /// EntityBuilder for Enum and IEnumerable<Enum> types in the model- this is a recursive function that will build the model for all types in the project that inherit from BaseEntity
         /// </summary>
         /// <param name="modelBuilder"></param>
         /// <param name="parentType"></param>
@@ -64,7 +64,7 @@ namespace SocialButterflAi.Data.Identity
         }
 
         /// <summary>
-        /// 
+        /// this will adjust the properties of the entities to store enums as strings in the database instead of ints
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="baseType"></param>

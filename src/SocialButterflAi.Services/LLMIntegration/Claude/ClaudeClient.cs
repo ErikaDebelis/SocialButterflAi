@@ -17,14 +17,14 @@ namespace SocialButterflAi.Services.LLMIntegration.Claude
         private HttpClient _httpClient;
         private ILogger<ClaudeClient> Logger;
         private ClaudeSettings _settings;
+        private TypedAiResponseHelper _typedAiResponseHelper;
         readonly Serilog.ILogger SeriLogger;
-
         private const string _authHeaderApiKeyPrefix = "x-api-key";
         private const string _contentType = "application/json";
 
         public ClaudeClient(
             ClaudeSettings settings,
-            ILogger<ClaudeClient> logger
+            ILoggerFactory loggerFactory
         )
         {
             _httpClient = new HttpClient();
@@ -32,8 +32,10 @@ namespace SocialButterflAi.Services.LLMIntegration.Claude
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_contentType));
             _httpClient.BaseAddress = new Uri(_settings.Url);
 
-            Logger = logger;
+            Logger = loggerFactory.CreateLogger<ClaudeClient>();
             SeriLogger = Serilog.Log.Logger;
+
+            _typedAiResponseHelper = new TypedAiResponseHelper(loggerFactory);
         }
 
         #region AiExecution
@@ -75,12 +77,14 @@ namespace SocialButterflAi.Services.LLMIntegration.Claude
 
                     return response;
                 }
+                var deserializeContent = _typedAiResponseHelper.DeserializeResponse(contentString);
 
                 Logger.LogInformation("response received and deserialized");
                 SeriLogger.Information("response received and deserialized");;
                 response.Success = true;
                 response.Message = "Success";
                 response.AiData = deserializedClaudeResponse;
+                response.TypedData = deserializeContent.Data;
 
                 return response;
             }

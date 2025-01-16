@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using SocialButterflAi.Models.Analysis;
 using System.Text.Json.Serialization;
 
 namespace SocialButterflAi.Models.LLMIntegration.HttpAbstractions
@@ -16,6 +17,10 @@ namespace SocialButterflAi.Models.LLMIntegration.HttpAbstractions
         [JsonPropertyName("AiData")]
         [JsonProperty("AiData")]
         public T AiData { get; set; }
+
+        [JsonPropertyName("TypedData")]
+        [JsonProperty("TypedData")]
+        public AnalysisData TypedData { get; set; }
 
     }
 }
