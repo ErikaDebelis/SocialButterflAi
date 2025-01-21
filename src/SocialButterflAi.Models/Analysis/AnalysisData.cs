@@ -29,13 +29,13 @@ namespace SocialButterflAi.Models.Analysis
         [JsonPropertyName("enhancedDescription")]
         public string EnhancedDescription { get; set; }
 
-        [JsonProperty("emotionalContext")]
-        [JsonPropertyName("emotionalContext")]
-        public string EmotionalContext { get; set; }
+        [JsonProperty("tone")]
+        [JsonPropertyName("tone")]
+        public Tone Tone { get; set; }
 
-        [JsonProperty("nonVerbalCues")]
-        [JsonPropertyName("nonVerbalCues")]
-        public string? NonVerbalCues { get; set; }
+        [JsonProperty("intent")]
+        [JsonPropertyName("intent")]
+        public Intent Intent { get; set; }
 
         [JsonProperty("metadata")]
         [JsonPropertyName("metadata")]

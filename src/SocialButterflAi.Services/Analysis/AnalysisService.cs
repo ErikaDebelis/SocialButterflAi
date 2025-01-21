@@ -39,6 +39,13 @@ using AudioEntity = SocialButterflAi.Data.Analysis.Entities.Audio;
 using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
 using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 using AnalysisEntity = SocialButterflAi.Data.Analysis.Entities.Analysis;
+using IntentEntity = SocialButterflAi.Data.Analysis.Entities.Intent;
+using IntentDto = SocialButterflAi.Models.Analysis.Intent;
+using ToneEntity = SocialButterflAi.Data.Analysis.Entities.Tone;
+using ToneDto = SocialButterflAi.Models.Analysis.Tone;
+using CaptionEntity = SocialButterflAi.Data.Analysis.Entities.EnhancedCaption;
+using CaptionDto = SocialButterflAi.Models.Analysis.EnhancedCaption;
+
 using MediaType = SocialButterflAi.Models.Analysis.MediaType;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
 #endregion
@@ -1432,6 +1439,8 @@ namespace SocialButterflAi.Services.Analysis
                     .ThenInclude(v => v.Video)
                 .Include(a => a.Caption)
                     .ThenInclude(v => v.Audio)
+                .Include(a => a.Intent)
+                .Include(a => a.Tone)
                 .Where(matchByStatement)
                 .ToArray();
         #endregion
@@ -1454,6 +1463,10 @@ namespace SocialButterflAi.Services.Analysis
                         .ThenInclude(m => m.Members)
                 .Include(v => v.Captions)
                     .ThenInclude(c => c.Analyses)
+                        .ThenInclude(a => a.Intent)
+                .Include(v => v.Captions)
+                    .ThenInclude(c => c.Analyses)
+                        .ThenInclude(a => a.Tone)
                 .Where(matchByStatement)
                 .ToArray();
         #endregion
@@ -1475,6 +1488,9 @@ namespace SocialButterflAi.Services.Analysis
                     .ThenInclude(i => i.Chat)
                         .ThenInclude(m => m.Members)
                 .Include(i => i.Analyses)
+                    .ThenInclude(a => a.Intent)
+                .Include(i => i.Analyses)
+                    .ThenInclude(a => a.Tone)
                 .Where(matchByStatement)
                 .ToArray();
         #endregion
@@ -1497,6 +1513,10 @@ namespace SocialButterflAi.Services.Analysis
                         .ThenInclude(m => m.Members)
                 .Include(v => v.Captions)
                     .ThenInclude(c => c.Analyses)
+                        .ThenInclude(a => a.Intent)
+                .Include(v => v.Captions)
+                    .ThenInclude(c => c.Analyses)
+                        .ThenInclude(a => a.Tone)
                 .Where(matchByStatement)
                 .ToArray();
         #endregion
@@ -1537,6 +1557,7 @@ namespace SocialButterflAi.Services.Analysis
                 .Include(ti => ti.FromIdentity)
                 .Include(ti => ti.ToIdentity)
                 .Include(m => m.Chat)
+                    .ThenInclude(m => m.Members)
                 .Where(matchByStatement)
                 .ToArray();
         #endregion
@@ -1732,6 +1753,22 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var videoDto = new VideoDto
                 {
+                    Id = videoEntity.Id,
+                    UploaderIdentityId = videoEntity.IdentityId,
+                    //todo:fix this
+                    // MessageId = ,
+                    Title = videoEntity.Title,
+                    Description = videoEntity.Description,
+                    Url = videoEntity.Path,
+                    Format = Enum.Parse<VideoFormat>($"{videoEntity.VideoType}"),
+                    Base64 = videoEntity.Base64,
+                    Duration = new DurationData
+                    {
+                        StartTime = "00:00:00",
+                        EndTime = $"{videoEntity.Duration.Hours}:{videoEntity.Duration.Minutes}:{videoEntity.Duration.Seconds}",
+                        TimeSpan = videoEntity.Duration
+                    },
+                    FileStream = null
                 };
 
                 Logger.LogTrace($"");
@@ -1770,8 +1807,8 @@ namespace SocialButterflAi.Services.Analysis
                     Type = Enum.Parse<Data.Analysis.Entities.MediaType>($"{analysisDto.Type}"),
                     Certainty = 0,
                     EnhancedDescription = null,
-                    Tone = null,
-                    Intent = null,
+                    Tone = ToneDtoToEntity(analysisDto.Tone, identityId),
+                    Intent = IntentDtoToEntity(analysisDto.Intent, identityId),
                     Metadata = null,
                     CreatedBy = $"{identityId}",
                     CreatedOn = DateTime.UtcNow,
@@ -1806,7 +1843,7 @@ namespace SocialButterflAi.Services.Analysis
         ///</summary>
         /// <param name="AnalysisEntity"> </param>
         /// <returns></returns>
-        private async Task<AnalysisData> AnalysisEntityToDto(
+        private AnalysisData AnalysisEntityToDto(
             AnalysisEntity analysisEntity
         )
         {
@@ -1815,12 +1852,12 @@ namespace SocialButterflAi.Services.Analysis
                 var analysisDto = new AnalysisData
                 {
                     Id = analysisEntity.Id,
-                    Caption = null,
-                    Type = null,
-                    Certainty = 0,
-                    EnhancedDescription = null,
-                    EmotionalContext = null,
-                    NonVerbalCues = null,
+                    Tone = ToneEntityToDto(analysisEntity.Tone),
+                    Intent = IntentEntityToDto(analysisEntity.Intent),
+                    Caption = CaptionEntityToDto(analysisEntity.Caption),
+                    Type = Enum.Parse<MediaType>($"{analysisEntity.Type}"),
+                    Certainty = analysisEntity.Certainty,
+                    EnhancedDescription = analysisEntity.EnhancedDescription,
                     Metadata = null
                 };
 
@@ -1828,6 +1865,228 @@ namespace SocialButterflAi.Services.Analysis
                 SeriLogger.Information($"");
 
                 return analysisDto;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region IntentDtoToEntity
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="Analysis"> </param>
+        /// <returns></returns>
+        private IntentEntity IntentDtoToEntity(
+            IntentDto intentDto,
+            Guid identityId
+        )
+        {
+            try
+            {
+                var intentEntity = new IntentEntity
+                {
+                    CreatedBy = $"{identityId}",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedBy = $"{identityId}",
+                    ModifiedOn = DateTime.UtcNow
+                };
+
+                if(intentEntity == null)
+                {
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
+                }
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return intentEntity;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region IntentEntityToDto
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="IntentEntity"> </param>
+        /// <returns></returns>
+        private IntentDto IntentEntityToDto(
+            IntentEntity intentEntity
+        )
+        {
+            try
+            {
+                var intentDto = new IntentDto
+                {
+                    Id = intentEntity.Id,
+                };
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return intentDto;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region ToneDtoToEntity
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="Tone"> </param>
+        /// <returns></returns>
+        private ToneEntity ToneDtoToEntity(
+            ToneDto toneDto,
+            Guid identityId
+        )
+        {
+            try
+            {
+                var toneEntity = new ToneEntity
+                {
+                    CreatedBy = $"{identityId}",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedBy = $"{identityId}",
+                    ModifiedOn = DateTime.UtcNow
+                };
+
+                if(toneEntity == null)
+                {
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
+                }
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return toneEntity;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region ToneEntityToDto
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="AnalysisEntity"> </param>
+        /// <returns></returns>
+        private ToneDto ToneEntityToDto(
+            ToneEntity toneEntity
+        )
+        {
+            try
+            {
+                var toneDto = new ToneDto
+                {
+                    Id = toneEntity.Id,
+                };
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return toneDto;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region CaptionDtoToEntity
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name=""> </param>
+        /// <returns></returns>
+        private CaptionEntity CaptionDtoToEntity(
+            CaptionDto captionDto,
+            Guid identityId
+        )
+        {
+            try
+            {
+                var captionEntity = new CaptionEntity
+                {
+                    CreatedBy = $"{identityId}",
+                    CreatedOn = DateTime.UtcNow,
+                    ModifiedBy = $"{identityId}",
+                    ModifiedOn = DateTime.UtcNow
+                };
+
+                if(captionEntity == null)
+                {
+                    Logger.LogError($"");
+                    SeriLogger.Error($"");
+                    throw new Exception($"");
+                }
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return captionEntity;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogCritical(ex, $"");
+                SeriLogger.Fatal(ex, $"");
+                throw new Exception($"", ex);
+            }
+        }
+        #endregion
+
+        #region CaptionEntityToDto
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name=""> </param>
+        /// <returns></returns>
+        private CaptionDto CaptionEntityToDto(
+            CaptionEntity captionEntity
+        )
+        {
+            try
+            {
+                var captionDto = new CaptionDto
+                {
+                    Id = captionEntity.Id,
+                };
+
+                Logger.LogTrace($"");
+                SeriLogger.Information($"");
+
+                return captionDto;
             }
             catch(Exception ex)
             {

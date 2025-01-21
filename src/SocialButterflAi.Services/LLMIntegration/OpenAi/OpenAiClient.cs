@@ -83,14 +83,27 @@ namespace SocialButterflAi.Services.LLMIntegration.OpenAi
 
                     return response;
                 }
+                response.AiData = deserializedOpenAiResponse;
 
                 var deserializeContent = _typedAiResponseHelper.DeserializeResponse(contentString);
+
+                if(deserializeContent == null
+                    || !deserializeContent.Success
+                    || deserializeContent.Data == null
+                )
+                {
+                    Logger.LogWarning("failed to deserialize response- must work with untyped data");
+                    SeriLogger.Error("failed to deserialize response- must work with untyped data");
+                    response.Success = true;
+                    response.Message = "failed to deserialize response- must work with untyped data";
+
+                    return response;
+                }
 
                 Logger.LogInformation("response received and deserialized");
                 SeriLogger.Information("response received and deserialized");;
                 response.Success = true;
                 response.Message = "Success";
-                response.AiData = deserializedOpenAiResponse;
                 response.TypedData = deserializeContent.Data;
 
                 return response;

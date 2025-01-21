@@ -34,8 +34,19 @@ namespace SocialButterflAi.Models.LLMIntegration.Claude
             }},
             ""certainty"": 0.0, //(ex. 0.0)
             ""enhancedDescription"": ""in this section you describe your interpretation of the image or transcript"", //(ex. 'It sounds like they're being sarcastic and may have some other feelings they're not expressing.')
-            ""emotionalContext"": ""in this section you can describe any emotional context you see in the image or transcript"", //(ex. 'their eyebrows are furrowed and they're looking away from the camera')
-            ""nonVerbalCues"": ""in this section you can describe any non-verbal cues you see in the image or transcript"" //(ex. 'they're tapping their foot and looking at their phone')
+            ""tone"": {{
+                ""primaryEmotion"": ""in this section you can describe the primary emotion you see in the image or transcript"", //(ex. 'they sound hurt')
+                ""emotionalSpectrum"": {{ ""emotion"": 0.0, ""emotion"": 0.0, ""emotion"": 0.0 }}, //(ex. { ""anger"": 0.5, ""joy"": 0.3, ""sadness"": 0.2
+                ""emotionalContext"": ""in this section you can describe any emotional context you see in the image or transcript"", //(ex. 'their voice quivered')
+                ""nonVerbalCues"": ""in this section you can describe any non-verbal cues you see in the image or transcript"", //(ex. 'they were frowning')
+                ""intensityScore"": 0.0 //(ex. 0.8)
+            }},
+            ""intent"": {{
+                ""primaryIntent"": ""in this section you can describe the primary intent you see in the image or transcript"", //(ex. 'they're trying to convince the other person to buy a car')
+                ""secondaryIntents"": {{ ""intent"": 0.0, ""intent"": 0.0, ""intent"": 0.0 }}, //(ex. { ""make them feel good"": 0.5, ""make them feel safe"": 0.3, ""make them feel happy"": 0.2 })
+                ""certaintyScore"": 0.0, //(ex. 0.8)
+                ""subtextualMeaning"": ""in this section you can describe any subtextual meaning you see in the image or transcript"" //(ex. 'they're working hard to make a sale')
+            }},
             ""metadata"":
             {{
                 ""key"": ""value"", //(ex. ""emotion"": ""sarcasm"")

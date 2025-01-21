@@ -9,8 +9,7 @@ namespace SocialButterflAi.Models.Analysis
     {
         public string StartTime { get; set; }
         public string EndTime { get; set; }
-        public TimeSpan TimeSpan => TimeSpan.Parse(EndTime) - TimeSpan.Parse(StartTime);
-
+        public TimeSpan TimeSpan { get; set; }
         public ProcessStartInfo ProcessStartInfo { get; set; }
     }
 }

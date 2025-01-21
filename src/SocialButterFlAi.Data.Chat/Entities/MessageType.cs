@@ -5,6 +5,7 @@ namespace SocialButterflAi.Data.Chat.Entities
         Text,
         Image,
         Video,
+        Audio,
         System
     }
 }
