@@ -362,7 +362,7 @@ namespace SocialButterflAi.Services.Analysis
                 SeriLogger.Information("Video uploaded successfully");
 
                 response.Success = true;
-                response.Data.VideoPath = filePath;
+                response.Data.Path = filePath;
 
                 return response;
             }
@@ -458,7 +458,7 @@ namespace SocialButterflAi.Services.Analysis
                 SeriLogger.Information("Video uploaded successfully");
 
                 response.Success = true;
-                response.Data.VideoPath = filePath;
+                response.Data.Path = filePath;
 
                 return response;
             }
@@ -478,13 +478,110 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="s"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<AnalysisData>> UploadImageAsync(
-            object s
+        public async Task<BaseResponse<UploadData>> UploadImageAsync(
+            Guid identityId,
+            Guid relatedMessageId,
+            string base64Image
         )
         {
+            var response = new BaseResponse<UploadData>();
+            var imageDto = new ImageDto();
             try
             {
-                throw new NotImplementedException();
+                var fileName = $"{Guid.NewGuid()}.{ImageType.png}";
+                var filePath = Path.Combine(_uploadDirectory, fileName);
+
+                imageDto = new ImageDto
+                {
+                    UploaderIdentityId = identityId,
+                    MessageId = relatedMessageId,
+                    Title = $"Img{relatedMessageId}",
+                    Description = "",
+                    ImageUrl = filePath,
+                    Base64 = base64Image
+                };
+
+                var imageEntity = ImageDtoToEntity(imageDto);
+
+                if (imageEntity == null)
+                {
+                    Logger.LogError("Error uploading image");
+                    SeriLogger.Error("Error uploading image");
+                    response.Success = false;
+                    response.Message = "Error uploading image";
+
+                    return response;
+                }
+
+                AnalysisDbContext.Images.Add(imageEntity);
+                await AnalysisDbContext.SaveChangesAsync();
+
+                Logger.LogInformation("Image uploaded successfully");
+
+                response.Success = true;
+                response.Message = "Image uploaded successfully";
+                response.Data.Path = filePath;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
+        #region UploadAudio
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<UploadData>> UploadAudioAsync(
+            Guid identityId,
+            Guid relatedMessageId,
+            string base64Audio
+        )
+        {
+            var response = new BaseResponse<UploadData>();
+            var audioDto = new AudioDto();
+            try
+            {
+                var fileName = $"{Guid.NewGuid()}.{AudioFormat.wav}";
+                var filePath = Path.Combine(_uploadDirectory, fileName);
+
+                audioDto = new AudioDto
+                {
+                    UploaderIdentityId = identityId,
+                    MessageId = relatedMessageId,
+                    Base64 = base64Audio
+                };
+
+                var audioEntity = AudioDtoToEntity(audioDto);
+
+                if (audioEntity == null)
+                {
+                    Logger.LogError("Error uploading audio");
+                    SeriLogger.Error("Error uploading audio");
+                    response.Success = false;
+                    response.Message = "Error uploading audio";
+
+                    return response;
+                }
+
+                AnalysisDbContext.Audios.Add(audioEntity);
+                await AnalysisDbContext.SaveChangesAsync();
+
+                Logger.LogInformation("audio uploaded successfully");
+
+                response.Success = true;
+                response.Message = "audio uploaded successfully";
+                response.Data.Path = filePath;
+
+                return response;
             }
             catch (Exception ex)
             {

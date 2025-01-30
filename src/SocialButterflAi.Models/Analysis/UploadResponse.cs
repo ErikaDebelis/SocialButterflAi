@@ -7,8 +7,8 @@ namespace SocialButterflAi.Models.Analysis
 {
     public class UploadData
     {
-        [JsonProperty("VideoPath")]
-        [JsonPropertyName("VideoPath")]
-        public string VideoPath { get; set; }
+        [JsonProperty("Path")]
+        [JsonPropertyName("Path")]
+        public string Path { get; set; }
     }
 }
