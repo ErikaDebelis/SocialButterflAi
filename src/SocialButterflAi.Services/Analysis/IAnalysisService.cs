@@ -45,7 +45,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="base64Video"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public Task<BaseResponse<UploadData>> UploadAsync(
+        public Task<BaseResponse<UploadData>> UploadVideoAsync(
             Guid identityId,
             Guid relatedMessageId,
             string base64Video
@@ -58,7 +58,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="Exception"></exception>
-        public Task<BaseResponse<UploadData>> UploadAsync(
+        public Task<BaseResponse<UploadData>> UploadVideoAsync(
             Guid identityId,
             IFormFile file,
             VideoFormat format,
@@ -74,8 +74,20 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="request"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public  Task<BaseResponse<AnalysisData>> AnalyzeAsync<T>(
+        public Task<BaseResponse<AnalysisData>> AnalyzeAsync<T>(
             T request
+        ) where T : BaseAnalysisRequest
+        ;
+
+        /// <summary>
+        /// the assumption here is that this is a brand new message with a new video/image/audio/text that needs to be uploaded and analyzed- does not already exist in DB
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public Task<BaseResponse<UploadAndAnalysisData<AnalysisData>>> UploadAndAnalyzeAsync<T>(
+            UploadAndAnalysisRequest<T> request
         ) where T : BaseAnalysisRequest
         ;
 

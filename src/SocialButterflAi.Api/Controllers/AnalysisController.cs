@@ -126,7 +126,7 @@ namespace SocialButterflAi.Api.Controllers
                     return BadRequest("Invalid video format");
                 }
 
-                var uploadResponse = await AnalysisService.UploadAsync(
+                var uploadResponse = await AnalysisService.UploadVideoAsync(
                                                     identity.Id,
                                                     file,
                                                     videoFormat,
@@ -168,12 +168,6 @@ namespace SocialButterflAi.Api.Controllers
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(request.VideoPath))
-                {
-                    Logger.LogError("No video path provided");
-                    return BadRequest("No video path provided");
-                }
-
                 var modelProvider = Enum.Parse<ModelProvider>(request.ModelProvider);
 
                 var analysis = await AnalysisService.AnalyzeAsync(request);

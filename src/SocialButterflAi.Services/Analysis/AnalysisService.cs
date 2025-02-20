@@ -400,13 +400,17 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var fileName = $"{videoTitle}:{Guid.NewGuid()}.{format}";
                 var filePath = Path.Combine(_uploadDirectory, fileName);
-                var base64 = string.Empty;
 
-                using (var memoryStream = new MemoryStream())
+                var generateBase64 = await GenerateVideoBase64Async(file);
+
+                if(generateBase64 is not { Success: true } )
                 {
-                    await file.OpenReadStream().CopyToAsync(memoryStream);
-                    var fileBytes = memoryStream.ToArray();
-                    base64 = Convert.ToBase64String(fileBytes);
+                    Logger.LogError("Error generating base64");
+                    SeriLogger.Error("Error generating base64");
+                    response.Success = false;
+                    response.Message = "Error generating base64";
+
+                    return response;
                 }
 
                 videoDto = new VideoDto
@@ -417,15 +421,15 @@ namespace SocialButterflAi.Services.Analysis
                     Format = format,
                     Url = filePath,
                     FileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read),
-                    Base64 = base64,
+                    Base64 = generateBase64.Data,
                     MessageId = relatedMessageId
                 };
 
                 var durationData = await GetDuration(
-                                            filePath,
-                                            null,
-                                            null
-                                        );
+                                        filePath,
+                                        null,
+                                        null
+                                    );
 
                 if(durationData is not { Success: true } )
                 {
@@ -594,19 +598,86 @@ namespace SocialButterflAi.Services.Analysis
 
         #region UploadAndAnalyzeAsync
         /// <summary>
-        /// 
+        /// the assumption here is that this is a brand new message with a new video/image/audio/text that needs to be uploaded and analyzed- does not already exist in DB
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="request"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<UploadAndAnalysisData>> UploadAndAnalyzeAsync<T>(
-            T request
+        public async Task<BaseResponse<UploadAndAnalysisData<AnalysisData>>> UploadAndAnalyzeAsync<T>(
+            UploadAndAnalysisRequest<T> request
         ) where T : BaseAnalysisRequest
         {
-            var response = new BaseResponse<AnalysisData>();
+            var response = new BaseResponse<UploadAndAnalysisData<AnalysisData>>();
             try
             {
+                var uploadResponse = request.Data switch
+                {
+                    VideoAnalysisRequest videoRequest => await UploadVideoAsync(
+                        videoRequest.RequesterIdentityId,
+                        videoRequest.MessageId,
+                        request.MediumBase64
+                    ),
+                    ImageAnalysisRequest imageRequest => await UploadImageAsync(
+                        imageRequest.RequesterIdentityId,
+                        imageRequest.MessageId,
+                        request.MediumBase64
+                    ),
+                    AudioAnalysisRequest audioRequest => await UploadAudioAsync(
+                        audioRequest.RequesterIdentityId,
+                        audioRequest.MessageId,
+                        request.MediumBase64
+                    ),
+                    TextAnalysisRequest textAnalysisRequest => new BaseResponse<UploadData>
+                    {
+                        Success = true,
+                        Message = "Text does not need to be uploaded- will be analyzed directly and stored as a message",
+                        Data = null
+                    },
+                    _ => new BaseResponse<UploadData>
+                    {
+                        Success = false,
+                        Message = "request type not supported- did not perform analysis",
+                        Data = null
+                    }
+                };
+
+                if(uploadResponse is not { Success: true } )
+                {
+                    Logger.LogError("Error uploading medium");
+                    SeriLogger.Error("Error uploading medium");
+
+                    response.Success = false;
+                    response.Message = "Error uploading medium";
+
+                    return response;
+                }
+
+                var analysisResponse = await AnalyzeAsync(request.Data);
+
+                if(analysisResponse is not { Success: true } )
+                {
+                    Logger.LogError("Error analyzing medium");
+                    SeriLogger.Error("Error analyzing medium");
+
+                    response.Success = false;
+                    response.Message = "Error analyzing medium";
+
+                    return response;
+                }
+
+                Logger.LogInformation("Upload and analysis completed");
+
+                response.Success = analysisResponse.Success;
+                response.Message = analysisResponse.Message;
+                response.Data = new UploadAndAnalysisData<AnalysisData>
+                {
+                    AnalysisData = analysisResponse.Data,
+                    Path = uploadResponse.Data.Path,
+                };
+
+                return response;
+
             }
             catch (Exception ex)
             {
@@ -697,10 +768,10 @@ namespace SocialButterflAi.Services.Analysis
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
 
                 var matchingVideo = FindVideos(v =>
-                    v.Id == request.VideoId
+                    v.Id == request.AnalysisMediumId
                     || ((v.Identity.Id == request.RequesterIdentityId
                         || v.Message.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null)
-                        && v.Path == request.VideoPath
+                        && v.MessageId == request.MessageId
                     )
                 ).FirstOrDefault();
 
@@ -715,7 +786,7 @@ namespace SocialButterflAi.Services.Analysis
                 }
 
                 var durationData = await GetDuration(
-                                    request.VideoPath,
+                                    matchingVideo.Path,
                                     request.StartTime,
                                     request.EndTime
                                 );
@@ -730,8 +801,8 @@ namespace SocialButterflAi.Services.Analysis
                     return response;
                 }
 
-                var outputAudio = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.wav";
-                var outputGif = $"{request.VideoPath.Split('.')[0]}-{Guid.NewGuid()}.gif";
+                var outputAudio = $"{matchingVideo.Path.Split('.')[0]}-{Guid.NewGuid()}.wav";
+                var outputGif = $"{matchingVideo.Path.Split('.')[0]}-{Guid.NewGuid()}.gif";
 
                 var processVideoResponse = await ProcessVideoFile(
                                 durationData.Data.ProcessStartInfo,
@@ -754,7 +825,6 @@ namespace SocialButterflAi.Services.Analysis
                     AudioFormat = AudioFormat.wav,
                     Model = WhisperModel.Whisper_1,
                     Base64Audio = processVideoResponse.Data.Base64Audio
-                    // WavUrl = $"data:audio/wav;base64,{request.Base64Audio}"
                 };
 
                 var whisperResponse = await OpenAiClient.ExecuteWhisperAsync(whisperRequest);
@@ -784,7 +854,7 @@ namespace SocialButterflAi.Services.Analysis
                 var analyzeImageRequest = new ImageAnalysisRequest
                 {
                     ModelProvider = request.ModelProvider,
-                    ImageId = matchingVideo.Id,
+                    AnalysisMediumId = matchingVideo.Id,
                     Transcript = whisperResponse.Text,
                 };
 
@@ -835,7 +905,7 @@ namespace SocialButterflAi.Services.Analysis
                 var parsedType =  Models.LLMIntegration.Claude.Content.MediaType.unknown;
                 var base64Media = string.Empty;
                 var matchingImage = FindImages(i =>
-                    i.Id == request.ImageId
+                    i.Id == request.AnalysisMediumId
                     && (i.Identity.Id == request.RequesterIdentityId
                         || i.Message.Chat.Members.FirstOrDefault(x => x.Id == i.Identity.Id) != null
                     )
@@ -980,10 +1050,10 @@ namespace SocialButterflAi.Services.Analysis
                 var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
 
                 var matchingAudio = FindAudios(a =>
-                    a.Id == request.AudioId
+                    a.Id == request.AnalysisMediumId
                     || ((a.Identity.Id == request.RequesterIdentityId
                         || a.Message.Chat.Members.FirstOrDefault(x => x.Id == a.Identity.Id) != null)
-                        && a.Base64 == request.Base64Audio
+                        && a.MessageId == request.MessageId
                     )
                 ).FirstOrDefault();
 
@@ -1001,7 +1071,7 @@ namespace SocialButterflAi.Services.Analysis
                 {
                     AudioFormat = AudioFormat.wav,
                     Model = WhisperModel.Whisper_1,
-                    Base64Audio = request.Base64Audio
+                    Base64Audio = matchingAudio.Base64
                     // WavUrl = $"data:audio/wav;base64,{request.Base64Audio}"
                 };
 
@@ -1032,7 +1102,7 @@ namespace SocialButterflAi.Services.Analysis
                 var analyzeTextRequest = new TextAnalysisRequest
                 {
                     ModelProvider = request.ModelProvider,
-                    MessageId = matchingAudio.MessageId,
+                    MessageId = matchingAudio.MessageId ?? request.MessageId,
                     Text = whisperResponse.Text,
                 };
 
@@ -1136,6 +1206,47 @@ namespace SocialButterflAi.Services.Analysis
         #endregion
 
         #region Private/Helper Methods
+        #region GenerateVideoBase64Async
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="modelProvider"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<string>> GenerateVideoBase64Async(
+            IFormFile file
+        )
+        {
+            var response = new BaseResponse<string>();
+            try
+            {
+                var base64 = string.Empty;
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    await file.OpenReadStream().CopyToAsync(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
+                    base64 = Convert.ToBase64String(fileBytes);
+                }
+
+                Logger.LogInformation("Base64 string generated successfully");
+                SeriLogger.Information("Base64 string generated successfully");
+
+                response.Success = true;
+                response.Data = base64;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
 
         #region Form Image Content
         /// <summary>
