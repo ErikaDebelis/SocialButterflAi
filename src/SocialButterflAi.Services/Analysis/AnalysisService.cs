@@ -290,7 +290,7 @@ namespace SocialButterflAi.Services.Analysis
         }
         #endregion
 
-        #region Upload
+        #region UploadVideoAsync
         /// <summary>
         /// 
         /// </summary>
@@ -300,7 +300,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="base64Video"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<UploadData>> UploadAsync(
+        public async Task<BaseResponse<UploadData>> UploadVideoAsync(
             Guid identityId,
             Guid relatedMessageId,
             string base64Video
@@ -375,7 +375,7 @@ namespace SocialButterflAi.Services.Analysis
         }
 
         /// <summary>
-        /// 
+        /// UploadVideoAsync
         /// </summary>
         /// <param name="identityId"></param>
         /// <param name="file"></param>
@@ -385,7 +385,7 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="videoDescription"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<BaseResponse<UploadData>> UploadAsync(
+        public async Task<BaseResponse<UploadData>> UploadVideoAsync(
             Guid identityId,
             IFormFile file,
             VideoFormat format,
@@ -582,6 +582,31 @@ namespace SocialButterflAi.Services.Analysis
                 response.Data.Path = filePath;
 
                 return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
+        #region UploadAndAnalyzeAsync
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<UploadAndAnalysisData>> UploadAndAnalyzeAsync<T>(
+            T request
+        ) where T : BaseAnalysisRequest
+        {
+            var response = new BaseResponse<AnalysisData>();
+            try
+            {
             }
             catch (Exception ex)
             {
@@ -1007,7 +1032,7 @@ namespace SocialButterflAi.Services.Analysis
                 var analyzeTextRequest = new TextAnalysisRequest
                 {
                     ModelProvider = request.ModelProvider,
-                    // MessageId = ,
+                    MessageId = matchingAudio.MessageId,
                     Text = whisperResponse.Text,
                 };
 
@@ -1038,7 +1063,7 @@ namespace SocialButterflAi.Services.Analysis
             }
         }
 
-        // <summary>
+        //<summary>
         /// 
         /// </summary>
         /// <param name="request"></param>

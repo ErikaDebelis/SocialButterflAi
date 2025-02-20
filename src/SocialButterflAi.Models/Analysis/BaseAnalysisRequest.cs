@@ -9,6 +9,8 @@ namespace SocialButterflAi.Models.Analysis
     public abstract class BaseAnalysisRequest
     {
         public Guid RequesterIdentityId { get; set; }
+        public Guid MessageId { get; set; }
+        public Guid AnalysisMediumId { get; set; } //text, image, audio, video
 
         [JsonProperty("ModelProvider")]
         [JsonPropertyName("ModelProvider")]

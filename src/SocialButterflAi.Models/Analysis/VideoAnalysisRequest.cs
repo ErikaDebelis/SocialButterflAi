@@ -8,14 +8,6 @@ namespace SocialButterflAi.Models.Analysis
 {
     public class VideoAnalysisRequest : BaseAnalysisRequest
     {
-        [JsonProperty("VideoId")]
-        [JsonPropertyName("VideoId")]
-        public Guid? VideoId { get; set; }
-
-        [JsonProperty("VideoPath")]
-        [JsonPropertyName("VideoPath")]
-        public string VideoPath { get; set; }
-
         /// <summary>
         /// the timeframe of the video to be analyzed - start time 00:00:00, end time 00:00:00 - default is the entire video
         /// </summary>

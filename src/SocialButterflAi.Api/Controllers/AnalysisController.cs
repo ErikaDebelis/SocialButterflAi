@@ -101,12 +101,12 @@ namespace SocialButterflAi.Api.Controllers
                 var identityName = HttpContext?.User?.Identity?.Name;
 
                 var identity = IdentityDbContext.Identities.SingleOrDefault(i => i.Email == identityName);
-                
+
                 var matchingChat = CueCoachService.FindChats(x =>
                     x.Members.FirstOrDefault(m => m.Id == identity.Id) != null
                     && x.Id == Guid.Parse(request.ChatId)
                 ).FirstOrDefault();
-                
+
                 if (file == null
                     || file.Length == 0
                 )
@@ -136,7 +136,7 @@ namespace SocialButterflAi.Api.Controllers
                                                 );
 
                 if (uploadResponse is not { Success: true }
-                    || string.IsNullOrWhiteSpace(uploadResponse.Data.VideoPath)
+                    || string.IsNullOrWhiteSpace(uploadResponse.Data.Path)
                 )
                 {
                     Logger.LogError("Upload was not successful");

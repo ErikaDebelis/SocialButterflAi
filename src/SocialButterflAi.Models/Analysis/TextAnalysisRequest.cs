@@ -8,9 +8,6 @@ namespace SocialButterflAi.Models.Analysis
 {
     public class TextAnalysisRequest: BaseAnalysisRequest
     {
-        public Guid? MessageId { get; set; }
-        
         public string? Text { get; set; }
-        
     }
 }

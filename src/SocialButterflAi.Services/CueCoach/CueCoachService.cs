@@ -117,7 +117,7 @@ namespace SocialButterflAi.Services.CueCoach
                             RequesterIdentityId = msg.FromIdentityId,
                             ModelProvider = $"{_modelProvider}",
                             TransactionId = $"{transactionId}",
-                            VideoPath = uploadResponse.Data.VideoPath,
+                            VideoPath = uploadResponse.Data.Path,
                             // StartTime = ,
                             // EndTime = ,
                             // InitialUserPerception = ,

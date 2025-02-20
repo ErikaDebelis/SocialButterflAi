@@ -37,7 +37,7 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
             IdentityDbContext = identityDbContext;
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-    
+
         #region IncomingMessage
         ///<remarks></remarks>
         /// <summary>
