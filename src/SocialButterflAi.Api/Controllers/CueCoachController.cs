@@ -15,6 +15,8 @@ using RabbitMQ.Client;
 
 using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Models.CueCoach.Contracts;
+using Microsoft.AspNetCore.Http;
+using SocialButterflAi.Api.Helpers;
 
 namespace SocialButterflAi.Api.CueCoach.Controllers
 {
@@ -26,6 +28,7 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
         private IdentityDbContext IdentityDbContext;
         private IBus Bus;
         private ILogger<CueCoachController> Logger;
+        private ApiHelpers Helpers = new ApiHelpers();
 
         public CueCoachController(
             IBus bus,
@@ -48,7 +51,9 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
         /// <response code="404">Error:</response>
         /// <response code="500">Description here</response>
         [HttpPost]
-        public async Task<IActionResult> IncomingMessage()
+        public async Task<IActionResult> IncomingMessage(
+            IFormFile? file
+        )
         {
             try
             {
@@ -104,9 +109,12 @@ namespace SocialButterflAi.Api.CueCoach.Controllers
                     headerTransaction = incomingHeaders.FirstOrDefault(hasTransactionHeader);
                 }
 
+                var base64Result = await Helpers.GenerateBase64Async(file);
+
 				var contract = new MessageContract
 				{
-	                Body = incomingMessage.String
+                    Body = incomingMessage.String,
+                    Base64 = base64Result.Data
                 };
 
                 // publish to messaging bus

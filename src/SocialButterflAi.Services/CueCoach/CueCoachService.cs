@@ -64,7 +64,8 @@ namespace SocialButterflAi.Services.CueCoach
         public async Task<BaseResponse<MessageData>> ProcessMessageAsync(
             MessageDto msg,
             Guid transactionId,
-            bool toAnalyze = false
+            bool toAnalyze = false,
+            string? base64 = null
         )
         {
             var response = new BaseResponse<MessageData>();
@@ -93,40 +94,20 @@ namespace SocialButterflAi.Services.CueCoach
                 {
                     (true, MessageType.Video) => async () =>
                     {
-                        var uploadResponse = await AnalysisService.UploadAsync(
-                                            identityId: msg.FromIdentityId,
-                                            relatedMessageId: msg.Id,
-                                            base64Video: msg.Text
-                                        );
-
-                        if(uploadResponse == null
-                            || !uploadResponse.Success
-                        )
-                        {
-                            Logger.LogError($"failed to upload video");
-                            SeriLogger.Error($"failed to upload video");
-                            response.Success = false;
-                            response.Message = $"failed to upload video";
-                            response.Data.AnalysisData = null;
-                        }
-                        Logger.LogInformation($"Video uploaded successfully");
-                        SeriLogger.Information($"Video uploaded successfully");
-
-                        var analysisRequest = new VideoAnalysisRequest()
+                        var videoAnalysisRequest = new VideoAnalysisRequest()
                         {
                             RequesterIdentityId = msg.FromIdentityId,
                             ModelProvider = $"{_modelProvider}",
                             TransactionId = $"{transactionId}",
-                            Path = uploadResponse.Data.Path,
                             // StartTime = ,
                             // EndTime = ,
                             // InitialUserPerception = ,
                         };
 
-                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
+                        var uploadAndAnalysisResponse = await AnalysisService.UploadAndAnalyzeAsync<VideoAnalysisRequest>(videoAnalysisRequest, base64);
 
-                        if(analysisResponse == null
-                            ||!analysisResponse.Success
+                        if(uploadAndAnalysisResponse == null
+                            ||!uploadAndAnalysisResponse.Success
                         )
                         {
                             Logger.LogError($"failed to analyze message");
@@ -137,7 +118,7 @@ namespace SocialButterflAi.Services.CueCoach
 
                             return false;
                         }
-                        response.Data.AnalysisData = analysisResponse.Data;
+                        response.Data.AnalysisData = uploadAndAnalysisResponse.Data.AnalysisData;
 
                         return true;
                     },
@@ -153,10 +134,10 @@ namespace SocialButterflAi.Services.CueCoach
                             // InitialUserPerception = ,
                         };
 
-                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
+                        var uploadAndAnalysisResponse = await AnalysisService.UploadAndAnalyzeAsync<ImageAnalysisRequest>(analysisRequest, base64);
 
-                        if(analysisResponse == null
-                            ||!analysisResponse.Success
+                        if(uploadAndAnalysisResponse == null
+                            ||!uploadAndAnalysisResponse.Success
                         )
                         {
                             Logger.LogError($"failed to analyze message");
@@ -167,7 +148,7 @@ namespace SocialButterflAi.Services.CueCoach
 
                             return false;
                         }
-                        response.Data.AnalysisData = analysisResponse.Data;
+                        response.Data.AnalysisData = uploadAndAnalysisResponse.Data.AnalysisData;
 
                         return true;
                     },
@@ -183,10 +164,10 @@ namespace SocialButterflAi.Services.CueCoach
                             // InitialUserPerception = ,
                         };
 
-                        var analysisResponse = await AnalysisService.AnalyzeAsync(analysisRequest);
+                        var uploadAndAnalysisResponse = await AnalysisService.UploadAndAnalyzeAsync<AudioAnalysisRequest>(analysisRequest, base64);
 
-                        if(analysisResponse == null
-                            ||!analysisResponse.Success
+                        if(uploadAndAnalysisResponse == null
+                            ||!uploadAndAnalysisResponse.Success
                         )
                         {
                             Logger.LogError($"failed to analyze message");
@@ -197,7 +178,7 @@ namespace SocialButterflAi.Services.CueCoach
 
                             return false;
                         }
-                        response.Data.AnalysisData = analysisResponse.Data;
+                        response.Data.AnalysisData = uploadAndAnalysisResponse.Data.AnalysisData;
 
                         return true;
                     },

@@ -32,5 +32,11 @@ namespace SocialButterflAi.Models.CueCoach.Contracts
         /// The body of the request. The actual Message text sent to the endpoint.
         /// </summary>
         public string Body { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string? Base64 { get; set; }
+
     }
 }

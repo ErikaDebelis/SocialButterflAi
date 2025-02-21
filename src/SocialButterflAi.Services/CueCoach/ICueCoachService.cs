@@ -22,7 +22,8 @@ namespace SocialButterflAi.Services.CueCoach
         public Task<BaseResponse<MessageData>> ProcessMessageAsync(
             MessageDto msg,
             Guid transactionId,
-            bool toAnalyze = false
+            bool toAnalyze = false,
+            string? base64 = null
         );
 
         #region FindChats

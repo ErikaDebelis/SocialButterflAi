@@ -67,7 +67,8 @@ namespace SocialButterflAi.Services.CueCoach.Consumers
                 var response = await CueCoachService.ProcessMessageAsync(
                     msg,
                     transactionId,
-                    true
+                    true,
+                    messageContractContext.Message.Base64
                 );
 
                 if (response == null)

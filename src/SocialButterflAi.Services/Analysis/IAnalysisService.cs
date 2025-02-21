@@ -87,7 +87,8 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public Task<BaseResponse<UploadAndAnalysisData<AnalysisData>>> UploadAndAnalyzeAsync<T>(
-            UploadAndAnalysisRequest<T> request
+            T request,
+            string base64
         ) where T : BaseAnalysisRequest
         ;
 

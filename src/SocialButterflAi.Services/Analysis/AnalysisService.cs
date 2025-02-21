@@ -605,28 +605,29 @@ namespace SocialButterflAi.Services.Analysis
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<UploadAndAnalysisData<AnalysisData>>> UploadAndAnalyzeAsync<T>(
-            UploadAndAnalysisRequest<T> request
+            T request,
+            string base64
         ) where T : BaseAnalysisRequest
         {
             var response = new BaseResponse<UploadAndAnalysisData<AnalysisData>>();
             try
             {
-                var uploadResponse = request.Data switch
+                var uploadResponse = request switch
                 {
                     VideoAnalysisRequest videoRequest => await UploadVideoAsync(
                         videoRequest.RequesterIdentityId,
                         videoRequest.MessageId,
-                        request.MediumBase64
+                        base64
                     ),
                     ImageAnalysisRequest imageRequest => await UploadImageAsync(
                         imageRequest.RequesterIdentityId,
                         imageRequest.MessageId,
-                        request.MediumBase64
+                        base64
                     ),
                     AudioAnalysisRequest audioRequest => await UploadAudioAsync(
                         audioRequest.RequesterIdentityId,
                         audioRequest.MessageId,
-                        request.MediumBase64
+                        base64
                     ),
                     TextAnalysisRequest textAnalysisRequest => new BaseResponse<UploadData>
                     {
@@ -653,7 +654,7 @@ namespace SocialButterflAi.Services.Analysis
                     return response;
                 }
 
-                var analysisResponse = await AnalyzeAsync(request.Data);
+                var analysisResponse = await AnalyzeAsync(request);
 
                 if(analysisResponse is not { Success: true } )
                 {
