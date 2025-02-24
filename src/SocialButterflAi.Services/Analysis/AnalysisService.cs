@@ -17,6 +17,7 @@ using SocialButterflAi.Data.Identity;
 using SocialButterflAi.Data.Analysis;
 using SocialButterflAi.Services.LLMIntegration;
 using SocialButterflAi.Services.LLMIntegration.OpenAi;
+using SocialButterflAi.Services.Analysis.Mappers;
 
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.Analysis;
@@ -68,6 +69,7 @@ namespace SocialButterflAi.Services.Analysis
         private readonly string _processedDirectory;
         private readonly long _maxFileSize;
         private readonly AnalysisSettings _configuration;
+        private Helpers Helpers;
         #endregion
 
         #region Constructor
@@ -81,6 +83,7 @@ namespace SocialButterflAi.Services.Analysis
             AnalysisSettings configuration
         )
         {
+            Helpers = new Helpers(logger);
             OpenAiClient = openAiClient;
             ClaudeClient = claudeClient;
 
@@ -343,20 +346,17 @@ namespace SocialButterflAi.Services.Analysis
 
                 videoDto.Duration = durationData.Data;
 
-                var videoEntity = VideoDtoToEntity(videoDto);
+                var saveResult = await SaveVideoAsync(videoDto);
 
-                if (videoEntity == null)
+                if(saveResult is not { Success: true } )
                 {
-                    Logger.LogError("Error uploading video");
-                    SeriLogger.Error("Error uploading video");
+                    Logger.LogError("Error saving video");
+                    SeriLogger.Error("Error saving video");
                     response.Success = false;
-                    response.Message = "Error uploading video";
+                    response.Message = "Error saving video";
 
                     return response;
                 }
-
-                AnalysisDbContext.Videos.Add(videoEntity);
-                await AnalysisDbContext.SaveChangesAsync();
 
                 Logger.LogInformation("Video uploaded successfully");
                 SeriLogger.Information("Video uploaded successfully");
@@ -443,20 +443,17 @@ namespace SocialButterflAi.Services.Analysis
 
                 videoDto.Duration = durationData.Data;
 
-                var videoEntity = VideoDtoToEntity(videoDto);
+                var result = await SaveVideoAsync(videoDto);
 
-                if (videoEntity == null)
+                if(result is not { Success: true } )
                 {
-                    Logger.LogError("Error uploading video");
-                    SeriLogger.Error("Error uploading video");
+                    Logger.LogError("Error saving video");
+                    SeriLogger.Error("Error saving video");
                     response.Success = false;
-                    response.Message = "Error uploading video";
+                    response.Message = "Error saving video";
 
                     return response;
                 }
-
-                AnalysisDbContext.Videos.Add(videoEntity);
-                await AnalysisDbContext.SaveChangesAsync();
 
                 Logger.LogInformation("Video uploaded successfully");
                 SeriLogger.Information("Video uploaded successfully");
@@ -505,20 +502,17 @@ namespace SocialButterflAi.Services.Analysis
                     Base64 = base64Image
                 };
 
-                var imageEntity = ImageDtoToEntity(imageDto);
+                var saveResult = await SaveImageAsync(imageDto);
 
-                if (imageEntity == null)
+                if(saveResult is not { Success: true } )
                 {
-                    Logger.LogError("Error uploading image");
-                    SeriLogger.Error("Error uploading image");
+                    Logger.LogError("Error saving image");
+                    SeriLogger.Error("Error saving image");
                     response.Success = false;
-                    response.Message = "Error uploading image";
+                    response.Message = "Error saving image";
 
                     return response;
                 }
-
-                AnalysisDbContext.Images.Add(imageEntity);
-                await AnalysisDbContext.SaveChangesAsync();
 
                 Logger.LogInformation("Image uploaded successfully");
 
@@ -564,20 +558,17 @@ namespace SocialButterflAi.Services.Analysis
                     Base64 = base64Audio
                 };
 
-                var audioEntity = AudioDtoToEntity(audioDto);
+                var result = await SaveAudioAsync(audioDto);
 
-                if (audioEntity == null)
+                if(result is not { Success: true } )
                 {
-                    Logger.LogError("Error uploading audio");
-                    SeriLogger.Error("Error uploading audio");
+                    Logger.LogError("Error saving audio");
+                    SeriLogger.Error("Error saving audio");
                     response.Success = false;
-                    response.Message = "Error uploading audio";
+                    response.Message = "Error saving audio";
 
                     return response;
                 }
-
-                AnalysisDbContext.Audios.Add(audioEntity);
-                await AnalysisDbContext.SaveChangesAsync();
 
                 Logger.LogInformation("audio uploaded successfully");
 
@@ -1803,10 +1794,74 @@ namespace SocialButterflAi.Services.Analysis
         /// <param name="Image"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<VideoDto>> SaveVideoAsync(
+            VideoDto video
+        )
+        {
+            var VideoMapper = new VideoMapper();
+            var response = new BaseResponse<VideoDto>();
+            try
+            {
+                //save to db
+                var matchingVideo = FindVideos(c => c.Id == video.Id).FirstOrDefault();
+
+                if(matchingVideo == null)
+                {
+                    Logger.LogError($"Video not found for Id: {video.Id}");
+                    SeriLogger.Error($"Video not found for Id: {video.Id}");
+                    response.Success = false;
+                    response.Message = $"Video not found for Id: {video.Id}";
+                    response.Data = null;
+
+                    return response;
+                }
+
+                var result = await Helpers.SaveEntity(
+                    AnalysisDbContext,
+                    video,
+                    VideoMapper
+                );
+
+                if(!result)
+                {
+                    Logger.LogError($"VideoDtoToEntity failed");
+                    SeriLogger.Error($"VideoDtoToEntity failed");
+                    response.Success = false;
+                    response.Message = $"VideoDtoToEntity failed";
+                    response.Data = null;
+
+                    return response;
+                }
+
+                Logger.LogInformation($"video saved successfully");
+                SeriLogger.Information($"video saved successfully");
+                response.Success = true;
+                response.Message = "video saved successfully";
+                response.Data = video;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
+        #region SaveImageAsync
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="Image"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<ImageDto>> SaveImageAsync(
             ImageDto image
         )
         {
+            var ImageMapper = new ImageMapper();
             var response = new BaseResponse<ImageDto>();
             try
             {
@@ -1823,9 +1878,13 @@ namespace SocialButterflAi.Services.Analysis
 
                     return response;
                 }
-                var imageEntity = ImageDtoToEntity(image);
+                var result = await Helpers.SaveEntity(
+                    AnalysisDbContext,
+                    image,
+                    ImageMapper
+                );
 
-                if(imageEntity == null)
+                if(!result)
                 {
                     Logger.LogError($"ImageDtoToEntity failed");
                     SeriLogger.Error($"ImageDtoToEntity failed");
@@ -1835,9 +1894,6 @@ namespace SocialButterflAi.Services.Analysis
 
                     return response;
                 }
-
-                AnalysisDbContext.Images.Add(imageEntity);
-                await AnalysisDbContext.SaveChangesAsync();
 
                 Logger.LogInformation($"Image saved successfully");
                 SeriLogger.Information($"Image saved successfully");
@@ -1867,6 +1923,7 @@ namespace SocialButterflAi.Services.Analysis
             AudioDto audio
         )
         {
+            var AudioMapper = new AudioMapper();
             var response = new BaseResponse<AudioDto>();
             try
             {
@@ -1883,9 +1940,13 @@ namespace SocialButterflAi.Services.Analysis
 
                     return response;
                 }
-                var audioEntity = AudioDtoToEntity(audio);
+                var result = await Helpers.SaveEntity(
+                    AnalysisDbContext,
+                    audio,
+                    AudioMapper
+                );
 
-                if(audioEntity == null)
+                if(!result)
                 {
                     Logger.LogError($"AudioDtoToEntity failed");
                     SeriLogger.Error($"AudioDtoToEntity failed");
@@ -1895,9 +1956,6 @@ namespace SocialButterflAi.Services.Analysis
 
                     return response;
                 }
-
-                AnalysisDbContext.Audios.Add(audioEntity);
-                await AnalysisDbContext.SaveChangesAsync();
 
                 Logger.LogInformation($"Audio saved successfully");
                 SeriLogger.Information($"Audio saved successfully");
@@ -1919,105 +1977,6 @@ namespace SocialButterflAi.Services.Analysis
         #endregion
 
         #region Mappers
-
-        #region VideoDtoToEntity
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="Video"> </param>
-        /// <returns></returns>
-        private VideoEntity VideoDtoToEntity(
-            VideoDto videoDto
-        )
-        {
-            try
-            {
-                var videoEntity = new VideoEntity
-                {
-                    Id = videoDto.Id,
-                    IdentityId = videoDto.UploaderIdentityId,
-                    //todo:fix this
-                    // MessageId = ,
-                    Title = videoDto.Title,
-                    Description = videoDto.Description,
-                    Path = videoDto.Url,
-                    VideoType = Enum.Parse<VideoType>($"{videoDto.Format}"),
-                    Base64 = videoDto.Base64,
-                    Duration = videoDto.Duration.TimeSpan,
-                    Captions = null,
-                    CreatedBy = $"{videoDto.UploaderIdentityId}",
-                    CreatedOn = DateTime.UtcNow,
-                    ModifiedBy = $"{videoDto.UploaderIdentityId}",
-                    ModifiedOn = DateTime.UtcNow
-                };
-
-                if(videoEntity == null)
-                {
-                    Logger.LogError($"");
-                    SeriLogger.Error($"");
-                    throw new Exception($"");
-                }
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                return videoEntity;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
-
-        #region VideoEntityToDto
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="VideoEntity"> </param>
-        /// <returns></returns>
-        private async Task<VideoDto> VideoEntityToDto(
-            VideoEntity videoEntity
-        )
-        {
-            try
-            {
-                var videoDto = new VideoDto
-                {
-                    Id = videoEntity.Id,
-                    UploaderIdentityId = videoEntity.IdentityId,
-                    //todo:fix this
-                    // MessageId = ,
-                    Title = videoEntity.Title,
-                    Description = videoEntity.Description,
-                    Url = videoEntity.Path,
-                    Format = Enum.Parse<VideoFormat>($"{videoEntity.VideoType}"),
-                    Base64 = videoEntity.Base64,
-                    Duration = new DurationData
-                    {
-                        StartTime = "00:00:00",
-                        EndTime = $"{videoEntity.Duration.Hours}:{videoEntity.Duration.Minutes}:{videoEntity.Duration.Seconds}",
-                        TimeSpan = videoEntity.Duration
-                    },
-                    FileStream = null
-                };
-
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                return videoDto;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
 
         #region AnalysisDtoToEntity
         /// <remarks></remarks>
@@ -2321,181 +2280,6 @@ namespace SocialButterflAi.Services.Analysis
                 SeriLogger.Information($"");
 
                 return captionDto;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
-
-        #region ImageDtoToEntity
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="Image"> </param>
-        /// <returns></returns>
-        private ImageEntity ImageDtoToEntity(
-            object imageDto
-        )
-        {
-            try
-            {
-                var imageEntity = new ImageEntity
-                {
-                    Id = default,
-                    CreatedOn = default,
-                    CreatedBy = null,
-                    ModifiedOn = default,
-                    ModifiedBy = null,
-                    IdentityId = default,
-                    Identity = null,
-                    MessageId = null,
-                    Message = null,
-                    Title = null,
-                    Description = null,
-                    Path = null,
-                    Base64 = null,
-                    Type = ImageType.unknown,
-                    Analyses = null
-                };
-
-                if(imageEntity == null)
-                {
-                    Logger.LogError($"");
-                    SeriLogger.Error($"");
-                    throw new Exception($"");
-                }
-
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                return imageEntity;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
-
-        #region ImageEntityToDto
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="ImageEntity"> </param>
-        /// <returns></returns>
-        private async Task<object> ImageEntityToDto(
-            ImageEntity imageEntity
-        )
-        {
-            try
-            {
-                var imageDto = new ImageDto
-                {
-                    Id = default,
-                    UploaderIdentityId = default,
-                    MessageId = null,
-                    Title = null,
-                    Description = null,
-                    ImageUrl = null,
-                    Base64 = null
-                };
-
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                throw new NotImplementedException();
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
-
-        #region AudioDtoToEntity
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="audioDto"> </param>
-        /// <returns></returns>
-        private AudioEntity AudioDtoToEntity(
-            object audioDto
-        )
-        {
-            try
-            {
-                var audioEntity = new AudioEntity
-                {
-                    Id = default,
-                    CreatedOn = default,
-                    CreatedBy = null,
-                    ModifiedOn = default,
-                    ModifiedBy = null,
-                    IdentityId = default,
-                    Identity = null,
-                    MessageId = null,
-                    Message = null,
-                    Base64 = null,
-                    Captions = null
-                };
-
-                if(audioEntity == null)
-                {
-                    Logger.LogError($"");
-                    SeriLogger.Error($"");
-                    throw new Exception($"");
-                }
-
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                return audioEntity;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
-
-        #region AudioEntityToDto
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="audioEntity"> </param>
-        /// <returns></returns>
-        private async Task<object> AudioEntityToDto(
-            AudioEntity audioEntity
-        )
-        {
-            try
-            {
-                var audioDto = new AudioDto
-                {
-                    Id = default,
-                    UploaderIdentityId = default,
-                    MessageId = null,
-                    Base64 = null
-                };
-
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                throw new NotImplementedException();
             }
             catch(Exception ex)
             {
