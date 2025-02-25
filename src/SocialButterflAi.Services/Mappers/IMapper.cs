@@ -1,6 +1,6 @@
 using System;
 
-namespace SocialButterflAi.Services
+namespace SocialButterflAi.Services.Mappers
 {
     public interface IMapper<TDto, TEntity>
     {

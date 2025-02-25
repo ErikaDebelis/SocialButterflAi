@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SocialButterflAi.Data.Identity;
+using SocialButterflAi.Services.Mappers;
 
 namespace SocialButterflAi.Services.Analysis
 {

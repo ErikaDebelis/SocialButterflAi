@@ -49,6 +49,7 @@ using CaptionDto = SocialButterflAi.Models.Analysis.EnhancedCaption;
 
 using MediaType = SocialButterflAi.Models.Analysis.MediaType;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
+using SocialButterflAi.Services.Helpers;
 #endregion
 
 namespace SocialButterflAi.Services.Analysis
@@ -60,6 +61,8 @@ namespace SocialButterflAi.Services.Analysis
         private IAiClient ClaudeClient;
         private AnalysisDbContext AnalysisDbContext;
         private ChatDbContext ChatDbContext;
+        private AnalysisDbQueries AnalysisDbQueries;
+        private ChatDbQueries ChatDbQueries;
 
         private ILogger<IAnalysisService> Logger;
         readonly Serilog.ILogger SeriLogger;
@@ -89,6 +92,8 @@ namespace SocialButterflAi.Services.Analysis
 
             AnalysisDbContext = analysisDbContext;
             ChatDbContext = chatDbContext;
+            AnalysisDbQueries = new AnalysisDbQueries(analysisDbContext, logger);
+            ChatDbQueries = new ChatDbQueries(chatDbContext, logger);
 
             Logger = logger;
             SeriLogger = Serilog.Log.Logger;
@@ -139,7 +144,7 @@ namespace SocialButterflAi.Services.Analysis
                 {
                     MediaType.Video => async () =>
                     {
-                        var video = FindVideos(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
+                        var video = AnalysisDbQueries.FindEntities<VideoEntity>(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
 
                         if (video == null)
                         {
@@ -187,7 +192,7 @@ namespace SocialButterflAi.Services.Analysis
                     },
                     MediaType.Image => async () =>
                     {
-                        var image = FindImages(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
+                        var image = AnalysisDbQueries.FindEntities<ImageEntity>(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
 
                         if (image == null)
                         {
@@ -220,7 +225,7 @@ namespace SocialButterflAi.Services.Analysis
                     },
                     MediaType.Audio => async () =>
                     {
-                        var audio = FindAudios(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
+                        var audio = AnalysisDbQueries.FindEntities<AudioEntity>(x => x.IdentityId == identityId && x.Path == path).FirstOrDefault();
 
                         if (audio == null)
                         {
@@ -760,7 +765,7 @@ namespace SocialButterflAi.Services.Analysis
                 //use ffmpeg to save gif from video with the same timestamp as the audio file
                 // for claude to analyze the gif for microexpressions and more accurate analysis of the audio
 
-                var matchingVideo = FindVideos(v =>
+                var matchingVideo = AnalysisDbQueries.FindEntities<VideoEntity>(v =>
                     v.Id == request.AnalysisMediumId
                     || ((v.Identity.Id == request.RequesterIdentityId
                         || v.Message.Chat.Members.FirstOrDefault(x => x.Id == v.Identity.Id) != null)
@@ -897,7 +902,7 @@ namespace SocialButterflAi.Services.Analysis
 
                 var parsedType =  Models.LLMIntegration.Claude.Content.MediaType.unknown;
                 var base64Media = string.Empty;
-                var matchingImage = FindImages(i =>
+                var matchingImage = AnalysisDbQueries.FindEntities<ImageEntity>(i =>
                     i.Id == request.AnalysisMediumId
                     && (i.Identity.Id == request.RequesterIdentityId
                         || i.Message.Chat.Members.FirstOrDefault(x => x.Id == i.Identity.Id) != null
@@ -1042,7 +1047,7 @@ namespace SocialButterflAi.Services.Analysis
             {
                 var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
 
-                var matchingAudio = FindAudios(a =>
+                var matchingAudio = AnalysisDbQueries.FindEntities<AudioEntity>(a =>
                     a.Id == request.AnalysisMediumId
                     || ((a.Identity.Id == request.RequesterIdentityId
                         || a.Message.Chat.Members.FirstOrDefault(x => x.Id == a.Identity.Id) != null)
@@ -1142,7 +1147,7 @@ namespace SocialButterflAi.Services.Analysis
             try
             {
                 var modelProvider = Enum.Parse<ModelProvider>($"{request.ModelProvider}");
-                var matchingMessage = FindMessages(m => m.Id == request.MessageId).FirstOrDefault();
+                var matchingMessage = ChatDbQueries.FindEntities<MessageEntity>(m => m.Id == request.MessageId).FirstOrDefault();
 
                 if(matchingMessage == null)
                 {
@@ -1649,145 +1654,6 @@ namespace SocialButterflAi.Services.Analysis
 
         #region Entity/Database Methods
 
-        #region FindAnalysis
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        private IEnumerable<AnalysisEntity> FindAnalyses(
-            Func<AnalysisEntity, bool> matchByStatement
-        )
-            => AnalysisDbContext
-                .Analyses
-                .Include(a => a.Caption)
-                    .ThenInclude(v => v.Video)
-                .Include(a => a.Caption)
-                    .ThenInclude(v => v.Audio)
-                .Include(a => a.Intent)
-                .Include(a => a.Tone)
-                .Where(matchByStatement)
-                .ToArray();
-        #endregion
-
-        #region FindVideos
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        private IEnumerable<VideoEntity> FindVideos(
-            Func<VideoEntity, bool> matchByStatement
-        )
-            => AnalysisDbContext
-                .Videos
-                .Include(v => v.Identity)
-                .Include(v => v.Message)
-                    .ThenInclude(v => v.Chat)
-                        .ThenInclude(m => m.Members)
-                .Include(v => v.Captions)
-                    .ThenInclude(c => c.Analyses)
-                        .ThenInclude(a => a.Intent)
-                .Include(v => v.Captions)
-                    .ThenInclude(c => c.Analyses)
-                        .ThenInclude(a => a.Tone)
-                .Where(matchByStatement)
-                .ToArray();
-        #endregion
-
-        #region FindImages
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        private IEnumerable<ImageEntity> FindImages(
-            Func<ImageEntity, bool> matchByStatement
-        )
-            => AnalysisDbContext
-                .Images
-                .Include(i => i.Identity)
-                .Include(i => i.Message)
-                    .ThenInclude(i => i.Chat)
-                        .ThenInclude(m => m.Members)
-                .Include(i => i.Analyses)
-                    .ThenInclude(a => a.Intent)
-                .Include(i => i.Analyses)
-                    .ThenInclude(a => a.Tone)
-                .Where(matchByStatement)
-                .ToArray();
-        #endregion
-
-        #region FindAudios
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        private IEnumerable<AudioEntity> FindAudios(
-            Func<AudioEntity, bool> matchByStatement
-        )
-            => AnalysisDbContext
-                .Audios
-                .Include(i => i.Identity)
-                .Include(i => i.Message)
-                    .ThenInclude(i => i.Chat)
-                        .ThenInclude(m => m.Members)
-                .Include(v => v.Captions)
-                    .ThenInclude(c => c.Analyses)
-                        .ThenInclude(a => a.Intent)
-                .Include(v => v.Captions)
-                    .ThenInclude(c => c.Analyses)
-                        .ThenInclude(a => a.Tone)
-                .Where(matchByStatement)
-                .ToArray();
-        #endregion
-
-        #region FindChats
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        public IEnumerable<ChatEntity> FindChats(
-            Func<ChatEntity, bool> matchByStatement
-        )
-            => ChatDbContext
-                .Chats
-                .Include(m => m.Members)
-                .Include(v => v.Messages)
-                    .ThenInclude(ti => ti.FromIdentity)
-                .Include(v => v.Messages)
-                    .ThenInclude(ti => ti.ToIdentity)
-                .Where(matchByStatement)
-                .ToArray();
-        #endregion
-
-        #region FindMessages
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        public IEnumerable<MessageEntity> FindMessages(
-            Func<MessageEntity, bool> matchByStatement
-        )
-            => ChatDbContext
-                .Messages
-                .Include(ti => ti.FromIdentity)
-                .Include(ti => ti.ToIdentity)
-                .Include(m => m.Chat)
-                    .ThenInclude(m => m.Members)
-                .Where(matchByStatement)
-                .ToArray();
-        #endregion
-
         #region SaveImageAsync
         /// <summary>
         ///
@@ -1799,16 +1665,16 @@ namespace SocialButterflAi.Services.Analysis
             VideoDto video
         )
         {
-            var VideoMapper = new VideoMapper();
+            var VideoMapper = new Mappers.VideoMapper();
             var response = new BaseResponse<VideoDto>();
             try
             {
                 //save to db
-                var matchingVideo = FindVideos(c => c.Id == video.Id).FirstOrDefault();
+                var matchingVideo = AnalysisDbQueries.FindEntities<VideoEntity>(c => c.Id == video.Id).FirstOrDefault();
 
                 if(matchingVideo == null)
                 {
-                    Logger.LogError($"Video not found for Id: {video.Id}");
+                    Logger.LogError($"Video not fouEnd for Id: {video.Id}");
                     SeriLogger.Error($"Video not found for Id: {video.Id}");
                     response.Success = false;
                     response.Message = $"Video not found for Id: {video.Id}";
@@ -1867,7 +1733,7 @@ namespace SocialButterflAi.Services.Analysis
             try
             {
                 //save to db
-                var matchingImage = FindImages(c => c.Id == image.Id).FirstOrDefault();
+                var matchingImage = AnalysisDbQueries.FindEntities<ImageEntity>(c => c.Id == image.Id).FirstOrDefault();
 
                 if(matchingImage == null)
                 {
@@ -1929,7 +1795,7 @@ namespace SocialButterflAi.Services.Analysis
             try
             {
                 //save to db
-                var matchingAudio = FindAudios(c => c.Id == audio.Id).FirstOrDefault();
+                var matchingAudio = AnalysisDbQueries.FindEntities<AudioEntity>(c => c.Id == audio.Id).FirstOrDefault();
 
                 if(matchingAudio == null)
                 {
