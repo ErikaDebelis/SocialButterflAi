@@ -4,7 +4,7 @@ using SocialButterflAi.Data.Analysis.Entities;
 using VideoDto = SocialButterflAi.Models.Analysis.Video;
 using VideoEntity = SocialButterflAi.Data.Analysis.Entities.Video;
 
-namespace SocialButterflAi.Services.Analysis.Mappers
+namespace SocialButterflAi.Services.Mappers
 {
     public class VideoMapper : IMapper<VideoDto, VideoEntity>
     {

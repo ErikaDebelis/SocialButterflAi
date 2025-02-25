@@ -9,6 +9,10 @@ namespace SocialButterflAi.Models.Analysis
 {
     public class AnalysisData
     {
+        [JsonProperty("identityId")]
+        [JsonPropertyName("identityId")]
+        public Guid? IdentityId { get; set; }
+
         [JsonProperty("Id")]
         [JsonPropertyName("Id")]
         public Guid? Id { get; set; }

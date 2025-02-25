@@ -4,7 +4,7 @@ using SocialButterflAi.Data.Analysis.Entities;
 using AudioDto = SocialButterflAi.Models.Analysis.Audio;
 using AudioEntity = SocialButterflAi.Data.Analysis.Entities.Audio;
 
-namespace SocialButterflAi.Services.Analysis.Mappers
+namespace SocialButterflAi.Services.Mappers
 {
     public class AudioMapper : IMapper<AudioDto, AudioEntity>
     {

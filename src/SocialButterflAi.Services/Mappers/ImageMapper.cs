@@ -4,7 +4,7 @@ using SocialButterflAi.Data.Analysis.Entities;
 using ImageDto = SocialButterflAi.Models.Analysis.Image;
 using ImageEntity = SocialButterflAi.Data.Analysis.Entities.Image;
 
-namespace SocialButterflAi.Services.Analysis.Mappers
+namespace SocialButterflAi.Services.Mappers
 {
     public class ImageMapper : IMapper<ImageDto, ImageEntity>
     {
