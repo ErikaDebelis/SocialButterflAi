@@ -5,24 +5,24 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 
+using SocialButterflAi.Data.Chat;
+using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
+using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 using SocialButterflAi.Data.Identity;
-using IdentityEntity = SocialButterflAi.Data.Identity.Entities.Identity;
-using ProfileEntity = SocialButterflAi.Data.Identity.Entities.Profile;
-using SocialButterflAi.Data.Identity.Entities;
 
-namespace SocialButterflAi.Services.Helpers
+namespace SocialButterflAi.Services.Helpers.Db.Queries
 {
-    public class IdentityDbQueries: IDbQueries
+    public class ChatDbQueries: IDbQueries
     {
         private ILogger Logger;
         private Serilog.ILogger SerilogLogger;
-        private IdentityDbContext IdentityDbContext;
-        public IdentityDbQueries(
-            IdentityDbContext identityDbContext,
+        private ChatDbContext ChatDbContext;
+        public ChatDbQueries(
+            ChatDbContext chatDbContext,
             ILogger logger
         )
         {
-            IdentityDbContext = identityDbContext;
+            ChatDbContext = chatDbContext;
             Logger = logger;
             SerilogLogger = Serilog.Log.Logger;
         }
@@ -30,17 +30,18 @@ namespace SocialButterflAi.Services.Helpers
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="analysisDbContext"></param>
+        /// <param name="chatDbContext"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static IDbQueries Use(
-            DbContext identityDbContext,
+            DbContext chatDbContext,
             ILogger logger
         )
         {
-            if (identityDbContext is IdentityDbContext)
+            if (chatDbContext is ChatDbContext)
             {
-                return new IdentityDbQueries(identityDbContext as IdentityDbContext, logger);
+                return new ChatDbQueries(chatDbContext as ChatDbContext, logger);
             }
 
             throw new ArgumentException("Invalid DbContext type");
@@ -65,9 +66,8 @@ namespace SocialButterflAi.Services.Helpers
 
                 var entities = entityType.Name switch
                 {
-                    nameof(IdentityEntity) => IdentityEntities(matchByStatement as Func<IdentityEntity, bool>) as IEnumerable<T>,
-                    nameof(ProfileEntity) => ProfileEntities(matchByStatement as Func<ProfileEntity, bool>) as IEnumerable<T>,
-                    nameof(PronounChoice) => PronounEntities(matchByStatement as Func<PronounChoice, bool>) as IEnumerable<T>,
+                    nameof(ChatEntity) => ChatEntities(matchByStatement as Func<ChatEntity, bool>) as IEnumerable<T>,
+                    nameof(MessageEntity) => MessageEntities(matchByStatement as Func<MessageEntity, bool>) as IEnumerable<T>,
                     _ => Enumerable.Empty<T>()
                 };
 
@@ -82,16 +82,21 @@ namespace SocialButterflAi.Services.Helpers
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="matchByStatement"></param>
         /// <returns></returns>
-        private IEnumerable<IdentityEntity> IdentityEntities(
-            Func<IdentityEntity, bool> matchByStatement,
+        private IEnumerable<ChatEntity> ChatEntities(
+            Func<ChatEntity, bool> matchByStatement,
             bool asNoTracking = false
         )
-            => IdentityDbContext
-                .Identities
+            => ChatDbContext
+                .Chats
+                .Include(m => m.Members)
+                .Include(v => v.Messages)
+                    .ThenInclude(ti => ti.FromIdentity)
+                .Include(v => v.Messages)
+                    .ThenInclude(ti => ti.ToIdentity)
                 .Where(matchByStatement)
                 .ToArray();
 
@@ -101,29 +106,16 @@ namespace SocialButterflAi.Services.Helpers
         ///</summary>
         /// <param name="matchByStatement"></param>
         /// <returns></returns>
-        public IEnumerable<ProfileEntity> ProfileEntities(
-            Func<ProfileEntity, bool> matchByStatement,
+        public IEnumerable<MessageEntity> MessageEntities(
+            Func<MessageEntity, bool> matchByStatement,
             bool asNoTracking = false
         )
-            => IdentityDbContext
-                .Profiles
-                    .Include(p => p.Identity)
-                    .Include(p => p.Pronouns)
-                .Where(matchByStatement)
-                .ToArray();
-
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        public IEnumerable<PronounChoice> PronounEntities(
-            Func<PronounChoice, bool> matchByStatement,
-            bool asNoTracking = false
-        )
-            => IdentityDbContext
-                .PronounChoices
+            => ChatDbContext
+                .Messages
+                .Include(ti => ti.FromIdentity)
+                .Include(ti => ti.ToIdentity)
+                .Include(m => m.Chat)
+                    .ThenInclude(m => m.Members)
                 .Where(matchByStatement)
                 .ToArray();
     }

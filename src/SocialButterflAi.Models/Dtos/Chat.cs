@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using SocialButterflAi.Models;
 
 namespace SocialButterflAi.Models.Dtos
 {
-    public class Chat
+    public class Chat: BaseDto
     {
-        public Guid Id { get; set; }
+        public override Guid? Id { get; set; }
 
         public string Name { get; set; }
         public ChatStatus ChatStatus { get; set; }

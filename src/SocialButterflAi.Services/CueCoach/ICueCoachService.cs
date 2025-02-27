@@ -25,17 +25,5 @@ namespace SocialButterflAi.Services.CueCoach
             bool toAnalyze = false,
             string? base64 = null
         );
-
-        #region FindChats
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        public IEnumerable<ChatEntity> FindChats(
-            Func<ChatEntity, bool> matchByStatement
-        );
-        #endregion
     }
 }

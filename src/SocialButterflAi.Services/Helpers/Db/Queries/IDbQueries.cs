@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SocialButterflAi.Data.Identity;
 
-namespace SocialButterflAi.Services.Helpers
+namespace SocialButterflAi.Services.Helpers.Db.Queries
 {
     public interface IDbQueries
     {

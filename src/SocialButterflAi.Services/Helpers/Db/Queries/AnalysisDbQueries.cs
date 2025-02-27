@@ -12,7 +12,7 @@ using ImageEntity = SocialButterflAi.Data.Analysis.Entities.Image;
 using AudioEntity = SocialButterflAi.Data.Analysis.Entities.Audio;
 using SocialButterflAi.Data.Identity;
 
-namespace SocialButterflAi.Services.Helpers
+namespace SocialButterflAi.Services.Helpers.Db.Queries
 {
     public class AnalysisDbQueries: IDbQueries
     {

@@ -5,9 +5,9 @@ using System.Text.Json.Serialization;
 
 namespace SocialButterflAi.Models.Dtos
 {
-    public class Message
+    public class Message : BaseDto
     {
-        public Guid Id { get; set; }
+        public override Guid? Id { get; set; }
         public Guid ChatId { get; set; }
         public Guid? ToIdentityId { get; set; }
         public Guid FromIdentityId { get; set; }

@@ -1,6 +1,8 @@
 using System;
+
 using SocialButterflAi.Data.Identity;
-using SocialButterflAi.Models.Analysis;
+
+using SocialButterflAi.Models;
 
 namespace SocialButterflAi.Services.Mappers
 {

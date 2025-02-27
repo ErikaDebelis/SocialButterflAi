@@ -1,4 +1,5 @@
 using System;
+using Serilog;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -17,10 +18,9 @@ using ChatDto = SocialButterflAi.Models.Dtos.Chat;
 using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 
 using SocialButterflAi.Models;
-using SocialButterflAi.Models.Analysis;
-using Serilog;
 using SocialButterflAi.Models.Dtos;
-using SocialButterflAi.Models.LLMIntegration.Claude.Content;
+using SocialButterflAi.Models.Analysis;
+using SocialButterflAi.Services.Helpers.Db;
 
 namespace SocialButterflAi.Services.CueCoach
 {
@@ -32,6 +32,8 @@ namespace SocialButterflAi.Services.CueCoach
         private ChatDbContext ChatDbContext;
         private ILogger<ICueCoachService> Logger;
         readonly Serilog.ILogger SeriLogger;
+
+        private CrudHelpers CrudHelpers;
         private const Models.LLMIntegration.ModelProvider _modelProvider = Models.LLMIntegration.ModelProvider.Claude;
         #endregion
 
@@ -43,6 +45,7 @@ namespace SocialButterflAi.Services.CueCoach
             ILogger<ICueCoachService> logger
         )
         {
+            CrudHelpers = new CrudHelpers(logger);
             AnalysisService = analysisService;
             IdentityDbContext = identityDbContext;
             ChatDbContext = chatDbContext;
@@ -129,7 +132,7 @@ namespace SocialButterflAi.Services.CueCoach
                             RequesterIdentityId = msg.FromIdentityId,
                             ModelProvider = $"{_modelProvider}",
                             TransactionId = $"{transactionId}",
-                            MessageId = msg.Id,
+                            MessageId = msg.Id ?? Guid.NewGuid(),
                             // Transcript = ,
                             // InitialUserPerception = ,
                         };
@@ -159,7 +162,7 @@ namespace SocialButterflAi.Services.CueCoach
                             RequesterIdentityId = msg.FromIdentityId,
                             ModelProvider = $"{_modelProvider}",
                             TransactionId = $"{transactionId}",
-                            MessageId = msg.Id,
+                            MessageId = msg.Id ?? Guid.NewGuid(),
                             // Transcript = ,
                             // InitialUserPerception = ,
                         };
@@ -189,7 +192,7 @@ namespace SocialButterflAi.Services.CueCoach
                             RequesterIdentityId = msg.FromIdentityId,
                             ModelProvider = $"{_modelProvider}",
                             TransactionId = $"{transactionId}",
-                            MessageId = msg.Id,
+                            MessageId = msg.Id ?? Guid.NewGuid(),
                             // InitialUserPerception = ,
                         };
 
@@ -274,37 +277,17 @@ namespace SocialButterflAi.Services.CueCoach
             Guid creatorIdentityId
         )
         {
+            var ChatMapper = new Mappers.ChatMapper();
             var response = new BaseResponse<ChatDto>();
             try
             {
-                //save to db
-                var matchingChat = FindChats(c => c.Id == chat.Id).FirstOrDefault();
+                //save chat to db
+                var result = await CrudHelpers.SaveEntity(
+                                        ChatDbContext,
+                                        chat,
+                                        ChatMapper
+                                    );
 
-                if(matchingChat == null)
-                {
-                    Logger.LogError($"Chat not found for Id: {chat.Id}");
-                    SeriLogger.Error($"Chat not found for Id: {chat.Id}");
-                    response.Success = false;
-                    response.Message = $"Chat not found for Id: {chat.Id}";
-                    response.Data = null;
-
-                    return response;
-                }
-                var chatEntity = ChatDtoToEntity(chat, creatorIdentityId);
-
-                if(chatEntity == null)
-                {
-                    Logger.LogError($"ChatDtoToEntity failed");
-                    SeriLogger.Error($"ChatDtoToEntity failed");
-                    response.Success = false;
-                    response.Message = $"ChatDtoToEntity failed";
-                    response.Data = null;
-
-                    return response;
-                }
-
-                ChatDbContext.Chats.Add(chatEntity);
-                await ChatDbContext.SaveChangesAsync();
 
                 Logger.LogInformation($"Chat saved successfully");
                 SeriLogger.Information($"Chat saved successfully");
@@ -334,39 +317,37 @@ namespace SocialButterflAi.Services.CueCoach
             MessageDto msg
         )
         {
+            var ChatMapper = new Mappers.ChatMapper();
+            var MessageMapper = new Mappers.MessageMapper();
             var response = new BaseResponse<MessageDto>();
             try
             {
-                //save msg to db
-                var matchingChat = FindChats(c => c.Id == msg.ChatId).FirstOrDefault();
+                Func<ChatEntity, bool> matchChatByStatement = c => c.Id == msg.ChatId;
 
-                if(matchingChat == null)
+                var foundChatResult = await CrudHelpers.GetEntity(
+                                        ChatDbContext,
+                                        matchChatByStatement,
+                                        ChatMapper
+                                    );
+
+                if(!foundChatResult)
                 {
-                    Logger.LogError($"Chat not found for ChatId: {msg.ChatId}");
-                    SeriLogger.Error($"Chat not found for ChatId: {msg.ChatId}");
+                    Logger.LogError($"Chat not found");
+                    SeriLogger.Error($"Chat not found");
                     response.Success = false;
-                    response.Message = $"Chat not found for ChatId: {msg.ChatId}";
+                    response.Message = $"Chat not found";
                     response.Data = null;
 
                     return response;
                 }
 
-                var matchingMsg = FindMessages(m => m.Id == msg.Id).FirstOrDefault();
+                var result = await CrudHelpers.SaveEntity(
+                                        ChatDbContext,
+                                        msg,
+                                        MessageMapper
+                                    );
 
-                if(matchingMsg != null)
-                {
-                    Logger.LogError($"Message already exists for Id: {msg.Id}- must update instead");
-                    SeriLogger.Error($"Message already exists for Id: {msg.Id}- must update instead");
-                    response.Success = false;
-                    response.Message = $"Message already exists for Id: {msg.Id}- must update instead";
-                    response.Data = null;
-
-                    return response;
-                }
-
-                var msgEntity = MessageDtoToEntity(msg);
-
-                if(msgEntity == null)
+                if(!result)
                 {
                     Logger.LogError($"MessageDtoToEntity failed");
                     SeriLogger.Error($"MessageDtoToEntity failed");
@@ -376,9 +357,6 @@ namespace SocialButterflAi.Services.CueCoach
 
                     return response;
                 }
-
-                ChatDbContext.Messages.Add(msgEntity);
-                await ChatDbContext.SaveChangesAsync();
 
                 Logger.LogInformation($"Message saved successfully");
                 SeriLogger.Information($"Message saved successfully");
@@ -393,217 +371,6 @@ namespace SocialButterflAi.Services.CueCoach
                 Logger.LogError(ex, "Error");
                 SeriLogger.Fatal(ex, "Error");
                 throw new Exception("Error", ex);
-            }
-        }
-        #endregion
-
-        #region FindChats
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        public IEnumerable<ChatEntity> FindChats(
-            Func<ChatEntity, bool> matchByStatement
-        )
-            => ChatDbContext
-                .Chats
-                .Include(m => m.Members)
-                .Include(v => v.Messages)
-                    .ThenInclude(ti => ti.FromIdentity)
-                .Include(v => v.Messages)
-                    .ThenInclude(ti => ti.ToIdentity)
-                .Where(matchByStatement)
-                .ToArray();
-        #endregion
-
-        #region FindMessages
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="matchByStatement"></param>
-        /// <returns></returns>
-        public IEnumerable<MessageEntity> FindMessages(
-            Func<MessageEntity, bool> matchByStatement
-        )
-            => ChatDbContext
-                .Messages
-                .Include(ti => ti.FromIdentity)
-                .Include(ti => ti.ToIdentity)
-                .Include(m => m.Chat)
-                .Where(matchByStatement)
-                .ToArray();
-        #endregion
-
-        #endregion
-
-        #region Mappers
-
-        #region ChatDtoToEntity
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="Chat"> </param>
-        /// <returns></returns>
-        private ChatEntity ChatDtoToEntity(
-            ChatDto chatDto,
-            Guid identityId
-        )
-        {
-            try
-            {
-                var chatEntity = new ChatEntity
-                {
-                    Id = chatDto.Id,
-                    Name = chatDto.Name,
-                    ChatStatus = Enum.Parse<Data.Chat.Entities.ChatStatus>($"{chatDto.ChatStatus}"),
-                    Messages = chatDto.Messages.Select(m => MessageDtoToEntity(m)).ToList(),
-                    // Members = ,
-                    CreatedBy = $"{identityId}",
-                    CreatedOn = DateTime.UtcNow,
-                    ModifiedBy = $"{identityId}",
-                    ModifiedOn = DateTime.UtcNow
-                };
-
-                if(chatEntity == null)
-                {
-                    Logger.LogError($"");
-                    SeriLogger.Error($"");
-                    throw new Exception($"");
-                }
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                return chatEntity;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
-
-        #region ChatEntityToDto
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="msgEntity"> </param>
-        /// <returns></returns>
-        private ChatDto ChatEntityToDto(
-            ChatEntity chatEntity
-        )
-        {
-            try
-            {
-                var chatDto = new ChatDto
-                {
-                    Id = default,
-                    Name = null,
-                    ChatStatus = ChatStatus.Unknown,
-                    Messages = chatEntity.Messages.Select(m => MessageEntityToDto(m)).ToArray(),
-                    MemberIdentityIds = chatEntity.Members.Select(m => m.Id).ToList(),
-                };
-
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                return chatDto;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
-
-        #region MessageDtoToEntity
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="Message"> </param>
-        /// <returns></returns>
-        private MessageEntity MessageDtoToEntity(
-            MessageDto msgDto
-        )
-        {
-            try
-            {
-                var msgEntity = new MessageEntity
-                {
-                    Id = msgDto.Id,
-                    ChatId = msgDto.ChatId,
-                    FromIdentityId = msgDto.FromIdentityId,
-                    ToIdentityId = msgDto.ToIdentityId ?? default,
-                    MessageType = Enum.Parse<Data.Chat.Entities.MessageType>($"{msgDto.MessageType}"),
-                    Metadata = msgDto.Metadata,
-                    CreatedBy = $"{msgDto.FromIdentityId}",
-                    CreatedOn = DateTime.UtcNow,
-                    ModifiedBy = $"{msgDto.FromIdentityId}",
-                    ModifiedOn = DateTime.UtcNow
-                };
-
-                if(msgEntity == null)
-                {
-                    Logger.LogError($"");
-                    SeriLogger.Error($"");
-                    throw new Exception($"");
-                }
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                return msgEntity;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
-            }
-        }
-        #endregion
-
-        #region MessageEntityToDto
-        /// <remarks></remarks>
-        /// <summary>
-        ///
-        ///</summary>
-        /// <param name="msgEntity"> </param>
-        /// <returns></returns>
-        private MessageDto MessageEntityToDto(
-            MessageEntity msgEntity
-        )
-        {
-            try
-            {
-                var msgDto = new MessageDto
-                {
-                    Id = msgEntity.Id,
-                    ChatId = msgEntity.ChatId,
-                    FromIdentityId = msgEntity.FromIdentityId,
-                    ToIdentityId = msgEntity.ToIdentityId,
-                    MessageType = Enum.Parse<MessageType>($"{msgEntity.MessageType}"),
-                    Metadata = msgEntity.Metadata,
-                };
-
-                Logger.LogTrace($"");
-                SeriLogger.Information($"");
-
-                return msgDto;
-            }
-            catch(Exception ex)
-            {
-                Logger.LogCritical(ex, $"");
-                SeriLogger.Fatal(ex, $"");
-                throw new Exception($"", ex);
             }
         }
         #endregion

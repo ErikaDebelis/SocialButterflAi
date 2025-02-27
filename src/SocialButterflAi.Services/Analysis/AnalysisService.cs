@@ -49,7 +49,8 @@ using CaptionDto = SocialButterflAi.Models.Analysis.EnhancedCaption;
 
 using MediaType = SocialButterflAi.Models.Analysis.MediaType;
 using WhisperModel = SocialButterflAi.Models.LLMIntegration.OpenAi.Whisper.Model;
-using SocialButterflAi.Services.Helpers;
+using SocialButterflAi.Services.Helpers.Db;
+using SocialButterflAi.Services.Helpers.Db.Queries;
 #endregion
 
 namespace SocialButterflAi.Services.Analysis
@@ -72,7 +73,7 @@ namespace SocialButterflAi.Services.Analysis
         private readonly string _processedDirectory;
         private readonly long _maxFileSize;
         private readonly AnalysisSettings _configuration;
-        private Helpers Helpers;
+        private CrudHelpers CrudHelpers;
         #endregion
 
         #region Constructor
@@ -86,7 +87,7 @@ namespace SocialButterflAi.Services.Analysis
             AnalysisSettings configuration
         )
         {
-            Helpers = new Helpers(logger);
+            CrudHelpers = new CrudHelpers(logger);
             OpenAiClient = openAiClient;
             ClaudeClient = claudeClient;
 
@@ -1655,11 +1656,11 @@ namespace SocialButterflAi.Services.Analysis
 
         #region Entity/Database Methods
 
-        #region SaveImageAsync
+        #region SaveVideoAsync
         /// <summary>
         ///
         /// </summary>
-        /// <param name="Image"></param>
+        /// <param name="video"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<BaseResponse<VideoDto>> SaveVideoAsync(
@@ -1670,21 +1671,7 @@ namespace SocialButterflAi.Services.Analysis
             var response = new BaseResponse<VideoDto>();
             try
             {
-                //save to db
-                var matchingVideo = AnalysisDbQueries.FindEntities<VideoEntity>(c => c.Id == video.Id).FirstOrDefault();
-
-                if(matchingVideo == null)
-                {
-                    Logger.LogError($"Video not fouEnd for Id: {video.Id}");
-                    SeriLogger.Error($"Video not found for Id: {video.Id}");
-                    response.Success = false;
-                    response.Message = $"Video not found for Id: {video.Id}";
-                    response.Data = null;
-
-                    return response;
-                }
-
-                var result = await Helpers.SaveEntity(
+                var result = await CrudHelpers.SaveEntity(
                                     AnalysisDbContext,
                                     video,
                                     VideoMapper
@@ -1733,24 +1720,11 @@ namespace SocialButterflAi.Services.Analysis
             var response = new BaseResponse<ImageDto>();
             try
             {
-                //save to db
-                var matchingImage = AnalysisDbQueries.FindEntities<ImageEntity>(c => c.Id == image.Id).FirstOrDefault();
-
-                if(matchingImage == null)
-                {
-                    Logger.LogError($"Image not found for Id: {image.Id}");
-                    SeriLogger.Error($"Image not found for Id: {image.Id}");
-                    response.Success = false;
-                    response.Message = $"Image not found for Id: {image.Id}";
-                    response.Data = null;
-
-                    return response;
-                }
-                var result = await Helpers.SaveEntity(
-                    AnalysisDbContext,
-                    image,
-                    ImageMapper
-                );
+                var result = await CrudHelpers.SaveEntity(
+                                        AnalysisDbContext,
+                                        image,
+                                        ImageMapper
+                                    );
 
                 if(!result)
                 {
@@ -1795,24 +1769,11 @@ namespace SocialButterflAi.Services.Analysis
             var response = new BaseResponse<AudioDto>();
             try
             {
-                //save to db
-                var matchingAudio = AnalysisDbQueries.FindEntities<AudioEntity>(c => c.Id == audio.Id).FirstOrDefault();
-
-                if(matchingAudio == null)
-                {
-                    Logger.LogError($"Audio not found for Id: {audio.Id}");
-                    SeriLogger.Error($"Audio not found for Id: {audio.Id}");
-                    response.Success = false;
-                    response.Message = $"Audio not found for Id: {audio.Id}";
-                    response.Data = null;
-
-                    return response;
-                }
-                var result = await Helpers.SaveEntity(
-                    AnalysisDbContext,
-                    audio,
-                    AudioMapper
-                );
+                var result = await CrudHelpers.SaveEntity(
+                                        AnalysisDbContext,
+                                        audio,
+                                        AudioMapper
+                                    );
 
                 if(!result)
                 {
