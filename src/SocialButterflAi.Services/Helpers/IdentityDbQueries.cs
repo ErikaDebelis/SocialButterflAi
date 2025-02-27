@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using SocialButterflAi.Data.Identity;
 using IdentityEntity = SocialButterflAi.Data.Identity.Entities.Identity;
 using ProfileEntity = SocialButterflAi.Data.Identity.Entities.Profile;
+using SocialButterflAi.Data.Identity.Entities;
 
 namespace SocialButterflAi.Services.Helpers
 {
@@ -26,6 +27,32 @@ namespace SocialButterflAi.Services.Helpers
             SerilogLogger = Serilog.Log.Logger;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="analysisDbContext"></param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        public static IDbQueries Use(
+            DbContext identityDbContext,
+            ILogger logger
+        )
+        {
+            if (identityDbContext is IdentityDbContext)
+            {
+                return new IdentityDbQueries(identityDbContext as IdentityDbContext, logger);
+            }
+
+            throw new ArgumentException("Invalid DbContext type");
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="matchByStatement"></param>
+        /// <param name="asNoTracking"></param>
+        /// <returns></returns>
         public IEnumerable<T> FindEntities<T>(
             Func<T, bool> matchByStatement,
             bool asNoTracking = false
@@ -40,6 +67,7 @@ namespace SocialButterflAi.Services.Helpers
                 {
                     nameof(IdentityEntity) => IdentityEntities(matchByStatement as Func<IdentityEntity, bool>) as IEnumerable<T>,
                     nameof(ProfileEntity) => ProfileEntities(matchByStatement as Func<ProfileEntity, bool>) as IEnumerable<T>,
+                    nameof(PronounChoice) => PronounEntities(matchByStatement as Func<PronounChoice, bool>) as IEnumerable<T>,
                     _ => Enumerable.Empty<T>()
                 };
 
@@ -54,7 +82,7 @@ namespace SocialButterflAi.Services.Helpers
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="matchByStatement"></param>
         /// <returns></returns>
@@ -79,6 +107,23 @@ namespace SocialButterflAi.Services.Helpers
         )
             => IdentityDbContext
                 .Profiles
+                    .Include(p => p.Identity)
+                    .Include(p => p.Pronouns)
+                .Where(matchByStatement)
+                .ToArray();
+
+        /// <remarks></remarks>
+        /// <summary>
+        ///
+        ///</summary>
+        /// <param name="matchByStatement"></param>
+        /// <returns></returns>
+        public IEnumerable<PronounChoice> PronounEntities(
+            Func<PronounChoice, bool> matchByStatement,
+            bool asNoTracking = false
+        )
+            => IdentityDbContext
+                .PronounChoices
                 .Where(matchByStatement)
                 .ToArray();
     }

@@ -19,7 +19,7 @@ namespace SocialButterflAi.Services.Mappers
         => new AudioEntity
             {
                 // Map properties from dto to entity
-                Id = audioDto.Id,
+                Id = audioDto.Id ?? Guid.NewGuid(),
                 MessageId = null,
                 Base64 = null,
                 CreatedBy = $"{audioDto.UploaderIdentityId}",

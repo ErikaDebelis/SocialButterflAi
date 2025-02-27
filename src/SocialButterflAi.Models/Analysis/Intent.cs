@@ -5,11 +5,11 @@ using System.Text.Json.Serialization;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class Intent
+    public class Intent : BaseDto
     {
         [JsonProperty("Id")]
         [JsonPropertyName("Id")]
-        public Guid? Id { get; set; }
+        public override Guid? Id { get; set; }
 
         [JsonProperty("primaryIntent")]
         [JsonPropertyName("primaryIntent")]

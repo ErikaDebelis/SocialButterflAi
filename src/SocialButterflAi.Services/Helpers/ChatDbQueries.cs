@@ -27,6 +27,33 @@ namespace SocialButterflAi.Services.Helpers
             SerilogLogger = Serilog.Log.Logger;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatDbContext"></param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static IDbQueries Use(
+            DbContext chatDbContext,
+            ILogger logger
+        )
+        {
+            if (chatDbContext is ChatDbContext)
+            {
+                return new ChatDbQueries(chatDbContext as ChatDbContext, logger);
+            }
+
+            throw new ArgumentException("Invalid DbContext type");
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="matchByStatement"></param>
+        /// <param name="asNoTracking"></param>
+        /// <returns></returns>
         public IEnumerable<T> FindEntities<T>(
             Func<T, bool> matchByStatement,
             bool asNoTracking = false

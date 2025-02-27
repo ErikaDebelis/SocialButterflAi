@@ -7,9 +7,11 @@ using System.IO;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class Video
+    public class Video: BaseDto
     {
-        public Guid Id { get; set; }
+        [JsonProperty("Id")]
+        [JsonPropertyName("Id")]
+        public override Guid? Id { get; set; }
         public Guid UploaderIdentityId { get; set; }
         public Guid? MessageId { get; set; }
 

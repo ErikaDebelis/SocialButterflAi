@@ -5,11 +5,11 @@ using System.Text.Json.Serialization;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class Tone
+    public class Tone: BaseDto
     {
         [JsonProperty("Id")]
         [JsonPropertyName("Id")]
-        public Guid? Id { get; set; }
+        public override Guid? Id { get; set; }
 
         [JsonProperty("primaryEmotion")]
         [JsonPropertyName("primaryEmotion")]

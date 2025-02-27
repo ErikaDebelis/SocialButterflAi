@@ -7,9 +7,9 @@ using System.IO;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class Audio
+    public class Audio : BaseDto
     {
-        public Guid Id { get; set; }
+        public override Guid? Id { get; set; }
         public Guid UploaderIdentityId { get; set; }
         public Guid? MessageId { get; set; }
 

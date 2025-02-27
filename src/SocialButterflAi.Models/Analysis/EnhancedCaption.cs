@@ -5,9 +5,11 @@ using System;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class EnhancedCaption
+    public class EnhancedCaption: BaseDto
     {
-        public Guid? Id { get; set; }
+        [JsonProperty("Id")]
+        [JsonPropertyName("Id")]
+        public override Guid? Id { get; set; }
         public Guid? VideoId { get; set; }
         public Guid? AudioId { get; set; }
         public string? StandardText { get; set; }

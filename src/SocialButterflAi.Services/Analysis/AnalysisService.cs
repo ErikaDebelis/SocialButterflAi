@@ -1204,6 +1204,7 @@ namespace SocialButterflAi.Services.Analysis
         #endregion
 
         #region Private/Helper Methods
+
         #region GenerateVideoBase64Async
         /// <summary>
         /// 
@@ -1684,10 +1685,10 @@ namespace SocialButterflAi.Services.Analysis
                 }
 
                 var result = await Helpers.SaveEntity(
-                    AnalysisDbContext,
-                    video,
-                    VideoMapper
-                );
+                                    AnalysisDbContext,
+                                    video,
+                                    VideoMapper
+                                );
 
                 if(!result)
                 {

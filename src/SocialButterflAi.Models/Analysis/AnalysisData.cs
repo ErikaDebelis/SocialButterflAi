@@ -7,7 +7,7 @@ using SocialButterflAi.Models.LLMIntegration.TypedAnalysis;
 
 namespace SocialButterflAi.Models.Analysis
 {
-    public class AnalysisData
+    public class AnalysisData : BaseDto
     {
         [JsonProperty("identityId")]
         [JsonPropertyName("identityId")]
@@ -15,7 +15,7 @@ namespace SocialButterflAi.Models.Analysis
 
         [JsonProperty("Id")]
         [JsonPropertyName("Id")]
-        public Guid? Id { get; set; }
+        public override Guid? Id { get; set; }
 
         [JsonProperty("caption")]
         [JsonPropertyName("caption")]

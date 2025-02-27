@@ -19,7 +19,7 @@ namespace SocialButterflAi.Services.Mappers
         => new ImageEntity
             {
                 // Map properties from dto to entity
-                Id = imageDto.Id,
+                Id = imageDto.Id ?? Guid.NewGuid(),
                 IdentityId = imageDto.UploaderIdentityId,
                 //todo:fix this
                 // MessageId = ,
