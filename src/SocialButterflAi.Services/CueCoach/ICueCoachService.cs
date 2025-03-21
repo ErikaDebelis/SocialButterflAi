@@ -25,5 +25,10 @@ namespace SocialButterflAi.Services.CueCoach
             bool toAnalyze = false,
             string? base64 = null
         );
+
+        public Task<BaseResponse<ChatDto>> CreateNewChatAsync(
+            ChatDto chat,
+            Guid transactionId
+        );
     }
 }

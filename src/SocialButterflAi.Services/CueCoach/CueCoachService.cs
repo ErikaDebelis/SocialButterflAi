@@ -16,6 +16,7 @@ using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
 using MessageDto = SocialButterflAi.Models.Dtos.Message;
 using ChatDto = SocialButterflAi.Models.Dtos.Chat;
 using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
+using IdentityEntity = SocialButterflAi.Data.Identity.Entities.Identity;
 
 using SocialButterflAi.Models;
 using SocialButterflAi.Models.Dtos;
@@ -35,6 +36,7 @@ namespace SocialButterflAi.Services.CueCoach
         readonly Serilog.ILogger SeriLogger;
 
         private ChatDbQueries ChatDbQueries;
+        private IdentityDbQueries IdentityDbQueries;
         private CrudHelpers CrudHelpers;
         private const Models.LLMIntegration.ModelProvider _modelProvider = Models.LLMIntegration.ModelProvider.Claude;
         #endregion
@@ -50,6 +52,7 @@ namespace SocialButterflAi.Services.CueCoach
             CrudHelpers = new CrudHelpers(logger);
             AnalysisService = analysisService;
             IdentityDbContext = identityDbContext;
+            IdentityDbQueries = new IdentityDbQueries(identityDbContext, logger);
             ChatDbContext = chatDbContext;
             ChatDbQueries = new ChatDbQueries(chatDbContext, logger);
             Logger = logger;
@@ -297,7 +300,55 @@ namespace SocialButterflAi.Services.CueCoach
                     return response;
                 }
 
-                throw new NotImplementedException("CreateNewChatAsync not implemented yet");
+                // confirm chat members exist
+                var chatMemberIds = chat.MemberIdentityIds.ToList();
+
+                if(!chatMemberIds.Contains(chat.CreatorId))
+                {
+                    chatMemberIds.Add(chat.CreatorId);
+                }
+
+                chatMemberIds.ForEach(memberId =>
+                {
+                    var matchingIdentity = IdentityDbQueries.FindEntities<IdentityEntity>(
+                                                    i => i.Id == memberId
+                                                ).FirstOrDefault();
+
+                    if(matchingIdentity == null)
+                    {
+                        Logger.LogError($"Identity not found for member: {memberId}. Removing from chat.");
+                        SeriLogger.Error($"Identity not found for member: {memberId}. Removing from chat.");
+
+                        chatMemberIds.Remove(memberId);
+                    }
+                });
+
+                chat.MemberIdentityIds = chatMemberIds;
+
+                //save chat to db
+                var savedChatResponse = await SaveChatAsync(chat, chat.CreatorId);
+
+                if(savedChatResponse == null
+                    ||!savedChatResponse.Success
+                )
+                {
+                    Logger.LogError($"failed to save chat");
+                    SeriLogger.Error($"failed to save chat");
+                    response.Success = false;
+                    response.Message = $"failed to save chat";
+
+                    return response;
+                }
+
+                response.Success = true;
+                response.Message = "Chat saved successfully";
+
+                Logger.LogInformation($"Chat saved successfully");
+                SeriLogger.Information($"Chat saved successfully");
+
+                response.Data = savedChatResponse.Data;
+
+                return response;
             }
             catch (Exception ex)
             {

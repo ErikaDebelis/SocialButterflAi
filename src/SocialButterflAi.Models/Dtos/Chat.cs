@@ -12,5 +12,6 @@ namespace SocialButterflAi.Models.Dtos
         public ChatStatus ChatStatus { get; set; }
         public IEnumerable<Message> Messages { get; set; }
         public IEnumerable<Guid> MemberIdentityIds { get; set; }
+        public Guid CreatorId { get; set; }
     }
 }
