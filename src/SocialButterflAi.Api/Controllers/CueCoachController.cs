@@ -4,23 +4,23 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
-using MessageDto = SocialButterflAi.Models.Dtos.Message;
-using ChatDto = SocialButterflAi.Models.Dtos.Chat;
-using SocialButterflAi.Data.Identity;
+
 using MassTransit;
 using RabbitMQ.Client;
+using SocialButterflAi.Api.Helpers;
+using SocialButterflAi.Data.Identity;
 
 using SocialButterflAi.Models.CueCoach;
 using SocialButterflAi.Models.CueCoach.Contracts;
-using Microsoft.AspNetCore.Http;
-using SocialButterflAi.Api.Helpers;
+using ChatDto = SocialButterflAi.Models.Dtos.Chat;
+using MessageDto = SocialButterflAi.Models.Dtos.Message;
 
 namespace SocialButterflAi.Api.CueCoach.Controllers
 {
-
     [Route("[controller]")]
     [ApiController]
     public class CueCoachController : ControllerBase

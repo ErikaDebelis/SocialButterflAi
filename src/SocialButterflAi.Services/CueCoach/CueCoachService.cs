@@ -21,6 +21,7 @@ using SocialButterflAi.Models;
 using SocialButterflAi.Models.Dtos;
 using SocialButterflAi.Models.Analysis;
 using SocialButterflAi.Services.Helpers.Db;
+using SocialButterflAi.Services.Helpers.Db.Queries;
 
 namespace SocialButterflAi.Services.CueCoach
 {
@@ -33,6 +34,7 @@ namespace SocialButterflAi.Services.CueCoach
         private ILogger<ICueCoachService> Logger;
         readonly Serilog.ILogger SeriLogger;
 
+        private ChatDbQueries ChatDbQueries;
         private CrudHelpers CrudHelpers;
         private const Models.LLMIntegration.ModelProvider _modelProvider = Models.LLMIntegration.ModelProvider.Claude;
         #endregion
@@ -49,6 +51,7 @@ namespace SocialButterflAi.Services.CueCoach
             AnalysisService = analysisService;
             IdentityDbContext = identityDbContext;
             ChatDbContext = chatDbContext;
+            ChatDbQueries = new ChatDbQueries(chatDbContext, logger);
             Logger = logger;
             SeriLogger = Serilog.Log.Logger;
         }
@@ -251,6 +254,50 @@ namespace SocialButterflAi.Services.CueCoach
                 SeriLogger.Information($"Message processed successfully");
 
                 return response;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error");
+                SeriLogger.Fatal(ex, "Error");
+                throw new Exception("Error", ex);
+            }
+        }
+        #endregion
+
+        #region CreateNewChatAsync
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="toAnalyze"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<BaseResponse<ChatDto>> CreateNewChatAsync(
+            ChatDto chat,
+            Guid transactionId
+        )
+        {
+            var response = new BaseResponse<ChatDto>();
+            try
+            {
+                var matchingChat = ChatDbQueries.FindEntities<ChatEntity>(
+                                                    c => c.Id == chat.Id
+                                                ).FirstOrDefault();
+
+                if(matchingChat != null)
+                {
+                    response.Success = false;
+                    response.Message = $"Chat already exists";
+
+                    Logger.LogError($"Chat already exists");
+                    SeriLogger.Error($"Chat already exists");
+
+                    response.Data = null;
+
+                    return response;
+                }
+
+                throw new NotImplementedException("CreateNewChatAsync not implemented yet");
             }
             catch (Exception ex)
             {

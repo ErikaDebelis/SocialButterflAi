@@ -1,21 +1,25 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using SocialButterflAi.Data.Analysis.Entities;
+
+using SocialButterflAi.Data.Chat;
 using SocialButterflAi.Data.Identity;
-using SocialButterflAi.Data.Identity.Entities;
 using SocialButterflAi.Services.Analysis;
+using SocialButterflAi.Data.Identity.Entities;
+using SocialButterflAi.Data.Analysis.Entities;
 
 using SocialButterflAi.Models.Analysis;
-using SocialButterflAi.Models.LLMIntegration;
 using SocialButterflAi.Services.CueCoach;
+using SocialButterflAi.Models.LLMIntegration;
+using SocialButterflAi.Services.Helpers.Db.Queries;
+using ChatEntity = SocialButterflAi.Data.Chat.Entities.Chat;
 using MediaType = SocialButterflAi.Models.Analysis.MediaType;
+using MessageEntity = SocialButterflAi.Data.Chat.Entities.Message;
 
 namespace SocialButterflAi.Api.Controllers
 {
@@ -25,18 +29,19 @@ namespace SocialButterflAi.Api.Controllers
     {
         private ILogger<AnalysisController> Logger;
         private IdentityDbContext IdentityDbContext;
+        private ChatDbQueries ChatDbQueries;
+
         private IAnalysisService AnalysisService;
-        private ICueCoachService CueCoachService;
 
         public AnalysisController(
             IAnalysisService analysisService,
-            ICueCoachService cueCoachService,
             IdentityDbContext identityDbContext,
+            ChatDbContext chatDbContext,
             ILogger<AnalysisController> logger
         )
         {
             AnalysisService = analysisService;
-            CueCoachService = cueCoachService;
+            ChatDbQueries = new ChatDbQueries(chatDbContext, logger);
             IdentityDbContext = identityDbContext;
             Logger = logger;
         }
@@ -102,7 +107,7 @@ namespace SocialButterflAi.Api.Controllers
 
                 var identity = IdentityDbContext.Identities.SingleOrDefault(i => i.Email == identityName);
 
-                var matchingChat = CueCoachService.FindChats(x =>
+                var matchingChat = ChatDbQueries.FindEntities<ChatEntity>(x =>
                     x.Members.FirstOrDefault(m => m.Id == identity.Id) != null
                     && x.Id == Guid.Parse(request.ChatId)
                 ).FirstOrDefault();
